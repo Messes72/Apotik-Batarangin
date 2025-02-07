@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Pagination from '$lib/table/Pagination.svelte';
 	import Search from '$lib/table/Search.svelte';
 	import Table from '$lib/table/Table.svelte';
@@ -7,8 +8,11 @@
 </script>
 
 <div>
-	<div class="mb-14 mt-6 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
-		<button class="font-notosans flex items-center pr-2 text-[14px] text-white">
+	<div class="mb-7 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
+		<button
+			class="font-notosans flex items-center pr-2 text-[14px] text-white"
+			on:click={() => goto('/product/input_product')}
+		>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 			</svg>

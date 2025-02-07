@@ -1,13 +1,41 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Pagination from '$lib/table/Pagination.svelte';
 	import Search from '$lib/table/Search.svelte';
 	import Table from '$lib/table/Table.svelte';
 
 	const { data } = $props();
+
+	let active_button = 'customer';
+	let active_button_history = 'riwayat';
 </script>
 
 <div>
-	<div class="mb-14 mt-6 flex h-10 w-44 items-center justify-center rounded-md bg-[#3EC210]">
+	<div class="font-montserrat mb-8 flex gap-4 text-[16px]">
+		<button
+			class="px-4 py-2 {active_button === 'customer'
+				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
+				: 'text-black hover:text-gray-500 hover:border-b-2'}"
+			on:click={() => {
+				active_button = 'customer';
+				goto('/customer');
+			}}
+		>
+			Customer
+		</button>
+		<button
+			class="px-4 py-2 {active_button === 'riwayat'
+				? 'border-b-2 border-blue-500 text-blue-500'
+				: 'text-black	 hover:text-gray-500 hover:border-b-2'}"
+			on:click={() => {
+				active_button_history = 'riwayat';
+				goto('/customer/riwayat_customer');
+			}}
+		>
+			Riwayat
+		</button>
+	</div>
+	<div class="mb-7 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
 		<button class="font-notosans flex items-center pr-2 text-[14px] text-white">
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
