@@ -18,6 +18,17 @@
 			$page.url.pathname.startsWith('/return_barang')
 	);
 
+	onMount(() => {
+		const path = $page.url.pathname;
+		if (path.startsWith('/dashboard')) $activeHover = 'dashboard';
+		else if (path.startsWith('/product')) $activeHover = 'product';
+		else if (path.startsWith('/stock_opname')) $activeHover = 'stock_opname';
+		else if (path.startsWith('/customer')) $activeHover = 'customer';
+		else if (path.startsWith('/transaksi')) $activeHover = 'transaksi';
+		else if (path.startsWith('/request_barang')) $activeHover = 'request_barang';
+		else if (path.startsWith('/return_barang')) $activeHover = 'return_barang';
+	});
+
 	function toggleMenu() {
 		isOpen = !isOpen;
 	}

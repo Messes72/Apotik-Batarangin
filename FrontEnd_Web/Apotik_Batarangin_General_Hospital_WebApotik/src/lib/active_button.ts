@@ -1,3 +1,3 @@
 import { writable } from 'svelte/store';
 
-export const activeHover = writable('dashboard');
+export const activeHover = writable('');

@@ -6,10 +6,14 @@
 
 	const { data } = $props();
 
-	let active_button = 'riwayat';
-	let active_button_history = 'cutomer';
+	let active_button = $state('riwayat');
+	let isModalEditOpen = $state(false);
 </script>
 
+<!-- svelte-ignore event_directive_deprecated -->
+<!-- svelte-ignore a11y_consider_explicit_label -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
 	<div class="font-montserrat mb-12 flex gap-4 text-[16px]">
 		<button
@@ -28,14 +32,14 @@
 				? 'border-b-2 border-blue-500 text-blue-500'
 				: 'text-black	 hover:text-gray-500'}"
 			on:click={() => {
-				active_button_history = 'riwayat';
+				active_button = 'riwayat';
 				goto('/customer/riwayat_customer');
 			}}
 		>
 			Riwayat
 		</button>
 	</div>
-	<div class="block items-center border px-8 pb-5 pt-4 shadow-lg drop-shadow-md">
+	<div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
 		<div class="mb-8 flex items-center justify-between px-2">
 			<Search />
 			<Pagination total_content={data.data_table.total_content} />
@@ -47,10 +51,8 @@
 				table_header={[
 					['children', 'Nama Lengkap'],
 					['children', 'Timer'],
-					'nik',
-					['children', 'Action'],
-					['children', 'Delete'],
-					'gender'
+					['children', 'NIK'],
+					['children', 'Action']
 				]}
 			>
 				{#snippet children({ head, body })}
@@ -61,6 +63,10 @@
 
 					{#if head === 'Timer'}
 						00:00:00
+					{/if}
+
+					{#if head === 'NIK'}
+						<div>{body.nik}</div>
 					{/if}
 
 					{#if head === 'Action'}
@@ -74,7 +80,10 @@
 								/></svg
 							>
 						</button>
-						<button class="rounded-full p-2 hover:bg-gray-200">
+						<button
+							class="rounded-full p-2 hover:bg-gray-200"
+							on:click={() => (isModalEditOpen = true)}
+						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
 									id="a"
@@ -111,12 +120,72 @@
 							>
 						</button>
 					{/if}
-
-					{#if head === 'Delete'}
-						<button>Delete</button>
-					{/if}
 				{/snippet}
 			</Table>
 		</div>
 	</div>
+	{#if isModalEditOpen}
+		<div
+			class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
+			on:click={() => (isModalEditOpen = false)}
+		>
+			<div class="w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
+				<div class="flex items-center justify-between p-8">
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Customer</div>
+					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
+						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
+							><path
+								fill="#515151"
+								d="M12.8 38 10 35.2 21.2 24 10 12.8l2.8-2.8L24 21.2 35.2 10l2.8 2.8L26.8 24 38 35.2 35.2 38 24 26.8 12.8 38Z"
+							/></svg
+						>
+					</button>
+				</div>
+				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
+				<div class="my-6 px-8">
+					<div class="mt-2 flex flex-col gap-2">
+						<label for="nama_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Nama Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Nama Kustomer"
+							id="nama_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						/>
+						<label for="alamat_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Alamat Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Alamat Kustomer"
+							id="alamat_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						/>
+						<label for="nomor_telepon_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Nomor Telepon Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Nomor Telepon Kustomer"
+							id="nomor_telepon_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						/>
+						<label for="note" class="font-intersemi text-[14px] text-[#1E1E1E]">Note</label>
+						<textarea
+							placeholder="Note"
+							id="note"
+							class="font-inter mb-3 h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						></textarea>
+					</div>
+					<div class="mt-6 flex justify-end">
+						<button
+							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							on:click={() => (isModalEditOpen = false)}>SIMPAN</button
+						>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

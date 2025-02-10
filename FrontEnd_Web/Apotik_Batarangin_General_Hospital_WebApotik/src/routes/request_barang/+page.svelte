@@ -7,8 +7,8 @@
 </script>
 
 <div>
-	<div class="mb-7 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
-		<button class="font-notosans flex items-center pr-2 text-[14px] text-white">
+	<div class="mb-7 flex h-10 w-48 items-center justify-center rounded-md bg-[#329B0D]">
+		<button class="w-full font-intersemi flex justify-center items-center pr-2 text-[14px] text-white">
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 			</svg>

@@ -17,7 +17,7 @@
 			<span class="ml-1 text-[16px] font-intersemi">Kembali</span>
 		</button>
 	</div>
-	<div class="block items-center border px-8 pb-5 pt-4 shadow-lg drop-shadow-md">
+	<div class="block items-center border px-8 pb-5 pt-4 shadow-lg rounded-lg bg-[#F9F9F9]">
 		<div class="mt-6 grid grid-cols-2 gap-6">
 			<div class="flex flex-col gap-2">
 				<label for="nomer_kartu" class="font-intersemi text-[14px] text-[#1E1E1E]">Nomer Kartu</label>
@@ -25,10 +25,10 @@
 					type="text"
 					placeholder="Nomer Kartu"
 					id="nomer_kartu"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 				<label for="kode" class="font-intersemi text-[14px] text-[#1E1E1E]">Kode</label>
-				<input type="text" placeholder="Kode" id="kode" class="w-full rounded-[13px] font-inter text-[13px]" />
+				<input type="text" placeholder="Kode" id="kode" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 			</div>
 			<div class="flex flex-col gap-2">
 				<label for="nomer_batch" class="font-intersemi text-[14px] text-[#1E1E1E]">Nomer Batch</label>
@@ -36,55 +36,55 @@
 					type="text"
 					placeholder="Nomer Batch"
 					id="nomer_batch"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 				<label for="kategori" class="font-intersemi text-[14px] text-[#1E1E1E]">Kategori</label>
-				<input type="text" placeholder="Kategori" id="kategori" class="w-full rounded-[13px] font-inter text-[13px]" />
+				<input type="text" placeholder="Kategori" id="kategori" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 			</div>
 		</div>
 		<div class="mt-2 flex flex-col gap-2">
 			<label for="nama_obat" class="font-intersemi text-[14px] text-[#1E1E1E]">Nama Obat</label>
-			<input type="text" placeholder="Nama Obat" id="nama_obat" class="w-full rounded-[13px] font-inter text-[13px]" />
+			<input type="text" placeholder="Nama Obat" id="nama_obat" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 		</div>
 		<div class="grid grid-cols-2 gap-6">
 			<div class="flex flex-col gap-2">
 				<label for="kadaluarsa" class="font-intersemi text-[14px] text-[#1E1E1E]">Kadaluarsa</label>
-				<input type="date" id="kadaluarsa" class="w-full rounded-[13px]" />
+				<input type="date" id="kadaluarsa" class="w-full rounded-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 				<label for="harga_uprate" class="font-intersemi text-[14px] text-[#1E1E1E]">Harga Uprate</label>
 				<input
 					type="text"
 					placeholder="Harga Uprate"
 					id="harga_uprate"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 				<label for="harga_jual" class="font-intersemi text-[14px] text-[#1E1E1E]">Harga Jual</label>
-				<input type="text" placeholder="Harga Jual" id="harga_jual" class="w-full rounded-[13px] font-inter text-[13px]" />
+				<input type="text" placeholder="Harga Jual" id="harga_jual" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 				<label for="jumlah_barang_masuk" class="font-intersemi text-[14px] text-[#1E1E1E]">Jumlah Barang Masuk</label>
 				<input
 					type="text"
 					placeholder="Jumlah Barang Masuk"
 					id="jumlah_barang_masuk"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 			</div>
 			<div class="flex flex-col gap-2">
 				<label for="satuan" class="font-intersemi text-[14px] text-[#1E1E1E]">Satuan</label>
-				<input type="text" placeholder="Satuan" id="satuan" class="w-full rounded-[13px] font-inter text-[13px]" />
+				<input type="text" placeholder="Satuan" id="satuan" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 				<label for="harga_beli" class="font-intersemi text-[14px] text-[#1E1E1E]">Harga Beli</label>
-				<input type="text" placeholder="Harga Beli" id="harga_beli" class="w-full rounded-[13px] font-inter text-[13px]" />
+				<input type="text" placeholder="Harga Beli" id="harga_beli" class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]" />
 				<label for="jumlah_barang_masuk" class="font-intersemi text-[14px] text-[#1E1E1E]">Jumlah Barang Masuk</label>
 				<input
 					type="text"
 					placeholder="Jumlah Barang Masuk"
 					id="jumlah_barang_masuk"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 				<label for="stock_barang" class="font-intersemi text-[14px] text-[#1E1E1E]">Stock Barang</label>
 				<input
 					type="text"
 					placeholder="Stock Barang"
 					id="stock_barang"
-					class="w-full rounded-[13px] font-inter text-[13px]"
+					class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 				/>
 			</div>
 		</div>
@@ -94,7 +94,7 @@
 				type="text"
 				placeholder="Cara Pemakaian"
 				id="cara_pemakaian"
-				class="w-full rounded-[13px] font-inter text-[13px]"
+				class="w-full rounded-[13px] font-inter text-[13px] bg-[#F4F4F4] border-2 border-[#AFAFAF]"
 			/>
 		</div>
 		<div class="flex justify-end">

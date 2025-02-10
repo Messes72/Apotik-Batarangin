@@ -24,7 +24,7 @@
 	</div>
 	<!-- svelte-ignore a11y_autofocus -->
 	<input
-		class="bg-slate-100 rounded-md font-notosans text-[14px]"
+		class="bg-[#F6F6F7] rounded-md font-notosans text-[14px]"
 		type="text"
 		placeholder="Search"
 		bind:value={keyword}

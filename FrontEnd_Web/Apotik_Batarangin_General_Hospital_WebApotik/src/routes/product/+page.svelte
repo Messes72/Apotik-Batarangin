@@ -5,12 +5,14 @@
 	import Table from '$lib/table/Table.svelte';
 
 	const { data } = $props();
+
+	let isModalOpen = $state(false);
 </script>
 
-<div>
-	<div class="mb-7 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
+<div class="mb-16">
+	<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
 		<button
-			class="font-notosans flex items-center pr-2 text-[14px] text-white"
+			class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 			on:click={() => goto('/product/input_product')}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
@@ -19,7 +21,7 @@
 			<span class="ml-1 text-[16px]">Input</span>
 		</button>
 	</div>
-	<div class="block items-center border px-8 pb-5 pt-4 shadow-lg drop-shadow-md">
+	<div class="block items-center border px-8 pb-5 pt-4 shadow-xl drop-shadow-md rounded-xl">
 		<div class="mb-8 flex items-center justify-between px-2">
 			<Search />
 			<Pagination total_content={data.data_table.total_content} />
@@ -60,7 +62,10 @@
 								/></svg
 							>
 						</button>
-						<button class="rounded-full p-2 hover:bg-gray-200">
+						<button
+							class="rounded-full p-2 hover:bg-gray-200"
+							on:click={() => (isModalOpen = true)}
+						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
 									id="a"
@@ -101,4 +106,60 @@
 			</Table>
 		</div>
 	</div>
+	{#if isModalOpen}
+		<div
+			class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
+			on:click={() => (isModalOpen = false)}
+		>
+			<div class="w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
+				<div class="p-8">
+					<div class="font-montserrat left-0 top-0 text-[26px] text-[#515151]">Edit Produk</div>
+				</div>
+				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
+				<div class="my-6 px-8">
+					<div class="mt-2 flex flex-col gap-2">
+						<label for="nama_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Nama Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Nama Kustomer"
+							id="nama_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+						/>
+						<label for="alamat_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Alamat Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Alamat Kustomer"
+							id="alamat_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+						/>
+						<label for="nomor_telepon_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Nomor Telepon Kustomer</label
+						>
+						<input
+							type="text"
+							placeholder="Nomor Telepon Kustomer"
+							id="nomor_telepon_kustomer"
+							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+						/>
+						<label for="note" class="font-intersemi text-[14px] text-[#1E1E1E]">Note</label>
+						<textarea
+							placeholder="Note"
+							id="note"
+							class="font-inter mb-3 h-40 w-full rounded-[13px] text-[13px]"
+						/>
+					</div>
+					<div class="mt-6 flex justify-end">
+						<button
+							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							on:click={() => (isModalOpen = false)}>SIMPAN</button
+						>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
