@@ -22,7 +22,7 @@
 		<button
 			class="px-4 py-2 {active_button === 'transaksi'
 				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:text-gray-500 hover:border-b-2'}"
+				: 'text-black hover:border-b-2 hover:text-gray-500'}"
 			on:click={() => {
 				active_button = 'transaksi';
 				goto('/transaksi');
@@ -33,7 +33,7 @@
 		<button
 			class="px-4 py-2 {active_button === 'laporan'
 				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:text-gray-500 hover:border-b-2'}"
+				: 'text-black	 hover:border-b-2 hover:text-gray-500'}"
 			on:click={() => {
 				active_button_2 = 'laporan';
 				goto('/transaksi/laporan');
@@ -44,7 +44,7 @@
 		<button
 			class="px-4 py-2 {active_button === 'riwayat'
 				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:text-gray-500 hover:border-b-2'}"
+				: 'text-black	 hover:border-b-2 hover:text-gray-500'}"
 			on:click={() => {
 				active_button_3 = 'riwayat';
 				goto('/transaksi/riwayat_transaksi');
@@ -57,7 +57,7 @@
 		<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
-				on:click={() => (isModalOpen = true)}
+				on:click={() => goto('/transaksi/input_transaksi')}
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
@@ -151,70 +151,6 @@
 				</Table>
 			</div>
 		</div>
-		{#if isModalOpen}
-			<div
-				class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
-				on:click={() => (isModalOpen = false)}
-			>
-				<div class="w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-					<div class="flex items-center justify-between p-8">
-						<div class="font-montserrat text-[26px] text-[#515151]">Input Customer</div>
-						<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
-							<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
-								><path
-									fill="#515151"
-									d="M12.8 38 10 35.2 21.2 24 10 12.8l2.8-2.8L24 21.2 35.2 10l2.8 2.8L26.8 24 38 35.2 35.2 38 24 26.8 12.8 38Z"
-								/></svg
-							>
-						</button>
-					</div>
-					<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-					<div class="my-6 px-8">
-						<div class="mt-2 flex flex-col gap-2">
-							<label for="nama_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
-								>Nama Kustomer</label
-							>
-							<input
-								type="text"
-								placeholder="Nama Kustomer"
-								id="nama_kustomer"
-								class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-							/>
-							<label for="alamat_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
-								>Alamat Kustomer</label
-							>
-							<input
-								type="text"
-								placeholder="Alamat Kustomer"
-								id="alamat_kustomer"
-								class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-							/>
-							<label for="nomor_telepon_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
-								>Nomor Telepon Kustomer</label
-							>
-							<input
-								type="text"
-								placeholder="Nomor Telepon Kustomer"
-								id="nomor_telepon_kustomer"
-								class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-							/>
-							<label for="note" class="font-intersemi text-[14px] text-[#1E1E1E]">Note</label>
-							<textarea
-								placeholder="Note"
-								id="note"
-								class="font-inter mb-3 h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-							></textarea>
-						</div>
-						<div class="mt-6 flex justify-end">
-							<button
-								class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
-								on:click={() => (isModalOpen = false)}>SIMPAN</button
-							>
-						</div>
-					</div>
-				</div>
-			</div>
-		{/if}
 		{#if isModalEditOpen}
 			<div
 				class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"

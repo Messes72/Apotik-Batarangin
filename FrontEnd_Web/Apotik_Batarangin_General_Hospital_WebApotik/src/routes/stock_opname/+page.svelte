@@ -13,7 +13,6 @@
 	<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
 		<button
 			class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
-			on:click={() => goto('/product/input_product')}
 		>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
@@ -21,7 +20,7 @@
 			<span class="ml-1 text-[16px]">Stock Opname</span>
 		</button>
 	</div>
-	<div class="block items-center border px-8 pb-5 pt-4 shadow-xl drop-shadow-md rounded-xl">
+	<div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
 		<div class="mb-8 flex items-center justify-between px-2">
 			<Search />
 			<Pagination total_content={data.data_table.total_content} />

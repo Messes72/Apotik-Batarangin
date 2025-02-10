@@ -7,8 +7,7 @@
 	const { data } = $props();
 
 	let active_button = $state('riwayat');
-	let active_button_2 = $state('transaksi');
-	let active_button_3 = $state('laporan');
+	let active_button_history = $state('riwayat');
 	let isModalEditOpen = $state(false);
 </script>
 
@@ -17,38 +16,31 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div>
-	<div class="font-montserrat mb-12 flex gap-4 text-[16px]">
+	<div class="font-montserrat mb-8 flex gap-4 text-[16px]">
 		<button
-			class="px-4 py-2 {active_button === 'transaksi'
+			class="px-4 py-2 {active_button === 'return_barang'
 				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:text-gray-500 hover:border-b-2'}"
+				: 'text-black hover:border-b-2 hover:text-gray-500'}"
+
 			on:click={() => {
-				active_button = 'transaksi';
-				goto('/transaksi');
+				active_button = 'return_barang';
+				goto('/return_barang');
 			}}
 		>
-			Transaksi
+			Return Barang
+
 		</button>
 		<button
-			class="px-4 py-2 {active_button === 'laporan'
-				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:text-gray-500 hover:border-b-2'}"
-			on:click={() => {
-				active_button_2 = 'laporan';
-				goto('/transaksi/laporan');
-			}}
-		>
-			Laporan
-		</button>
-		<button
+
 			class="px-4 py-2 {active_button === 'riwayat'
 				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:text-gray-500 hover:border-b-2'}"
+				: 'text-black	 hover:border-b-2 hover:text-gray-500'}"
 			on:click={() => {
-				active_button_3 = 'riwayat';
-				goto('/transaksi/riwayat_transaksi');
+				active_button_history = 'riwayat';
+				goto('/return_barang/riwayat_return_barang');
 			}}
 		>
+
 			Riwayat
 		</button>
 	</div>

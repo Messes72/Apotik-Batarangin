@@ -62,12 +62,12 @@
 								<a
 									href="/dashboard"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'dashboard'}
+									onclick={() => ($activeHover = 'dashboard')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
-										class="h-6 w-6 flex-shrink-0 dashboard-icon"
+										class="dashboard-icon h-6 w-6 flex-shrink-0"
 										fill="none"
 									>
 										<path
@@ -82,12 +82,12 @@
 								<a
 									href="/product"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'product'}
+									onclick={() => ($activeHover = 'product')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
-										class="h-6 w-6 flex-shrink-0 product-icon"
+										class="product-icon h-6 w-6 flex-shrink-0"
 										fill="none"
 									>
 										<path
@@ -112,13 +112,13 @@
 								<a
 									href="/stock_opname"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'stock_opname'}
+									onclick={() => ($activeHover = 'stock_opname')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
 										fill="none"
-										class="h-6 w-6 flex-shrink-0 stock-opname-icon"
+										class="stock-opname-icon h-6 w-6 flex-shrink-0"
 									>
 										<path
 											stroke="#fff"
@@ -141,13 +141,13 @@
 								<a
 									href="/customer"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'customer'}
+									onclick={() => ($activeHover = 'customer')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
 										fill="none"
-										class="h-6 w-6 flex-shrink-0 customer-icon"
+										class="customer-icon h-6 w-6 flex-shrink-0"
 									>
 										<path
 											fill="#fff"
@@ -161,7 +161,7 @@
 								<a
 									href="/transaksi"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'transaksi'}
+									onclick={() => ($activeHover = 'transaksi')}
 								>
 									<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
 										><path
@@ -185,13 +185,13 @@
 								<a
 									href="/request_barang"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'request_barang'}
+									onclick={() => ($activeHover = 'request_barang')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
 										fill="none"
-										class="h-6 w-6 flex-shrink-0 request-barang-icon"
+										class="request-barang-icon h-6 w-6 flex-shrink-0"
 									>
 										<path
 											stroke="#fff"
@@ -214,13 +214,13 @@
 								<a
 									href="/return_barang"
 									class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
-									onclick={() => $activeHover = 'return_barang'}
+									onclick={() => ($activeHover = 'return_barang')}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"
 										fill="none"
-										class="h-6 w-6 flex-shrink-0 return-barang-icon"
+										class="return-barang-icon h-6 w-6 flex-shrink-0"
 									>
 										<path
 											stroke="#fff"
@@ -380,12 +380,18 @@
 							RIWAYAT CUSTOMER
 						{:else if $page.url.pathname === '/transaksi/laporan'}
 							LAPORAN
+						{:else if $page.url.pathname === '/transaksi/input_transaksi'}
+							INPUT TRANSAKSI
 						{:else if $page.url.pathname === '/transaksi/riwayat_transaksi'}
 							RIWAYAT TRANSAKSI
 						{:else if $page.url.pathname === '/request_barang'}
 							REQUEST BARANG
+						{:else if $page.url.pathname === '/request_barang/riwayat_request_barang'}
+							RIWAYAT REQUEST BARANG
 						{:else if $page.url.pathname === '/return_barang'}
 							RETURN BARANG
+						{:else if $page.url.pathname === '/return_barang/riwayat_return_barang'}
+							RIWAYAT RETURN BARANG
 						{:else if $page.url.pathname === '/product/input_product'}
 							INPUT PRODUCT
 						{:else}
