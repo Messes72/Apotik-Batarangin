@@ -1,21 +1,27 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import Pagination from '$lib/table/Pagination.svelte';
 	import Search from '$lib/table/Search.svelte';
 	import Table from '$lib/table/Table.svelte';
 
 	const { data } = $props();
+
+	let isModalEditOpen = $state(false);
 </script>
 
-<div>
-	<div class="mb-14 mt-6 flex h-10 w-48 items-center justify-center rounded-md bg-[#3EC210]">
-		<button class="font-notosans flex items-center pr-2 text-[14px] text-white">
+<div class="mb-16">
+	<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
+		<button
+			class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
+			on:click={() => goto('/product/input_product')}
+		>
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 			</svg>
 			<span class="ml-1 text-[16px]">Input</span>
 		</button>
 	</div>
-	<div class="block items-center border px-8 pb-5 pt-4 shadow-lg drop-shadow-md">
+	<div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
 		<div class="mb-8 flex items-center justify-between px-2">
 			<Search />
 			<Pagination total_content={data.data_table.total_content} />
@@ -56,7 +62,10 @@
 								/></svg
 							>
 						</button>
-						<button class="rounded-full p-2 hover:bg-gray-200">
+						<button
+							class="rounded-full p-2 hover:bg-gray-200"
+							on:click={() => (isModalEditOpen = true)}
+						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
 									id="a"
@@ -97,4 +106,170 @@
 			</Table>
 		</div>
 	</div>
+	{#if isModalEditOpen}
+		<div
+			class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
+			on:click={() => (isModalEditOpen = false)}
+		>
+			<div class="w-[1200px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
+				<div class="flex items-center justify-between p-8">
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Produk</div>
+					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
+						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
+							><path
+								fill="#515151"
+								d="M12.8 38 10 35.2 21.2 24 10 12.8l2.8-2.8L24 21.2 35.2 10l2.8 2.8L26.8 24 38 35.2 35.2 38 24 26.8 12.8 38Z"
+							/></svg
+						>
+					</button>
+				</div>
+				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
+				<div class="my-6 px-8">
+					<div class="mt-6 grid grid-cols-2 gap-6">
+						<div class="flex flex-col gap-2">
+							<label for="nomer_kartu" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Nomer Kartu</label
+							>
+							<input
+								type="text"
+								placeholder="Nomer Kartu"
+								id="nomer_kartu"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="kode" class="font-intersemi text-[14px] text-[#1E1E1E]">Kode</label>
+							<input
+								type="text"
+								placeholder="Kode"
+								id="kode"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+						</div>
+						<div class="flex flex-col gap-2">
+							<label for="nomer_batch" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Nomer Batch</label
+							>
+							<input
+								type="text"
+								placeholder="Nomer Batch"
+								id="nomer_batch"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="kategori" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Kategori</label
+							>
+							<input
+								type="text"
+								placeholder="Kategori"
+								id="kategori"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+						</div>
+					</div>
+					<div class="mt-2 flex flex-col gap-2">
+						<label for="nama_obat" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Nama Obat</label
+						>
+						<input
+							type="text"
+							placeholder="Nama Obat"
+							id="nama_obat"
+							class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						/>
+					</div>
+					<div class="grid grid-cols-2 gap-6">
+						<div class="flex flex-col gap-2">
+							<label for="kadaluarsa" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Kadaluarsa</label
+							>
+							<input
+								type="date"
+								id="kadaluarsa"
+								class="w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4]"
+							/>
+							<label for="harga_uprate" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Harga Uprate</label
+							>
+							<input
+								type="text"
+								placeholder="Harga Uprate"
+								id="harga_uprate"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="harga_jual" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Harga Jual</label
+							>
+							<input
+								type="text"
+								placeholder="Harga Jual"
+								id="harga_jual"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="jumlah_barang_masuk" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Jumlah Barang Masuk</label
+							>
+							<input
+								type="text"
+								placeholder="Jumlah Barang Masuk"
+								id="jumlah_barang_masuk"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+						</div>
+						<div class="flex flex-col gap-2">
+							<label for="satuan" class="font-intersemi text-[14px] text-[#1E1E1E]">Satuan</label>
+							<input
+								type="text"
+								placeholder="Satuan"
+								id="satuan"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="harga_beli" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Harga Beli</label
+							>
+							<input
+								type="text"
+								placeholder="Harga Beli"
+								id="harga_beli"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="jumlah_barang_masuk" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Jumlah Barang Masuk</label
+							>
+							<input
+								type="text"
+								placeholder="Jumlah Barang Masuk"
+								id="jumlah_barang_masuk"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+							<label for="stock_barang" class="font-intersemi text-[14px] text-[#1E1E1E]"
+								>Stock Barang</label
+							>
+							<input
+								type="text"
+								placeholder="Stock Barang"
+								id="stock_barang"
+								class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							/>
+						</div>
+					</div>
+					<div class="mb-6 mt-2 flex flex-col gap-2">
+						<label for="cara_pemakaian" class="font-intersemi text-[14px] text-[#1E1E1E]"
+							>Cara Pemakaian</label
+						>
+						<input
+							type="text"
+							placeholder="Cara Pemakaian"
+							id="cara_pemakaian"
+							class="font-inter w-full rounded-[13px] border-2 border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						/>
+					</div>
+					<div class="flex justify-end">
+						<button
+							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							on:click={() => (isModalEditOpen = false)}>SIMPAN</button
+						>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

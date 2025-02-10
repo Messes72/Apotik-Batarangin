@@ -6,18 +6,37 @@
 
 	const { data } = $props();
 
-	let isModalOpen = $state(false);
+	let active_button = $state('riwayat');
+	let isModalEditOpen = $state(false);
 </script>
 
-<div class="mb-16">
-	<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
+<!-- svelte-ignore event_directive_deprecated -->
+<!-- svelte-ignore a11y_consider_explicit_label -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div>
+	<div class="font-montserrat mb-12 flex gap-4 text-[16px]">
 		<button
-			class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
+			class="px-4 py-2 {active_button === 'customer'
+				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
+				: 'text-black hover:text-gray-500'}"
+			on:click={() => {
+				active_button = 'customer';
+				goto('/customer');
+			}}
 		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
-			</svg>
-			<span class="ml-1 text-[16px]">Stock Opname</span>
+			Customer
+		</button>
+		<button
+			class="px-4 py-2 {active_button === 'riwayat'
+				? 'border-b-2 border-blue-500 text-blue-500'
+				: 'text-black	 hover:text-gray-500'}"
+			on:click={() => {
+				active_button = 'riwayat';
+				goto('/customer/riwayat_customer');
+			}}
+		>
+			Riwayat
 		</button>
 	</div>
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
@@ -63,7 +82,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalOpen = true)}
+							on:click={() => (isModalEditOpen = true)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -105,14 +124,22 @@
 			</Table>
 		</div>
 	</div>
-	{#if isModalOpen}
+	{#if isModalEditOpen}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
-			on:click={() => (isModalOpen = false)}
+			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-				<div class="p-8">
-					<div class="font-montserrat left-0 top-0 text-[26px] text-[#515151]">Edit Produk</div>
+				<div class="flex items-center justify-between p-8">
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Customer</div>
+					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
+						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
+							><path
+								fill="#515151"
+								d="M12.8 38 10 35.2 21.2 24 10 12.8l2.8-2.8L24 21.2 35.2 10l2.8 2.8L26.8 24 38 35.2 35.2 38 24 26.8 12.8 38Z"
+							/></svg
+						>
+					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
 				<div class="my-6 px-8">
@@ -124,7 +151,7 @@
 							type="text"
 							placeholder="Nama Kustomer"
 							id="nama_kustomer"
-							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
 						/>
 						<label for="alamat_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
 							>Alamat Kustomer</label
@@ -133,7 +160,7 @@
 							type="text"
 							placeholder="Alamat Kustomer"
 							id="alamat_kustomer"
-							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
 						/>
 						<label for="nomor_telepon_kustomer" class="font-intersemi text-[14px] text-[#1E1E1E]"
 							>Nomor Telepon Kustomer</label
@@ -142,19 +169,19 @@
 							type="text"
 							placeholder="Nomor Telepon Kustomer"
 							id="nomor_telepon_kustomer"
-							class="font-inter mb-3 w-full rounded-[13px] text-[13px]"
+							class="font-inter mb-3 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
 						/>
 						<label for="note" class="font-intersemi text-[14px] text-[#1E1E1E]">Note</label>
 						<textarea
 							placeholder="Note"
 							id="note"
-							class="font-inter mb-3 h-40 w-full rounded-[13px] text-[13px]"
-						/>
+							class="font-inter mb-3 h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						></textarea>
 					</div>
 					<div class="mt-6 flex justify-end">
 						<button
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
-							on:click={() => (isModalOpen = false)}>SIMPAN</button
+							on:click={() => (isModalEditOpen = false)}>SIMPAN</button
 						>
 					</div>
 				</div>
