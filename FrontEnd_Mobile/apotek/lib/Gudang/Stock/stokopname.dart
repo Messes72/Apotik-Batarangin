@@ -1018,7 +1018,7 @@ class stokPage extends State<stokopname> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorStyle.button_green,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 5),

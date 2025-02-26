@@ -255,7 +255,7 @@ class LoginPage extends State<Login> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             backgroundColor: ColorStyle.primary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           child: const Text("MASUK",

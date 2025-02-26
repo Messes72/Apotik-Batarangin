@@ -19,6 +19,8 @@ class pagePembelian extends State<Pembeliaanbarang>
     with SingleTickerProviderStateMixin {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];
+  final List<String> rowStatus = ["Berhasil", "Gagal"];
+  String? _selectedStatus;
 
   String? selectedValue;
 
@@ -32,14 +34,12 @@ class pagePembelian extends State<Pembeliaanbarang>
 
   // Tab
   late TabController _tabController;
-
-  final _selectedColor = Color(0xff1a73e8);
-  final _unselectedColor = Color(0xff5f6368);
-  final _tabs = [
-    Tab(text: 'Penerimaan'),
-    Tab(text: 'Statistik'),
-    Tab(text: 'Riwayat'),
+  final List<String> _titles = [
+    "PEMBELIAN BARANG",
+    "LAPORAN PEMBELIAN BARANG",
+    "RIWAYAT PEMBELIAN BARANG"
   ];
+  int _selectedTabIndex = 0;
 
   int _rowsPerPage = 10; // Default jumlah baris per halaman
   int _currentPage = 0;
@@ -59,7 +59,8 @@ class pagePembelian extends State<Pembeliaanbarang>
       noBatch: "Batch-$index",
       namaSupplier: "Supplier ${(index % 3) + 1}",
       namaPenerimaBarang: "Penerima ${(index % 4) + 1}",
-      catatan: "Catatan untuk Barang $index",
+      catatan:
+          "Catatan untuk Barang $index adalah ada yang cacat , banyak obatnya yang glundung dan botol pecah semua sampai basah kotaknya",
     ),
   );
 
@@ -69,6 +70,13 @@ class pagePembelian extends State<Pembeliaanbarang>
     super.initState();
     filterData = List.from(_data);
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _selectedTabIndex = _tabController.index;
+        });
+      }
+    });
   }
 
   void filtering(String query) {
@@ -105,7 +113,7 @@ class pagePembelian extends State<Pembeliaanbarang>
     return Scaffold(
       // appBar: NavbarTop(title: "PENERIMAAN BARANG", onMenuPressed: onMenuPressed, isExpanded: isExpanded),
       appBar: NavbarTop(
-          title: "PEMBELIAN BARANG",
+          title: _titles[_selectedTabIndex],
           onMenuPressed: widget.toggleSidebar,
           isExpanded: widget.isExpanded,
           animationTrigger: onMenuPressed,
@@ -146,20 +154,160 @@ class pagePembelian extends State<Pembeliaanbarang>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text("Input",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorStyle.button_green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {},
+                              icon: Transform.translate(
+                                offset: Offset(
+                                    5, 0), // Geser ikon lebih dekat ke teks
+                                child: Icon(Icons.add,
+                                    color: Colors.white, size: 22),
+                              ),
+                              label: const Text("Input Pembelian",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: ColorStyle.button_green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 3),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 50, vertical: 5),
-                          ),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Expanded(
+                              child: Container(
+                                height: 40,
+                                // width: 242,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: ColorStyle.fill_stroke, width: 1),
+                                  color: ColorStyle.fill_form,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Padding(padding: EdgeInsets.only(left: 8)),
+                                    Icon(
+                                      Icons.search_outlined,
+                                      color: Color(0XFF1B1442),
+                                      size: 30,
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: text,
+                                        onChanged: filtering,
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          // contentPadding: EdgeInsets.only(
+                                          //     left: 8, bottom: 13),
+                                          hintText: "Search",
+                                          hintStyle: TextStyle(
+                                            color: ColorStyle.text_hint,
+                                            fontSize: 14,
+                                          ),
+                                          border: InputBorder.none,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8))
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Center(
+                              child: SizedBox(
+                                width:
+                                    200, // Sesuaikan lebar agar tidak terlalu besar
+                                height:
+                                    40, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                child: DropdownButtonFormField2<String>(
+                                  isExpanded:
+                                      false, // Jangan meluaskan dropdown ke full width
+                                  value: _selectedStatus,
+                                  hint: Text(
+                                    "-- Pilih Status --",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: ColorStyle.text_hint),
+                                  ),
+                                  items: rowStatus
+                                      .map((e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(
+                                              e,
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: ColorStyle.text_hint),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedStatus = value!;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 2),
+                                    constraints: BoxConstraints(maxHeight: 30),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          5), // Border radius halus
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_grey),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(
+                                          color: ColorStyle
+                                              .text_secondary), // Saat aktif, border lebih gelap
+                                    ),
+                                  ),
+
+                                  // **Atur Tampilan Dropdown**
+                                  buttonStyleData: ButtonStyleData(
+                                    height: 25, // Tinggi tombol dropdown
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6), // Jarak dalam dropdown
+                                  ),
+
+                                  // **Atur Tampilan Dropdown yang Muncul**
+                                  dropdownStyleData: DropdownStyleData(
+                                    width:
+                                        200, // Lebar dropdown harus sama dengan input
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(color: Colors.grey),
+                                      color: ColorStyle.fill_form,
+                                    ),
+                                  ),
+
+                                  // **Atur Posisi Item Dropdown**
+                                  menuItemStyleData: const MenuItemStyleData(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            8), // Padding antar item dropdown
+                                  ),
+
+                                  // **Ganti Icon Dropdown**
+                                  iconStyleData: IconStyleData(
+                                    icon: Icon(Icons.arrow_drop_down,
+                                        size: 20, color: Colors.black),
+                                    openMenuIcon: Icon(Icons.arrow_drop_up,
+                                        size: 20, color: Colors.black),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 30),
                         Expanded(
@@ -181,214 +329,6 @@ class pagePembelian extends State<Pembeliaanbarang>
                               ),
                               child: Column(
                                 children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 8.0),
-                                            child: Container(
-                                              height: 32,
-                                              width: 242,
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color:
-                                                        ColorStyle.fill_stroke,
-                                                    width: 1),
-                                                color: ColorStyle.fill_form,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 8)),
-                                                  Icon(
-                                                    Icons.search_outlined,
-                                                    color: Color(0XFF1B1442),
-                                                    size: 30,
-                                                  ),
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller: text,
-                                                      onChanged: filtering,
-                                                      decoration:
-                                                          InputDecoration(
-                                                        isDense: true,
-                                                        // contentPadding: EdgeInsets.only(
-                                                        //     left: 8, bottom: 13),
-                                                        hintText: "Search",
-                                                        hintStyle: TextStyle(
-                                                          color: ColorStyle
-                                                              .tulisan_form,
-                                                          fontSize: 14,
-                                                        ),
-                                                        border:
-                                                            InputBorder.none,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          right: 8))
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          Spacer(),
-                                          Text("Rows per page:"),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 8)),
-                                          Center(
-                                            child: SizedBox(
-                                              width:
-                                                  65, // Sesuaikan lebar agar tidak terlalu besar
-                                              height:
-                                                  25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                                              child:
-                                                  DropdownButtonFormField2<int>(
-                                                isExpanded:
-                                                    false, // Jangan meluaskan dropdown ke full width
-                                                value: _rowsPerPage,
-                                                items: rowItems
-                                                    .map((e) =>
-                                                        DropdownMenuItem(
-                                                          value: e,
-                                                          child: Text(
-                                                            e.toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 14,
-                                                                color: Colors
-                                                                    .black),
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ))
-                                                    .toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _rowsPerPage = value!;
-                                                  });
-                                                },
-
-                                                // **Atur Tampilan Input**
-                                                decoration: InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 4,
-                                                          vertical: 4),
-                                                  constraints: BoxConstraints(
-                                                      maxHeight: 30),
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5), // Border radius halus
-                                                    borderSide: BorderSide(
-                                                        color: Colors.grey),
-                                                  ),
-                                                  focusedBorder:
-                                                      OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    borderSide: BorderSide(
-                                                        color: ColorStyle
-                                                            .button_grey), // Saat aktif, border lebih gelap
-                                                  ),
-                                                ),
-
-                                                // **Atur Tampilan Dropdown**
-                                                buttonStyleData:
-                                                    ButtonStyleData(
-                                                  height:
-                                                      25, // Tinggi tombol dropdown
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          6), // Jarak dalam dropdown
-                                                ),
-
-                                                // **Atur Tampilan Dropdown yang Muncul**
-                                                dropdownStyleData:
-                                                    DropdownStyleData(
-                                                  width:
-                                                      65, // Lebar dropdown harus sama dengan input
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    border: Border.all(
-                                                        color: Colors.grey),
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-
-                                                // **Atur Posisi Item Dropdown**
-                                                menuItemStyleData:
-                                                    const MenuItemStyleData(
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          8), // Padding antar item dropdown
-                                                ),
-
-                                                // **Ganti Icon Dropdown**
-                                                iconStyleData: IconStyleData(
-                                                  icon: Icon(
-                                                      Icons.arrow_drop_down,
-                                                      size: 20,
-                                                      color: Colors.black),
-                                                  openMenuIcon: Icon(
-                                                      Icons.arrow_drop_up,
-                                                      size: 20,
-                                                      color: Colors.black),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 8)),
-                                          Text(
-                                              "Page $endIndex of ${filterData.length}"),
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(Icons.chevron_left),
-                                                onPressed: _currentPage > 0
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage--;
-                                                        });
-                                                      }
-                                                    : null,
-                                              ),
-                                              IconButton(
-                                                icon: Icon(Icons.chevron_right),
-                                                onPressed: _currentPage <
-                                                        totalPages - 1
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage++;
-                                                        });
-                                                      }
-                                                    : null,
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 16,
-                                  ),
                                   Expanded(
                                     child: LayoutBuilder(
                                         builder: (context, constraints) {
@@ -552,22 +492,35 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                 const EdgeInsets
                                                                     .symmetric(
                                                                     horizontal:
-                                                                        8,
+                                                                        14,
                                                                     vertical:
                                                                         4),
                                                             decoration:
                                                                 BoxDecoration(
-                                                              color:
-                                                                  item.stokBarang ==
-                                                                          10
-                                                                      ? Colors
-                                                                          .green
-                                                                      : Colors
-                                                                          .red,
+                                                              color: item.stokBarang ==
+                                                                      10
+                                                                  ? ColorStyle
+                                                                      .status_green
+                                                                      .withOpacity(
+                                                                          0.8)
+                                                                  : ColorStyle
+                                                                      .status_red
+                                                                      .withOpacity(
+                                                                          0.8),
                                                               borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                          4),
+                                                                          5),
+                                                              border:
+                                                                  Border.all(
+                                                                color: item.stokBarang ==
+                                                                        10
+                                                                    ? ColorStyle
+                                                                        .status_green
+                                                                    : ColorStyle
+                                                                        .status_red,
+                                                                width: 1,
+                                                              ),
                                                             ),
                                                             child: Text(
                                                               item.stokBarang ==
@@ -579,7 +532,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                       .white,
                                                                   fontWeight:
                                                                       FontWeight
-                                                                          .bold),
+                                                                          .bold,
+                                                                  fontSize: 14),
                                                             ),
                                                           ),
                                                         ],
@@ -660,6 +614,124 @@ class pagePembelian extends State<Pembeliaanbarang>
                               ),
                             ),
                           ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text("Rows per page:",
+                                style: TextStyle(
+                                    color: ColorStyle.text_hint, fontSize: 14)),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Center(
+                              child: SizedBox(
+                                width:
+                                    65, // Sesuaikan lebar agar tidak terlalu besar
+                                height:
+                                    25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                child: DropdownButtonFormField2<int>(
+                                  isExpanded:
+                                      false, // Jangan meluaskan dropdown ke full width
+                                  value: _rowsPerPage,
+                                  items: rowItems
+                                      .map((e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(
+                                              e.toString(),
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: ColorStyle.text_hint),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rowsPerPage = value!;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 2),
+                                    constraints: BoxConstraints(maxHeight: 30),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          5), // Border radius halus
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_grey),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                      borderSide: BorderSide(
+                                          color: ColorStyle
+                                              .text_secondary), // Saat aktif, border lebih gelap
+                                    ),
+                                  ),
+
+                                  // **Atur Tampilan Dropdown**
+                                  buttonStyleData: ButtonStyleData(
+                                    height: 25, // Tinggi tombol dropdown
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6), // Jarak dalam dropdown
+                                  ),
+
+                                  // **Atur Tampilan Dropdown yang Muncul**
+                                  dropdownStyleData: DropdownStyleData(
+                                    width:
+                                        65, // Lebar dropdown harus sama dengan input
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                          color: ColorStyle.button_grey),
+                                      color: Colors.white,
+                                    ),
+                                  ),
+
+                                  // **Atur Posisi Item Dropdown**
+                                  menuItemStyleData: const MenuItemStyleData(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            8), // Padding antar item dropdown
+                                  ),
+
+                                  // **Ganti Icon Dropdown**
+                                  iconStyleData: IconStyleData(
+                                    icon: Icon(Icons.arrow_drop_down,
+                                        size: 20, color: Colors.black),
+                                    openMenuIcon: Icon(Icons.arrow_drop_up,
+                                        size: 20, color: Colors.black),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Text("Page $endIndex of ${filterData.length}",
+                                style: TextStyle(
+                                    color: ColorStyle.text_hint, fontSize: 14)),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.chevron_left),
+                                  onPressed: _currentPage > 0
+                                      ? () {
+                                          setState(() {
+                                            _currentPage--;
+                                          });
+                                        }
+                                      : null,
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.chevron_right),
+                                  onPressed: _currentPage < totalPages - 1
+                                      ? () {
+                                          setState(() {
+                                            _currentPage++;
+                                          });
+                                        }
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -672,20 +744,140 @@ class pagePembelian extends State<Pembeliaanbarang>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text("Input",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColorStyle.button_green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        Row(
+                          children: [
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Expanded(
+                              child: Container(
+                                height: 40,
+                                // width: 242,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: ColorStyle.fill_stroke, width: 1),
+                                  color: ColorStyle.fill_form,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Padding(padding: EdgeInsets.only(left: 8)),
+                                    Icon(
+                                      Icons.search_outlined,
+                                      color: Color(0XFF1B1442),
+                                      size: 30,
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: text,
+                                        onChanged: filtering,
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          // contentPadding: EdgeInsets.only(
+                                          //     left: 8, bottom: 13),
+                                          hintText: "Search",
+                                          hintStyle: TextStyle(
+                                            color: ColorStyle.text_hint,
+                                            fontSize: 14,
+                                          ),
+                                          border: InputBorder.none,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8))
+                                  ],
+                                ),
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 50, vertical: 5),
-                          ),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Center(
+                              child: SizedBox(
+                                width:
+                                    200, // Sesuaikan lebar agar tidak terlalu besar
+                                height:
+                                    40, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                child: DropdownButtonFormField2<String>(
+                                  isExpanded:
+                                      false, // Jangan meluaskan dropdown ke full width
+                                  value: _selectedStatus,
+                                  hint: Text(
+                                    "-- Pilih Status --",
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: ColorStyle.text_hint),
+                                  ),
+                                  items: rowStatus
+                                      .map((e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(
+                                              e,
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: ColorStyle.text_hint),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedStatus = value!;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 2),
+                                    constraints: BoxConstraints(maxHeight: 30),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          5), // Border radius halus
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_grey),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                      borderSide: BorderSide(
+                                          color: ColorStyle
+                                              .text_secondary), // Saat aktif, border lebih gelap
+                                    ),
+                                  ),
+
+                                  // **Atur Tampilan Dropdown**
+                                  buttonStyleData: ButtonStyleData(
+                                    height: 25, // Tinggi tombol dropdown
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6), // Jarak dalam dropdown
+                                  ),
+
+                                  // **Atur Tampilan Dropdown yang Muncul**
+                                  dropdownStyleData: DropdownStyleData(
+                                    width:
+                                        200, // Lebar dropdown harus sama dengan input
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(color: Colors.grey),
+                                      color: ColorStyle.fill_form,
+                                    ),
+                                  ),
+
+                                  // **Atur Posisi Item Dropdown**
+                                  menuItemStyleData: const MenuItemStyleData(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            8), // Padding antar item dropdown
+                                  ),
+
+                                  // **Ganti Icon Dropdown**
+                                  iconStyleData: IconStyleData(
+                                    icon: Icon(Icons.arrow_drop_down,
+                                        size: 20, color: Colors.black),
+                                    openMenuIcon: Icon(Icons.arrow_drop_up,
+                                        size: 20, color: Colors.black),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 30),
                         Expanded(
@@ -707,214 +899,6 @@ class pagePembelian extends State<Pembeliaanbarang>
                               ),
                               child: Column(
                                 children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 8.0),
-                                            child: Container(
-                                              height: 32,
-                                              width: 242,
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color:
-                                                        ColorStyle.fill_stroke,
-                                                    width: 1),
-                                                color: ColorStyle.fill_form,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 8)),
-                                                  Icon(
-                                                    Icons.search_outlined,
-                                                    color: Color(0XFF1B1442),
-                                                    size: 30,
-                                                  ),
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller: text,
-                                                      onChanged: filtering,
-                                                      decoration:
-                                                          InputDecoration(
-                                                        isDense: true,
-                                                        // contentPadding: EdgeInsets.only(
-                                                        //     left: 8, bottom: 13),
-                                                        hintText: "Search",
-                                                        hintStyle: TextStyle(
-                                                          color: ColorStyle
-                                                              .tulisan_form,
-                                                          fontSize: 14,
-                                                        ),
-                                                        border:
-                                                            InputBorder.none,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Padding(
-                                                      padding: EdgeInsets.only(
-                                                          right: 8))
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          Spacer(),
-                                          Text("Rows per page:"),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 8)),
-                                          Center(
-                                            child: SizedBox(
-                                              width:
-                                                  65, // Sesuaikan lebar agar tidak terlalu besar
-                                              height:
-                                                  25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                                              child:
-                                                  DropdownButtonFormField2<int>(
-                                                isExpanded:
-                                                    false, // Jangan meluaskan dropdown ke full width
-                                                value: _rowsPerPage,
-                                                items: rowItems
-                                                    .map((e) =>
-                                                        DropdownMenuItem(
-                                                          value: e,
-                                                          child: Text(
-                                                            e.toString(),
-                                                            style: TextStyle(
-                                                                fontSize: 14,
-                                                                color: Colors
-                                                                    .black),
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ))
-                                                    .toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    _rowsPerPage = value!;
-                                                  });
-                                                },
-
-                                                // **Atur Tampilan Input**
-                                                decoration: InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 4,
-                                                          vertical: 4),
-                                                  constraints: BoxConstraints(
-                                                      maxHeight: 30),
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5), // Border radius halus
-                                                    borderSide: BorderSide(
-                                                        color: Colors.grey),
-                                                  ),
-                                                  focusedBorder:
-                                                      OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    borderSide: BorderSide(
-                                                        color: ColorStyle
-                                                            .button_grey), // Saat aktif, border lebih gelap
-                                                  ),
-                                                ),
-
-                                                // **Atur Tampilan Dropdown**
-                                                buttonStyleData:
-                                                    ButtonStyleData(
-                                                  height:
-                                                      25, // Tinggi tombol dropdown
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          6), // Jarak dalam dropdown
-                                                ),
-
-                                                // **Atur Tampilan Dropdown yang Muncul**
-                                                dropdownStyleData:
-                                                    DropdownStyleData(
-                                                  width:
-                                                      65, // Lebar dropdown harus sama dengan input
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    border: Border.all(
-                                                        color: Colors.grey),
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-
-                                                // **Atur Posisi Item Dropdown**
-                                                menuItemStyleData:
-                                                    const MenuItemStyleData(
-                                                  padding: EdgeInsets.symmetric(
-                                                      horizontal:
-                                                          8), // Padding antar item dropdown
-                                                ),
-
-                                                // **Ganti Icon Dropdown**
-                                                iconStyleData: IconStyleData(
-                                                  icon: Icon(
-                                                      Icons.arrow_drop_down,
-                                                      size: 20,
-                                                      color: Colors.black),
-                                                  openMenuIcon: Icon(
-                                                      Icons.arrow_drop_up,
-                                                      size: 20,
-                                                      color: Colors.black),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          Padding(
-                                              padding:
-                                                  EdgeInsets.only(right: 8)),
-                                          Text(
-                                              "Page $endIndex of ${filterData.length}"),
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(Icons.chevron_left),
-                                                onPressed: _currentPage > 0
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage--;
-                                                        });
-                                                      }
-                                                    : null,
-                                              ),
-                                              IconButton(
-                                                icon: Icon(Icons.chevron_right),
-                                                onPressed: _currentPage <
-                                                        totalPages - 1
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage++;
-                                                        });
-                                                      }
-                                                    : null,
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 16,
-                                  ),
                                   Expanded(
                                     child: LayoutBuilder(
                                         builder: (context, constraints) {
@@ -998,7 +982,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                 DataColumn(
                                                     label: Expanded(
                                                   child: Center(
-                                                    child: Text('Actions',
+                                                    child: Text('Catatan',
                                                         textAlign:
                                                             TextAlign.center,
                                                         style: TextStyle(
@@ -1078,22 +1062,35 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                 const EdgeInsets
                                                                     .symmetric(
                                                                     horizontal:
-                                                                        8,
+                                                                        14,
                                                                     vertical:
                                                                         4),
                                                             decoration:
                                                                 BoxDecoration(
-                                                              color:
-                                                                  item.stokBarang ==
-                                                                          10
-                                                                      ? Colors
-                                                                          .green
-                                                                      : Colors
-                                                                          .red,
+                                                              color: item.stokBarang ==
+                                                                      10
+                                                                  ? ColorStyle
+                                                                      .status_green
+                                                                      .withOpacity(
+                                                                          0.8)
+                                                                  : ColorStyle
+                                                                      .status_red
+                                                                      .withOpacity(
+                                                                          0.8),
                                                               borderRadius:
                                                                   BorderRadius
                                                                       .circular(
-                                                                          4),
+                                                                          5),
+                                                              border:
+                                                                  Border.all(
+                                                                color: item.stokBarang ==
+                                                                        10
+                                                                    ? ColorStyle
+                                                                        .status_green
+                                                                    : ColorStyle
+                                                                        .status_red,
+                                                                width: 1,
+                                                              ),
                                                             ),
                                                             child: Text(
                                                               item.stokBarang ==
@@ -1105,74 +1102,32 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                       .white,
                                                                   fontWeight:
                                                                       FontWeight
-                                                                          .bold),
+                                                                          .bold,
+                                                                  fontSize: 14),
                                                             ),
                                                           ),
                                                         ],
                                                       ),
                                                     ),
                                                     DataCell(
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          PopupMenuButton<int>(
-                                                            icon: Icon(Icons
-                                                                .more_horiz),
-                                                            offset: Offset(0,
-                                                                40), // Mengatur posisi dropdown ke bawah
-                                                            shape:
-                                                                RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8), // Membuat sudut melengkung
+                                                      Center(
+                                                        child: SizedBox(
+                                                          width: 300,
+                                                          child: Text(
+                                                            item.catatan,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: TextStyle(
+                                                              fontSize: 14,
                                                             ),
-                                                            itemBuilder:
-                                                                (context) => [
-                                                              PopupMenuItem(
-                                                                value: 1,
-                                                                child: Row(
-                                                                  children: [
-                                                                    Icon(
-                                                                        Icons
-                                                                            .edit,
-                                                                        color: ColorStyle
-                                                                            .text_secondary),
-                                                                    SizedBox(
-                                                                        width:
-                                                                            8),
-                                                                    Text(
-                                                                        "Edit"),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                              PopupMenuItem(
-                                                                value: 2,
-                                                                child: Row(
-                                                                  children: [
-                                                                    Icon(
-                                                                        Icons
-                                                                            .delete,
-                                                                        color: ColorStyle
-                                                                            .text_secondary),
-                                                                    SizedBox(
-                                                                        width:
-                                                                            8),
-                                                                    Text(
-                                                                        "Hapus"),
-                                                                  ],
-                                                                ),
-                                                              ),
-                                                            ],
+                                                            maxLines: 2,
+                                                            textAlign: TextAlign
+                                                                .start, // Batas maksimal baris teks
                                                           ),
-                                                          // IconButton(
-                                                          //     icon: Icon(Icons.more_horiz),
-                                                          //
-                                                        ],
+                                                        ),
                                                       ),
-                                                    )
+                                                    ),
                                                   ],
                                                 );
                                               }).toList(),
@@ -1186,6 +1141,124 @@ class pagePembelian extends State<Pembeliaanbarang>
                               ),
                             ),
                           ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text("Rows per page:",
+                                style: TextStyle(
+                                    color: ColorStyle.text_hint, fontSize: 14)),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Center(
+                              child: SizedBox(
+                                width:
+                                    65, // Sesuaikan lebar agar tidak terlalu besar
+                                height:
+                                    25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                child: DropdownButtonFormField2<int>(
+                                  isExpanded:
+                                      false, // Jangan meluaskan dropdown ke full width
+                                  value: _rowsPerPage,
+                                  items: rowItems
+                                      .map((e) => DropdownMenuItem(
+                                            value: e,
+                                            child: Text(
+                                              e.toString(),
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: ColorStyle.text_hint),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ))
+                                      .toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _rowsPerPage = value!;
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 2),
+                                    constraints: BoxConstraints(maxHeight: 30),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          5), // Border radius halus
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_grey),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                      borderSide: BorderSide(
+                                          color: ColorStyle
+                                              .text_secondary), // Saat aktif, border lebih gelap
+                                    ),
+                                  ),
+
+                                  // **Atur Tampilan Dropdown**
+                                  buttonStyleData: ButtonStyleData(
+                                    height: 25, // Tinggi tombol dropdown
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6), // Jarak dalam dropdown
+                                  ),
+
+                                  // **Atur Tampilan Dropdown yang Muncul**
+                                  dropdownStyleData: DropdownStyleData(
+                                    width:
+                                        65, // Lebar dropdown harus sama dengan input
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(5),
+                                      border: Border.all(
+                                          color: ColorStyle.button_grey),
+                                      color: Colors.white,
+                                    ),
+                                  ),
+
+                                  // **Atur Posisi Item Dropdown**
+                                  menuItemStyleData: const MenuItemStyleData(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            8), // Padding antar item dropdown
+                                  ),
+
+                                  // **Ganti Icon Dropdown**
+                                  iconStyleData: IconStyleData(
+                                    icon: Icon(Icons.arrow_drop_down,
+                                        size: 20, color: Colors.black),
+                                    openMenuIcon: Icon(Icons.arrow_drop_up,
+                                        size: 20, color: Colors.black),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Padding(padding: EdgeInsets.only(right: 8)),
+                            Text("Page $endIndex of ${filterData.length}",
+                                style: TextStyle(
+                                    color: ColorStyle.text_hint, fontSize: 14)),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.chevron_left),
+                                  onPressed: _currentPage > 0
+                                      ? () {
+                                          setState(() {
+                                            _currentPage--;
+                                          });
+                                        }
+                                      : null,
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.chevron_right),
+                                  onPressed: _currentPage < totalPages - 1
+                                      ? () {
+                                          setState(() {
+                                            _currentPage++;
+                                          });
+                                        }
+                                      : null,
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ],
                     ),

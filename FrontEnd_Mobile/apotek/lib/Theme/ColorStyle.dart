@@ -17,6 +17,9 @@ class ColorStyle {
   static const shadow = Color(0xff000000);
   static const putih_background = Color(0xffFBFBFE);
   static const alert_ungu = Color(0xff6988DC);
+  static const text_hint = Color(0xff6E6E71);
+  static const status_green = Color(0xff3EC210);
+  static const status_red = Color(0xffFF3B30);
 }
 
 class TextStyleModel{

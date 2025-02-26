@@ -100,7 +100,7 @@ class pageInputProduk extends State<Inputproduk> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
