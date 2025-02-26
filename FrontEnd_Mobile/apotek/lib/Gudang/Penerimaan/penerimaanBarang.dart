@@ -302,27 +302,22 @@ class pagePenerimaan extends State<PenerimaanBarang>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    TabBar(
-                      controller: _tabController,
-                      isScrollable: true, // Tab hanya selebar teksnya
-                      labelColor: Colors.blue, // Warna teks aktif
-                      unselectedLabelColor:
-                          Colors.black, // Warna teks tidak aktif
-                      indicatorColor: Colors.blue, // Warna indikator bawah
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                      labelPadding: const EdgeInsets.only(left: 0, right: 16),
-                      tabs: [
-                        Tab(text: "Penerimaan"),
-                        Tab(text: "Statistik"),
-                        Tab(text: "Riwayat"),
-                      ],
-                    ),
-                  ],
-                ),
+              TabBar(
+                tabAlignment: TabAlignment.start,
+                padding: EdgeInsets.zero,
+                controller: _tabController,
+                isScrollable: true, // Tab hanya selebar teksnya
+                labelColor: Colors.blue, // Warna teks aktif
+                unselectedLabelColor: Colors.black, // Warna teks tidak aktif
+                indicatorColor: Colors.blue, // Warna indikator bawah
+                labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                dividerColor: Colors.transparent,
+                labelPadding: const EdgeInsets.only(left: 0, right: 16),
+                tabs: [
+                  Tab(text: "Penerimaan"),
+                  Tab(text: "Statistik"),
+                  Tab(text: "Riwayat"),
+                ],
               ),
               Padding(padding: EdgeInsets.only(bottom: 16)),
               ElevatedButton.icon(
