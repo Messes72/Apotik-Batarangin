@@ -1,0 +1,8 @@
+# IDE and OS files
+.vscode/
+*.log
+.DS_Store
+*.swp
+go.sum
+
+.env
