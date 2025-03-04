@@ -1,1 +1,0 @@
-<2025-02-24 13:12:21>|| {REQUEST: uri: /category, status: 401, ip:::1, Host:localhost:2688, ContentLength:56, User-Agent:PostmanRuntime/7.43.0, Error:code=401, message=Unauthorized, Latency:0s, method:GET ,Protocol:HTTP/1.1, RequestId:, ResponseSize:0, custom-value: 42}
