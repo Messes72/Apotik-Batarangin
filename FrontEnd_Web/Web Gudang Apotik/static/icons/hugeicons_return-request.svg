@@ -1,0 +1,8 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="hugeicons:return-request">
+<g id="Group">
+<path id="Vector" d="M3 8V13C3 16.771 3.001 18.656 4.172 19.828C5.343 21 7.229 21 11 21H13C16.771 21 18.656 20.999 19.828 19.828C21 18.657 21 16.771 21 13V8M3 8H21M3 8L3.865 6.077C4.537 4.585 4.872 3.84 5.552 3.42C6.232 3 7.105 3 8.85 3H15.15C16.895 3 17.767 3 18.448 3.42C19.128 3.84 19.463 4.585 20.135 6.077L21 8M12 8V3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M8.5 13.5H14C14.5304 13.5 15.0391 13.7107 15.4142 14.0858C15.7893 14.4609 16 14.9696 16 15.5C16 16.0304 15.7893 16.5391 15.4142 16.9142C15.0391 17.2893 14.5304 17.5 14 17.5H13M10 11.5L8 13.5L10 15.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>
