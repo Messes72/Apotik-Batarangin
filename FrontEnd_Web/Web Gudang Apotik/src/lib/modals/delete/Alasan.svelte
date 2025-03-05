@@ -16,7 +16,7 @@
 	>
 		<div class="my-auto {width} rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 			<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data</div>
+				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data Obat</div>
 				<button
 					class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
 					on:click={() => (isOpen = false)}

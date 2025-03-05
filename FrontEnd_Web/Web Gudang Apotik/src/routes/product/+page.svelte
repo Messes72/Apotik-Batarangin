@@ -178,7 +178,7 @@
 
 	<!-- Card Obat -->
 	<div class="flex">
-		<div class="flex w-10/12 justify-start">
+		<div class="w-10/12 justify-start">
 			<CardObat card_data={sortedData}>
 				{#snippet children({ body })}
 					<div class="space-y-2">
@@ -425,23 +425,36 @@
 					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
 					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
 					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
-					<Input id="kategori_obat" label="Kategori Obat" placeholder="Kategori Obat" />
+					<div class="flex flex-col gap-2">
+						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
+							>Kategori Obat</label
+						>
+						<select
+							id="kategori_obat"
+							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+						>
+							<option value="" disabled selected>Pilih Kategori Obat</option>
+							<option value="tablet">Tablet</option>
+						</select>
+					</div>
 					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
-					<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
-					<select
-						id="satuan"
-						class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-					>
-						<option value="" disabled selected>Pilih Satuan</option>
-						<option value="tablet">Tablet</option>
-						<option value="kapsul">Kapsul</option>
-						<option value="botol">Botol</option>
-						<option value="strip">Strip</option>
-						<option value="ampul">Ampul</option>
-						<option value="vial">Vial</option>
-						<option value="tube">Tube</option>
-					</select>
+					<div class="flex flex-col gap-2">
+						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
+						<select
+							id="satuan"
+							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						>
+							<option value="" disabled selected>Pilih Satuan</option>
+							<option value="tablet">Tablet</option>
+							<option value="kapsul">Kapsul</option>
+							<option value="botol">Botol</option>
+							<option value="strip">Strip</option>
+							<option value="ampul">Ampul</option>
+							<option value="vial">Vial</option>
+							<option value="tube">Tube</option>
+						</select>
+					</div>
 					<Input
 						id="jumlah_barang"
 						type="number"
@@ -570,23 +583,36 @@
 					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
 					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
 					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
-					<Input id="kategori_obat" label="Kategori Obat" placeholder="Kategori Obat" />
+					<div class="flex flex-col gap-2">
+						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
+							>Kategori Obat</label
+						>
+						<select
+							id="kategori_obat"
+							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+						>
+							<option value="" disabled selected>Pilih Kategori Obat</option>
+							<option value="tablet">Tablet</option>
+						</select>
+					</div>
 					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
-					<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
-					<select
-						id="satuan"
-						class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
-					>
-						<option value="" disabled selected>Pilih Satuan</option>
-						<option value="tablet">Tablet</option>
-						<option value="kapsul">Kapsul</option>
-						<option value="botol">Botol</option>
-						<option value="strip">Strip</option>
-						<option value="ampul">Ampul</option>
-						<option value="vial">Vial</option>
-						<option value="tube">Tube</option>
-					</select>
+					<div class="flex flex-col gap-2">
+						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
+						<select
+							id="satuan"
+							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+						>
+							<option value="" disabled selected>Pilih Satuan</option>
+							<option value="tablet">Tablet</option>
+							<option value="kapsul">Kapsul</option>
+							<option value="botol">Botol</option>
+							<option value="strip">Strip</option>
+							<option value="ampul">Ampul</option>
+							<option value="vial">Vial</option>
+							<option value="tube">Tube</option>
+						</select>
+					</div>
 					<Input
 						id="jumlah_barang"
 						type="number"
@@ -687,7 +713,7 @@
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
 			on:click={() => (isModalDetailOpen = false)}
 		>
-			<div class="my-auto w-[1200px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
+			<div class="my-auto w-[992px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
 					<div class="font-montserrat text-[26px] text-white">Informasi Data Produk</div>
 					<button
@@ -702,37 +728,19 @@
 						>
 					</button>
 				</div>
-				<form class="my-6 px-8 pb-3">
-					<div class="mt-6 grid grid-cols-2 gap-6">
-						<div class="flex flex-col gap-2">
-							<Detail label="Nomer Kartu" value="Nomer Kartu" />
-							<Detail label="Kode" value="Kode" />
-						</div>
-						<div class="flex flex-col gap-2">
-							<Detail label="Nomer Batch" value="Nomer Batch" />
-							<Detail label="Kategori" value="Kategori" />
-						</div>
-					</div>
-					<div class="my-2 flex flex-col gap-2">
-						<Detail label="Nama Obat" value="Nama Obat" />
-					</div>
-					<div class="grid grid-cols-2 gap-6">
-						<div class="flex flex-col gap-2">
-							<Detail label="Kadaluarsa" value="Kadaluarsa" />
-							<Detail label="Harga Uprate" value="Harga Uprate" />
-							<Detail label="Harga Jual" value="Harga Jual" />
-							<Detail label="Jumlah Barang Masuk" value="Jumlah Barang Masuk" />
-						</div>
-						<div class="flex flex-col gap-2">
-							<Detail label="Satuan" value="Satuan" />
-							<Detail label="Harga Beli" value="Harga Beli" />
-							<Detail label="Jumlah Barang Masuk" value="Jumlah Barang Masuk" />
-							<Detail label="Stock Barang" value="Stock Barang" />
-						</div>
-					</div>
-					<div class="mt-2 flex flex-col gap-2">
-						<Detail label="Cara Pemakaian" value="Cara Pemakaian" />
-					</div>
+				<form class="flex flex-col gap-4 px-10 py-6">
+					<Detail label="Nomor Kartu" value="APT-0001" />
+					<Detail label="Nomor Batch" value="BT001" />
+					<Detail label="Kode Obat" value="OB001" />
+					<Detail label="Kategori Obat" value="Obat Panas" />
+					<Detail label="Nama Obat" value="Paracetamol" />
+					<Detail label="Harga Beli" value="10.000" />
+					<Detail label="Kadaluarsa" value="12/05/2026" />
+					<Detail label="Jumlah Barang" value="100" />
+					<Detail label="Satuan" value="Tablet" />
+					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
+					<Detail label="Cara Pemakaian" value="1 kapsul sehari 2 kali" />
+					
 				</form>
 			</div>
 		</div>

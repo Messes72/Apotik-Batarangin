@@ -16,7 +16,7 @@
 	>
 		<div class="my-auto {width} rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 			<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data</div>
+				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data Obat</div>
 				<button
 					class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
 					on:click={() => (isOpen = false)}
@@ -31,11 +31,11 @@
 			</div>
 			<form class="mb-4 mt-6 px-8 pb-3">
 				<div class="mt-2 flex flex-col gap-2">
-					<TextArea id="alasan" label="Alasan 'nama barang' ini dikosongkan" placeholder="Alasan" />
+					<TextArea id="alasan" label="Alasan 'nama barang' ini Dihapus" placeholder="Alasan" />
 				</div>
 				<div class="mt-2 flex justify-end">
 					<button
-						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white shadow-xl"
 						on:click={() => {
 							isOpen = false;
 							isKonfirmDeleteOpen = true;

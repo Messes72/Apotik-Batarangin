@@ -3,7 +3,6 @@
 	import Dropdown from '$lib/dropdown/Dropdown.svelte';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
-	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
 	import Alasan from '$lib/modals/delete/Alasan.svelte';
 	import KonfirmDelete from '$lib/modals/delete/KonfirmDelete.svelte';
 	import KonfirmEdit from '$lib/modals/konfirmasi/KonfirmEdit.svelte';
