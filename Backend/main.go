@@ -144,5 +144,10 @@ func main() {
 	// 	e.Logger.Fatal(err)
 	// }
 
-	e.Logger.Fatal(e.Start(":2688"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "2688" // Default port if not set in .env
+	}
+	e.Logger.Fatal(e.Start(":" + port))
+
 }
