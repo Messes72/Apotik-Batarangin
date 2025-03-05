@@ -33,7 +33,7 @@
 <div class="grid grid-cols-3 gap-6">
 	{#each card_data as body, index}
 		<div
-			class="font-montserrat w-auto h-[100px] flex-shrink-0 items-center rounded-xl border border-[#D9D9D9] bg-white px-4 py-2 text-[20px]"
+			class="font-montserrat w-auto flex-shrink-0 items-center rounded-xl border border-[#D9D9D9] bg-white px-4 py-2 text-[20px]"
 		>
 			<div class="grid h-full grid-cols-4 gap-0">
 				<!-- Grid pertama -->

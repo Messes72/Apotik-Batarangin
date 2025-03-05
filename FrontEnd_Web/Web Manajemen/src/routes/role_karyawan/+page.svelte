@@ -1,57 +1,68 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
-	import KonfirmDelete from '$lib/modals/delete/KonfirmDelete.svelte';
+	import AlasanDeleteRoleKaryawan from '$lib/modals/delete/AlasanDeleteRoleKaryawan.svelte';
+	import KonfirmDeleteRoleKaryawan from '$lib/modals/delete/KonfirmDeleteRoleKaryawan.svelte';
 	import KonfirmEdit from '$lib/modals/konfirmasi/KonfirmEdit.svelte';
 	import KonfirmInput from '$lib/modals/konfirmasi/KonfirmInput.svelte';
 	import Edit from '$lib/modals/success/Edit.svelte';
 	import Hapus from '$lib/modals/success/Hapus.svelte';
 	import Inputt from '$lib/modals/success/Inputt.svelte';
-	import Pagination from '$lib/table/Pagination.svelte';
-	import Search from '$lib/table/Search.svelte';
+	import Pagination10 from '$lib/table/Pagination10.svelte';
+	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
 
 	const { data } = $props();
 
+	// Modal Input
 	let isModalOpen = $state(false);
-	let isModalEditOpen = $state(false);
-	let isModalDetailOpen = $state(false);
 	let isModalKonfirmInputOpen = $state(false);
-	let isModalKonfirmEditOpen = $state(false);
-	let isModalKonfirmDeleteOpen = $state(false);
 	let isModalSuccessInputOpen = $state(false);
+
+	// Modal Edit
+	let isModalEditOpen = $state(false);
+	let isModalKonfirmEditOpen = $state(false);
 	let isModalSuccessEditOpen = $state(false);
+
+	// Modal Delete
+	let isModalAlasanOpen = $state(false);
+	let isModalKonfirmDeleteOpen = $state(false);
 	let isModalSuccessDeleteOpen = $state(false);
+
+	// Modal Detail
+	let isModalDetailOpen = $state(false);
+
+	let active_button = $state('supplier');
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="mb-16">
-	<div class="mb-7 flex h-10 w-[203px] items-center justify-center rounded-md bg-[#329B0D]">
-		<button
-			class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
-			on:click={() => (isModalOpen = true)}
-		>
-			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
-				<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
-			</svg>
-			<span class="ml-1 text-[16px]">Input</span>
-		</button>
-	</div>
-	<div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
-		<div class="mb-8 flex items-center justify-between px-2">
-			<Search />
-			<Pagination total_content={data.data_table.total_content} />
-		</div>
 
+<div class="mb-16">
+	<div class="flex w-full items-center justify-between gap-4 pb-8">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+			<button
+				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
+				on:click={() => (isModalOpen = true)}
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
+					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
+				</svg>
+				<span class="ml-1 text-[16px]">Input Role Karyawan</span>
+			</button>
+		</div>
+		<div class="flex-1"><Search2 /></div>
+	</div>
+
+	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
 				table_data={data.data_table.data}
 				table_header={[
+					['children', 'Gender'],
 					['children', 'Nama Lengkap'],
 					['children', 'Timer'],
 					['children', 'NIK'],
@@ -59,6 +70,10 @@
 				]}
 			>
 				{#snippet children({ head, body })}
+					{#if head === 'Gender'}
+						<div>{body.gender}</div>
+					{/if}
+
 					{#if head === 'Nama Lengkap'}
 						<div>{body.nama}</div>
 						<div>({body.nnama})</div>
@@ -109,7 +124,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalKonfirmDeleteOpen = true)}
+							on:click={() => (isModalAlasanOpen = true)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -133,6 +148,9 @@
 			</Table>
 		</div>
 	</div>
+	<div class="mt-4 flex justify-end">
+		<Pagination10 total_content={data.data_table.total_content} />
+	</div>
 	{#if isModalOpen}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
@@ -140,7 +158,7 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Input Data Karyawan</div>
+					<div class="font-montserrat text-[26px] text-[#515151]">Input Data Role Karyawan</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -151,20 +169,20 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8" on:submit|preventDefault>
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="id_role" label="ID Role" type="text" placeholder="ID Role" />
-						<Input id="nama_role" label="Nama Role" type="text" placeholder="Nama Role" />
-						<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
-					</div>
-					<div class="mt-6 flex justify-end">
+				<form class="flex flex-col gap-4 px-10 py-6">
+					<Input id="id_role" label="ID Role" placeholder="ID Role" />
+					<Input id="nama_role" label="Nama Role" placeholder="Nama Role" />
+					<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
+					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
 							on:click={() => {
 								isModalOpen = false;
 								isModalKonfirmInputOpen = true;
-							}}>KONFIRMASI</button
+							}}
 						>
+							KONFIRMASI
+						</button>
 					</div>
 				</form>
 			</div>
@@ -177,7 +195,7 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Karyawan</div>
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Role Karyawan</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -188,19 +206,17 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8" on:submit|preventDefault>
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="id_role" label="ID Role" type="text" placeholder="ID Role" />
-						<Input id="nama_role" label="Nama Role" type="text" placeholder="Nama Role" />
-						<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
-					</div>
-					<div class="mt-6 flex justify-end">
+				<form class="flex flex-col gap-4 px-10 py-6">
+					<Input id="id_role" label="ID Role" placeholder="ID Role" />
+					<Input id="nama_role" label="Nama Role" placeholder="Nama Role" />
+					<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
+					<div class="flex items-center justify-end">
 						<button
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
 							on:click={() => {
-								isModalEditOpen = false;
-								isModalKonfirmEditOpen = true;
-							}}>SAVE</button
+								isModalOpen = false;
+								isModalKonfirmInputOpen = true;
+							}}>KONFIRMASI</button
 						>
 					</div>
 				</form>
@@ -214,7 +230,7 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-					<div class="font-montserrat text-[26px] text-white">Informasi Data Karyawan</div>
+					<div class="font-montserrat text-[26px] text-white">Informasi Data Role Karyawan</div>
 					<button
 						class="rounded-xl hover:bg-gray-100/20"
 						on:click={() => (isModalDetailOpen = false)}
@@ -227,29 +243,33 @@
 						>
 					</button>
 				</div>
-				<div class="my-6 px-8">
-					<form class="mt-2 flex flex-col gap-2" on:submit|preventDefault>
-						<Detail label="ID Role" value="Abraham Contoh Aja" />
-						<Detail label="Nama Role" value="Jl. Contoh Aja No. 123, Kota Contoh, 12345" />
-						<Detail
-							label="Catatan Role"
-							value="Contoh Catatan Karyawanasdffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffjdsaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-						/>
-					</form>
-				</div>
+				<form class="my-6 px-8 pb-3">
+					<div class="mt-2 flex flex-col gap-2">
+						<Detail label="ID Role" value="ID Role" />
+						<Detail label="Nama Role" value="Nama Role" />
+						<Detail label="Catatan Role" value="Catatan Role" />
+					</div>
+				</form>
 			</div>
 		</div>
 	{/if}
+
+	<!-- Modal Input -->
 	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
+
+	<!-- Modal Edit -->
 	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
-	<KonfirmDelete bind:isOpen={isModalKonfirmDeleteOpen} bind:isSuccess={isModalSuccessDeleteOpen} />
+
+	<!-- Modal Delete -->
+	<AlasanDeleteRoleKaryawan
+		bind:isOpen={isModalAlasanOpen}
+		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+	/>
+	<KonfirmDeleteRoleKaryawan
+		bind:isOpen={isModalKonfirmDeleteOpen}
+		bind:isSuccess={isModalSuccessDeleteOpen}
+	/>
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>
-
-<style>
-	select option {
-		color: #000000;
-	}
-</style>

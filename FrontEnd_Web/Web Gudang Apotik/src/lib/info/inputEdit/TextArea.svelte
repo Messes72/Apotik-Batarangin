@@ -11,6 +11,6 @@
 		{placeholder}
 		{id}
 		bind:value
-		class="font-inter mb-3 h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+		class="font-inter h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
 	></textarea>
 </div>

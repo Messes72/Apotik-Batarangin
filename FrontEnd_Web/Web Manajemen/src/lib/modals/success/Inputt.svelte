@@ -9,7 +9,7 @@
 		setTimeout(() => {
 			isOpen = false;
 			dispatch('click');
-		}, 3000);
+		}, 2500);
 	}
 </script>
 
