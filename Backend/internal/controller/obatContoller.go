@@ -11,6 +11,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	JenisGudang = "gudang"
+	JenisApotik = "apotek"
+)
+
 func AddObat(c echo.Context) error {
 	var requestBody class.Obat
 
@@ -37,8 +42,13 @@ func AddObat(c echo.Context) error {
 
 	idKategori := c.Param("id_kategori")
 
+	jenis := c.QueryParam("jenis") //apotik or gudang
+
+	if jenis != JenisGudang && jenis != JenisApotik {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "jenis harus antara 'gudang' atau 'apotik' "})
+	}
 	// Call the model function
-	result, err := model.AddObat(c.Request().Context(), requestBody, idKategori, idDepoparam, idKaryawan.(string))
+	result, err := model.AddObat(c.Request().Context(), requestBody, idKategori, idDepoparam, idKaryawan.(string), jenis)
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}
@@ -51,7 +61,11 @@ func GetObat(c echo.Context) error {
 	pageparam := c.QueryParam("page")
 	pagesizeparam := c.QueryParam("page_size")
 	idkategori := c.Param("id_kategori")
+	jenis := c.QueryParam("jenis") //apotik or gudang
 
+	if jenis != JenisGudang && jenis != JenisApotik {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "jenis harus antara 'gudang' atau 'apotik' "})
+	}
 	page := 1
 	pageSize := 10
 
@@ -66,7 +80,7 @@ func GetObat(c echo.Context) error {
 		}
 	}
 
-	result, err := model.GetObat(c.Request().Context(), idobat, idkategori, page, pageSize)
+	result, err := model.GetObat(c.Request().Context(), idobat, idkategori, page, pageSize, jenis)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
@@ -84,9 +98,15 @@ func UpdateObat(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, karyawan tidak dikenali"})
 	}
 
+	jenis := c.QueryParam("jenis") //apotik or gudang
+
+	if jenis != JenisGudang && jenis != JenisApotik {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "jenis harus antara 'gudang' atau 'apotik' "})
+	}
+
 	var requestBody class.Obat
 	err := c.Bind(&requestBody)
-	log.Println("error request body ", err)
+	log.Println("error r	equest body ", err)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
 	}
@@ -102,7 +122,7 @@ func UpdateObat(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Nama, ID Depo, and ID Satuan tidak boleh kosong"})
 	}
 
-	result, err := model.UpdateObat(c.Request().Context(), idkategori, idobat, requestBody, idkaryawan)
+	result, err := model.UpdateObat(c.Request().Context(), idkategori, idobat, requestBody, idkaryawan, jenis)
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}
@@ -119,11 +139,15 @@ func DeleteObat(c echo.Context) error {
 		log.Println("id karyawan tidak diterima di controller updateobat dari jwt token, atau isi id karyawan bukan string")
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, karyawan tidak dikenali"})
 	}
+	jenis := c.QueryParam("jenis") //apotik or gudang
 
+	if jenis != JenisGudang && jenis != JenisApotik {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "jenis harus antara 'gudang' atau 'apotik' "})
+	}
 	_ = idkategori //nanti perlu ditentukan apakah perlu idkategori untuk langkah penghapusan karena sebenernya tidak diperlukan
 	//sementara gini , buat menghindari dia error gara2 dibuat tp tidak dipakai, kalau gak perlu ya nanti hapus aja tp jangan lupa tambahkan idkategori di query di model nya juga
 
-	result, err := model.DeleteObat(c.Request().Context(), idobat, idkaryawan)
+	result, err := model.DeleteObat(c.Request().Context(), idobat, idkaryawan, jenis)
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}

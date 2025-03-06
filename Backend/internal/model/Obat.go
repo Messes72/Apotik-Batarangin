@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,7 +12,34 @@ import (
 	"strings"
 )
 
-func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo string, idKaryawan string) (class.Response, error) {
+type TableNames struct {
+	Obat      string
+	KartuStok string
+	Counter   string
+}
+
+var tableMappings = map[string]TableNames{
+	"gudang": {
+		Obat:      "obat_gudang",
+		KartuStok: "kartu_stok_gudang",
+		Counter:   "ObatCounterGudang",
+	},
+	"apotek": {
+		Obat:      "obat_apotik",
+		KartuStok: "kartu_stok_apotik",
+		Counter:   "ObatCounter",
+	},
+}
+
+func getTableNames(jenis string) (TableNames, error) {
+	tables, ok := tableMappings[jenis]
+	if !ok {
+		return TableNames{}, errors.New("invalid jenis value")
+	}
+	return tables, nil
+}
+
+func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo string, idKaryawan string, jenis string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -25,8 +53,17 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
 
+	tables, err := getTableNames(jenis)
+	if err != nil {
+		return class.Response{Status: http.StatusBadRequest, Message: "Invalid jenis value", Data: nil}, nil
+	}
+
+	tableObat := tables.Obat
+	tableKartuStok := tables.KartuStok
+	tableCounter := tables.Counter
+
 	var exists string
-	checkQuery := `SELECT 1 FROM obat WHERE LOWER(nama) = ? AND id_depo = ? LIMIT 1`
+	checkQuery := `SELECT 1 FROM ` + tableObat + ` WHERE LOWER(nama) = ? AND id_depo = ? LIMIT 1`
 	err = tx.QueryRowContext(ctx, checkQuery, strings.ToLower(obat.Nama), idDepo).Scan(&exists)
 	if err == nil {
 		tx.Rollback()
@@ -39,7 +76,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 	}
 
 	var counter int
-	queryCounter := `SELECT count FROM ObatCounter FOR UPDATE`
+	queryCounter := `SELECT count FROM ` + tableCounter + ` FOR UPDATE`
 	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
 	if err != nil {
 		tx.Rollback()
@@ -50,7 +87,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 	newCounter := counter + 1
 	newIDObat := fmt.Sprintf("MDC%012d", counter)
 
-	updateCounter := `UPDATE ObatCounter SET count = ?`
+	updateCounter := `UPDATE ` + tableCounter + ` SET count = ?`
 	_, err = tx.ExecContext(ctx, updateCounter, newCounter)
 	if err != nil {
 		tx.Rollback()
@@ -58,7 +95,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 	}
 
-	insertKartuStok := `INSERT INTO kartu_stok (id_kartustok, id_depo, id_satuan, stok_barang, created_at, created_by, updated_at, deleted_at, catatan) 
+	insertKartuStok := `INSERT INTO ` + tableKartuStok + ` (id_kartustok, id_depo, id_satuan, stok_barang, created_at, created_by, updated_at, deleted_at, catatan) 
 						VALUES (?, ?, ?, ?, NOW(), ?, NULL, NULL, ?)`
 	_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, obat.IDSatuan, obat.StokBarang, idKaryawan, obat.Catatan)
 	if err != nil {
@@ -67,7 +104,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to insert kartu_stok", Data: nil}, err
 	}
 
-	insertObat := `INSERT INTO obat (id_obat, id_satuan, id_depo, id_kartustok, id_kategori, nama, harga_jual, harga_beli, stok_barang, uprate, no_batch, kadaluarsa, created_at, created_by, updated_at, deleted_at, catatan) 
+	insertObat := `INSERT INTO ` + tableObat + ` (id_obat, id_satuan, id_depo, id_kartustok, id_kategori, nama, harga_jual, harga_beli, stok_barang, uprate, no_batch, kadaluarsa, created_at, created_by, updated_at, deleted_at, catatan) 
 					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NULL, NULL, ?)`
 	_, err = tx.ExecContext(ctx, insertObat, newIDObat, obat.IDSatuan, idDepo, newIDObat, idKategori, strings.ToLower(obat.Nama), obat.HargaJual, obat.HargaBeli, 0, obat.Uprate, obat.NoBatch, obat.Kadaluarsa, idKaryawan, obat.Catatan)
 	if err != nil {
@@ -85,7 +122,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 	return class.Response{Status: http.StatusCreated, Message: "Obat successfully added", Data: nil}, nil
 }
 
-func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) (class.Response, error) {
+func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int, jenis string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -93,11 +130,18 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 	}
 	defer db.DbClose(con)
 
+	tables, err := getTableNames(jenis)
+	if err != nil {
+		return class.Response{Status: http.StatusBadRequest, Message: "Invalid jenis value", Data: nil}, nil
+	}
+
+	tableObat := tables.Obat
+
 	if idget != "" { //get data sebuah obat
 		var obat class.Obat
 
 		queryoneobat := `SELECT id_obat, id_satuan, id_depo, id_kartustok, id_kategori,nama,harga_jual, harga_beli,stok_barang,uprate,no_batch,kadaluarsa,created_at, created_by, updated_at,updated_by, catatan 
-				  FROM Obat WHERE id_obat = ? AND deleted_at IS NULL`
+				  FROM ` + tableObat + ` WHERE id_obat = ? AND deleted_at IS NULL`
 		err := con.QueryRowContext(ctx, queryoneobat, idget).Scan(&obat.IDObat, &obat.IDSatuan, &obat.IDDepo, &obat.IDKartuStok, &obat.IDKategori, &obat.Nama, &obat.HargaJual, &obat.HargaBeli, &obat.StokBarang,
 			&obat.Uprate, &obat.NoBatch, &obat.Kadaluarsa, &obat.CreatedAt, &obat.CreatedBy, &obat.UpdatedAt, &obat.UpdatedBy, &obat.Catatan)
 
@@ -113,7 +157,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 		var sliceobat []class.Obat
 
 		querymanyobat := `SELECT id_obat, id_satuan, id_depo, id_kartustok, id_kategori,nama,harga_jual, harga_beli,stok_barang,uprate,no_batch,kadaluarsa,created_at, created_by, updated_at,updated_by, catatan 
-				  FROM Obat WHERE deleted_at IS NULL  LIMIT ? OFFSET ?`
+				  FROM ` + tableObat + ` WHERE deleted_at IS NULL  LIMIT ? OFFSET ?`
 
 		rows, err := con.QueryContext(ctx, querymanyobat, pagesize, offset)
 		if err != nil {
@@ -135,7 +179,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 		}
 
 		var totalrecord int
-		countrecordquery := `SELECT COUNT(*) FROM Obat`
+		countrecordquery := `SELECT COUNT(*) FROM ` + tableObat
 		err = con.QueryRowContext(ctx, countrecordquery).Scan(&totalrecord)
 
 		if err != nil {
@@ -157,7 +201,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 
 }
 
-func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat, idkaryawan string) (class.Response, error) {
+func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat, idkaryawan string, jenis string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -171,8 +215,17 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
 
+	tables, err := getTableNames(jenis)
+	if err != nil {
+		return class.Response{Status: http.StatusBadRequest, Message: "Invalid jenis value", Data: nil}, nil
+	}
+
+	// Use the table names dynamically
+	tableObat := tables.Obat
+	tableKartuStok := tables.KartuStok
+
 	var exist bool
-	cekexist := `SELECT EXISTS(SELECT 1 FROM Obat WHERE id_obat = ? AND id_kategori = ? AND deleted_at IS NULL LIMIT 1)`
+	cekexist := `SELECT EXISTS(SELECT 1 FROM ` + tableObat + ` WHERE id_obat = ? AND id_kategori = ? AND deleted_at IS NULL LIMIT 1)`
 	err = tx.QueryRowContext(ctx, cekexist, idobat, idkategori).Scan(&exist)
 	if err != nil {
 		tx.Rollback()
@@ -181,10 +234,11 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 	}
 	if !exist {
 		tx.Rollback()
+		log.Println("error data obat tidak ditemukan : ", exist)
 		return class.Response{Status: http.StatusNotFound, Message: "data obat tidak ditemukan"}, nil
 	}
 
-	queryupdateobat := `UPDATE Obat SET id_satuan = ? , id_kategori =?,nama = ?,harga_jual = ?, harga_beli =?, uprate = ? , kadaluarsa = ? , updated_at = NOW(),updated_by = ?, catatan=? WHERE id_obat = ? AND deleted_at IS NULL`
+	queryupdateobat := `UPDATE ` + tableObat + ` SET id_satuan = ? , id_kategori =?,nama = ?,harga_jual = ?, harga_beli =?, uprate = ? , kadaluarsa = ? , updated_at = NOW(),updated_by = ?, catatan=? WHERE id_obat = ? AND deleted_at IS NULL`
 
 	_, err = con.ExecContext(ctx, queryupdateobat, obat.IDSatuan, obat.IDKategori, obat.Nama, obat.HargaJual,
 		obat.HargaBeli, obat.Uprate, obat.Kadaluarsa, idkaryawan, obat.Catatan, idobat)
@@ -196,7 +250,7 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 	}
 
 	var id_kartustok string
-	queryGetKartuStok := `SELECT id_kartustok FROM Obat WHERE id_obat = ? AND deleted_at IS NULL`
+	queryGetKartuStok := `SELECT id_kartustok FROM ` + tableObat + ` WHERE id_obat = ? AND deleted_at IS NULL`
 
 	err = tx.QueryRowContext(ctx, queryGetKartuStok, idobat).Scan(&id_kartustok)
 	if err != nil {
@@ -205,7 +259,7 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 		return class.Response{Status: http.StatusInternalServerError, Message: "gagal mendapatkan kartu stok", Data: nil}, err
 	}
 
-	queryupdatekartustok := `UPDATE kartu_stok SET id_satuan = ? , updated_at = NOW(), updated_by = ? WHERE id_kartustok = ? `
+	queryupdatekartustok := `UPDATE ` + tableKartuStok + ` SET id_satuan = ? , updated_at = NOW(), updated_by = ? WHERE id_kartustok = ? `
 	_, err = con.ExecContext(ctx, queryupdatekartustok, obat.IDSatuan, idkaryawan, id_kartustok)
 
 	if err != nil {
@@ -223,7 +277,7 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 
 }
 
-func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response, error) {
+func DeleteObat(ctx context.Context, idobat, idkaryawan string, jenis string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -236,9 +290,16 @@ func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response,
 		log.Printf("Failed to start transaction: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
+	tables, err := getTableNames(jenis)
+	if err != nil {
+		return class.Response{Status: http.StatusBadRequest, Message: "Invalid jenis value", Data: nil}, nil
+	}
+
+	// Use the table names dynamically
+	tableObat := tables.Obat
 
 	var exist bool
-	cekexist := `SELECT EXISTS(SELECT 1 FROM Obat WHERE id_obat = ? AND deleted_at IS NULL LIMIT 1)`
+	cekexist := `SELECT EXISTS(SELECT 1 FROM ` + tableObat + ` WHERE id_obat = ? AND deleted_at IS NULL LIMIT 1)`
 	err = tx.QueryRowContext(ctx, cekexist, idobat).Scan(&exist)
 	if err != nil {
 		tx.Rollback()
@@ -250,7 +311,7 @@ func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response,
 		return class.Response{Status: http.StatusNotFound, Message: "data obat tidak ditemukan"}, nil
 	}
 
-	querydelete := `UPDATE Obat SET deleted_at = NOW(), deleted_by = ?  WHERE id_obat = ? AND deleted_at is NULL`
+	querydelete := `UPDATE ` + tableObat + ` SET deleted_at = NOW(), deleted_by = ?  WHERE id_obat = ? AND deleted_at is NULL`
 	result, err := tx.ExecContext(ctx, querydelete, idkaryawan, idobat)
 
 	if err != nil {

@@ -100,6 +100,10 @@ CREATE TABLE ObatCounter (
     count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
 );
 
+CREATE TABLE ObatCounterGudang (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -149,23 +153,7 @@ CREATE TABLE stok_opname (
     created_at DATETIME NOT NULL
 );
 
-CREATE TABLE kartu_stok (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_satuan VARCHAR(10) NOT NULL,
-    id_depo VARCHAR(10) NOT NULL,
-    id_kartustok VARCHAR(15) UNIQUE NOT NULL,
-    stok_barang INT UNSIGNED NOT NULL,
-    created_at DATETIME NOT NULL,
-    created_by VARCHAR(10) NOT NULL,
-    updated_at DATETIME,
-    updated_by VARCHAR(10) NULL,
-    deleted_at DATETIME,
-    deleted_by VARCHAR(10) NULL,
-    catatan VARCHAR(255),
-    CONSTRAINT fk_kartu_stock_depo FOREIGN KEY (id_depo) REFERENCES Depo(id_depo),
-    CONSTRAINT fk_kartu_stock_satuan FOREIGN KEY (id_satuan) REFERENCES satuan(id_satuan)
 
-);
 
 CREATE TABLE detail_stokopname (
     id_depo VARCHAR(10) NOT NULL,
@@ -190,10 +178,10 @@ CREATE TABLE detail_keluarmasukobat (
     CONSTRAINT fk_detail_keluarmasukobat_kartu_stok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok),
     CONSTRAINT fk_detail_keluarmasukobat_kategori FOREIGN KEY (id_kategori) REFERENCES kategori(id_kategori), 
     CONSTRAINT fkfkfkf FOREIGN KEY (id_obat) REFERENCES obat(id_obat) 
-);
+);//salah
 
 
-CREATE TABLE obat (
+CREATE TABLE obat_apotik (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_obat VARCHAR(15) NOT NULL UNIQUE,
     id_satuan VARCHAR(10) NOT NULL,
@@ -214,7 +202,7 @@ CREATE TABLE obat (
     deleted_at DATETIME,
     deleted_by VARCHAR(10) NULL,
     catatan VARCHAR(255),
-    CONSTRAINT fk_obat_jadi_kartu_stok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok),
+    CONSTRAINT fk_obat_jadi_kartu_stok_apotik FOREIGN KEY (id_kartustok) REFERENCES kartu_stok_apotik(id_kartustok),
     CONSTRAINT fk_obat_jadi_depo FOREIGN KEY (id_depo) REFERENCES Depo(id_depo),
     CONSTRAINT fk_obat_jadi_kategori FOREIGN KEY (id_kategori) REFERENCES Kategori(id_kategori),
     CONSTRAINT fk_obat_satuan FOREIGN KEY (id_satuan) REFERENCES satuan(id_satuan)
@@ -222,6 +210,67 @@ CREATE TABLE obat (
 );
 
 
+CREATE TABLE obat_gudang (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_obat VARCHAR(15) NOT NULL UNIQUE,
+    id_satuan VARCHAR(10) NOT NULL,
+    id_depo VARCHAR(10) NOT NULL,
+    id_kartustok VARCHAR(15) NOT NULL,
+    id_kategori VARCHAR(15) NOT NULL,
+    nama VARCHAR(100) NOT NULL,
+    harga_jual INT UNSIGNED NOT NULL,
+    harga_beli INT UNSIGNED NOT NULL,
+    stok_barang INT UNSIGNED NOT NULL,
+    uprate INT UNSIGNED NOT NULL,
+    no_batch VARCHAR(20) NOT NULL,
+    kadaluarsa DATE NOT NULL,
+    created_at DATETIME NOT NULL,
+    created_by VARCHAR(10) NOT NULL,
+    updated_at DATETIME ,
+    updated_by VARCHAR(10) NULL,
+    deleted_at DATETIME,
+    deleted_by VARCHAR(10) NULL,
+    catatan VARCHAR(255),
+    CONSTRAINT fk_obat_jadi_kartu_stok_gudang FOREIGN KEY (id_kartustok) REFERENCES kartu_stok_gudang(id_kartustok),
+    CONSTRAINT fk_obat_jadi_depo_gudang FOREIGN KEY (id_depo) REFERENCES Depo(id_depo),
+    CONSTRAINT fk_obat_jadi_kategori_gudang FOREIGN KEY (id_kategori) REFERENCES Kategori(id_kategori),
+    CONSTRAINT fk_obat_satuan_gudang FOREIGN KEY (id_satuan) REFERENCES satuan(id_satuan)
+
+);
+CREATE TABLE kartu_stok_gudang (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_satuan VARCHAR(10) NOT NULL,
+    id_depo VARCHAR(10) NOT NULL,
+    id_kartustok VARCHAR(15) UNIQUE NOT NULL,
+    stok_barang INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL,
+    created_by VARCHAR(10) NOT NULL,
+    updated_at DATETIME,
+    updated_by VARCHAR(10) NULL,
+    deleted_at DATETIME,
+    deleted_by VARCHAR(10) NULL,
+    catatan VARCHAR(255),
+    CONSTRAINT fk_kartu_stock_depo_gudang FOREIGN KEY (id_depo) REFERENCES Depo(id_depo),
+    CONSTRAINT fk_kartu_stock_satuan_gudang FOREIGN KEY (id_satuan) REFERENCES satuan(id_satuan)
+
+);
+CREATE TABLE kartu_stok_apotik (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_satuan VARCHAR(10) NOT NULL,
+    id_depo VARCHAR(10) NOT NULL,
+    id_kartustok VARCHAR(15) UNIQUE NOT NULL,
+    stok_barang INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL,
+    created_by VARCHAR(10) NOT NULL,
+    updated_at DATETIME,
+    updated_by VARCHAR(10) NULL,
+    deleted_at DATETIME,
+    deleted_by VARCHAR(10) NULL,
+    catatan VARCHAR(255),
+    CONSTRAINT fk_kartu_stock_depo FOREIGN KEY (id_depo) REFERENCES Depo(id_depo),
+    CONSTRAINT fk_kartu_stock_satuan FOREIGN KEY (id_satuan) REFERENCES satuan(id_satuan)
+
+);
 CREATE TABLE satuan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_satuan VARCHAR(10) NOT NULL UNIQUE,
@@ -230,3 +279,6 @@ CREATE TABLE satuan(
     catatan VARCHAR(255),
     created_at DATETIME
 );
+
+
+/home/rs/farmasi/backend/Apotik-Batarangin/Backend
