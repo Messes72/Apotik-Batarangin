@@ -11,6 +11,7 @@
 		<label for={id} class="font-intersemi text-[16px] text-[#1E1E1E]">{label}</label>
 		<input
 			{type}
+			name={id}
 			{placeholder}
 			{id}
 			bind:value
@@ -29,6 +30,7 @@
 		<label for={id} class="font-intersemi text-[16px] text-[#1E1E1E]">{label}</label>
 		<input
 			{type}
+			name={id}
 			{placeholder}
 			{id}
 			bind:value

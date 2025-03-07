@@ -127,6 +127,7 @@
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<title>Halaman Product</title>
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
@@ -187,7 +188,7 @@
 							<span class="font-inter text-[12px] leading-normal text-black">
 								{body.id}
 							</span>
-							<span class="font-inter mt-3 border text-[12px] leading-normal text-black">
+							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
 								Stock : {body.id}
 								{body.id}
 							</span>
