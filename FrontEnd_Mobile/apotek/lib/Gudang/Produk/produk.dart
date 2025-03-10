@@ -1,5 +1,4 @@
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
-import 'package:apotek/Gudang/Stock/coba2.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/main.dart';
@@ -21,7 +20,30 @@ class produk extends StatefulWidget {
 class PageProduk extends State<produk> {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
 
+  // Ini buat listnya kalau kaetgori dana jumlah stock di filter
+  List<Map<String, dynamic>> kategoriObat = [
+    {"name": "Obat Panas", "selected": false},
+    {"name": "Obat Flu", "selected": false},
+    {"name": "Obat Batuk", "selected": false},
+    {"name": "Suplemen", "selected": false},
+  ];
+
+  List<Map<String, dynamic>> jumlahStock = [
+    {"name": "> 5", "selected": false},
+    {"name": "> 10", "selected": false},
+    {"name": "< 5", "selected": false},
+    {"name": "< 10", "selected": false},
+  ];
+
+  String? selectedSatuan;
+  final TextEditingController minHargaController = TextEditingController();
+  final TextEditingController maxHargaController = TextEditingController();
+
+//
+
   final List<int> rowItems = [10, 25, 50, 100];
+  String? _selectedStatus;
+  final List<String> rowStatus = ["Habis", "Sisa"];
 
   String? selectedValue;
 
@@ -412,6 +434,24 @@ class PageProduk extends State<produk> {
         caraPemakaian: "caraPemakaian",
         satuan: "satuan"),
   ];
+  DateFormat dateformat = DateFormat("dd/MM/yyyy");
+  DateTime selectedDate = DateTime.now();
+  var tanggalController = TextEditingController();
+
+  void _selectedDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(2023, 1),
+        lastDate: DateTime(2100));
+
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        tanggalController.text = DateFormat("dd/MM/yyyy").format(selectedDate);
+      });
+    }
+  }
 
   void _viewDetails(Produk item) {
     showDialog(
@@ -427,7 +467,7 @@ class PageProduk extends State<produk> {
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
+                    0.9, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -477,20 +517,24 @@ class PageProduk extends State<produk> {
                           spacing: 16,
                           runSpacing: 16,
                           children: [
-                            RowForm("Nomor Kartu", item.nomorKartu,
-                                "Nomor Batch", item.nomorBatch),
-                            RowForm(
-                                "Kode", item.kode, "Kategori", item.kategori),
-                            RowForm(
-                                "Nama Obat",
-                                item.namaObat,
-                                "Kadaluarsa",
-                                DateFormat('dd/MM/yyyy')
-                                    .format(item.kadaluarsa)),
-                            RowForm("Satuan", item.satuan, "Jumlah Barang",
-                                item.jumlah.toString()),
-                            buildFormCaraPemakaian(
-                                "Cara Pemakaian", item.caraPemakaian)
+                            Column(
+                              children: [
+                                detailField("Nomor Kartu", item.nomorKartu),
+                                detailField("Nomor Batch", item.nomorBatch),
+                                detailField("Kode", item.kode),
+                                detailField("Kategori", item.kategori),
+                                detailField("Nama Obat", item.namaObat),
+                                detailField(
+                                    "Kadaluarsa",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa)),
+                                detailField("Satuan", item.satuan),
+                                detailField(
+                                    "Jumlah Barang", item.jumlah.toString()),
+                                buildFormCaraPemakaian(
+                                    "Cara Pemakaian", item.caraPemakaian)
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -532,9 +576,18 @@ class PageProduk extends State<produk> {
     });
 
     // Navigator.pop(context); // 🔹 Menutup dialog setelah menyimpan
-    _alertDone(item, "diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
+    _alertDone("diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
   }
 
+  var nomorKartu_text = TextEditingController();
+  var nomorBatch_text = TextEditingController();
+  var kodeObat_text = TextEditingController();
+  var kategori_text = TextEditingController();
+  var namaObat_text = TextEditingController();
+  var jumlahBarang_text = TextEditingController();
+  var caraPemakaian_text = TextEditingController();
+  var stokBarang_text = TextEditingController();
+  var satuan_text = TextEditingController();
   void _editProduk(Produk item) {
     TextEditingController nomorKartuController =
         TextEditingController(text: item.nomorKartu);
@@ -567,7 +620,7 @@ class PageProduk extends State<produk> {
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
+                    0.9, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -593,7 +646,7 @@ class PageProduk extends State<produk> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Edit Produk",
+                            "Edit Data Obat",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -620,40 +673,35 @@ class PageProduk extends State<produk> {
                           spacing: 16,
                           runSpacing: 16,
                           children: [
-                            RowEditForm(
-                                "Nomor Kartu",
-                                item.nomorKartu,
-                                "Nomor Batch",
-                                item.nomorBatch,
-                                nomorKartuController,
-                                nomorBatchController),
-                            RowEditForm(
-                                "Kode",
-                                item.kode,
-                                "Kategori",
-                                item.kategori,
-                                kodeController,
-                                kategoriController),
-                            RowEditForm(
-                                "Nama Obat",
-                                item.namaObat,
-                                "Kadaluarsa",
-                                DateFormat('dd/MM/yyyy')
-                                    .format(item.kadaluarsa),
-                                namaObatController,
-                                kadaluarsaController),
-                            RowEditForm(
-                                "Satuan",
-                                item.satuan,
-                                "Jumlah Barang",
-                                item.jumlah.toString(),
-                                satuanController,
-                                jumlahController),
-                            buildFormCaraPemakaian2("Cara Pemakaian",
-                                item.caraPemakaian, caraPemakaianController),
+                            Column(
+                              children: [
+                                editFeld("Nomor Kartu", item.nomorKartu,
+                                    nomorKartuController),
+                                editFeld("Nomor Batch", item.nomorBatch,
+                                    nomorBatchController),
+                                editFeld("Kode", item.kode, kodeController),
+                                editFeld("Kategori", item.kategori,
+                                    kategoriController),
+                                editFeld("Nama Obat", item.namaObat,
+                                    namaObatController),
+                                editFeld(
+                                    "Kadaluarsa",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa),
+                                    kadaluarsaController),
+                                editFeld(
+                                    "Satuan", item.satuan, satuanController),
+                                editFeld("Jumlah Barang",
+                                    item.jumlah.toString(), jumlahController),
+                                buildFormCaraPemakaian2(
+                                    "Cara Pemakaian",
+                                    item.caraPemakaian,
+                                    caraPemakaianController),
+                              ],
+                            ),
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 16, right: 16),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -684,7 +732,151 @@ class PageProduk extends State<produk> {
                                           item.caraPemakaian =
                                               caraPemakaianController.text;
                                         });
-                                        _alertDone(item, "diedit");
+                                        _alertDone("diedit");
+                                        // _updateProduk(
+                                        //     item,
+                                        //     nomorKartuController,
+                                        //     nomorBatchController,
+                                        //     kodeController,
+                                        //     kategoriController,
+                                        //     namaObatController,
+                                        //     kadaluarsaController,
+                                        //     satuanController,
+                                        //     jumlahController,
+                                        //     caraPemakaianController);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6),
+                                        backgroundColor:
+                                            ColorStyle.button_green,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text("SAVE",
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _inputProdukBaru() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Container(
+                width:
+                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
+                height: constraints.maxHeight *
+                    0.9, // Batasi tinggi agar tidak terlalu besar
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
+                          ),
+                          border: Border(
+                              bottom: BorderSide(
+                                  color: ColorStyle.button_grey, width: 1))),
+                      padding:
+                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Input Data Obat",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: ColorStyle.text_dalam_kolom,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 23),
+                            child: IconButton(
+                              icon: Icon(Icons.close,
+                                  color: ColorStyle.text_dalam_kolom),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            Column(
+                              children: [
+                                inputField("Nomor Kartu", nomorKartu_text),
+                                inputField("Nomor Batch", nomorBatch_text),
+                                inputField("Kode", kodeObat_text),
+                                inputField("Kategori", kategori_text),
+                                inputField("Nama Obat", namaObat_text),
+                                tanggalInput("Kadaluarsa", "DD/MM/YYYY",
+                                    tanggalController),
+                                inputField("Jumlah Barang", jumlahBarang_text),
+                                inputCaraPemakaian(
+                                    "Cara Pemakaian", caraPemakaian_text),
+                              ],
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 16, right: 16),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  SizedBox(
+                                    width: 120,
+                                    height: 30,
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        // _alertDone(item, "diedit");
+                                        _alertInput();
+                                        // _alertDone("diinput");
                                         // _updateProduk(
                                         //     item,
                                         //     nomorKartuController,
@@ -971,7 +1163,7 @@ class PageProduk extends State<produk> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _alertDone(item, "dikosongkan");
+                                  _alertDone("dikosongkan");
                                   text2.clear();
                                 },
                                 style: ElevatedButton.styleFrom(
@@ -1004,7 +1196,116 @@ class PageProduk extends State<produk> {
     );
   }
 
-  void _alertDone(Produk item, String isi) {
+  void _alertInput() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return FractionallySizedBox(
+                widthFactor: 0.5, // 50% dari lebar layar
+                heightFactor: 0.55, // 50% dari tinggi layar
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min, // Tidak bisa di-scroll
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "images/input.png",
+                        width: constraints.maxWidth *
+                            0.08, // Ukuran gambar responsif
+                        height: constraints.maxWidth * 0.08,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Apakah Anda yakin akan \nmenginput data ini?",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: constraints.maxWidth *
+                              0.02, // Ukuran teks responsif
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 23),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: constraints.maxWidth *
+                                  0.15, // Ukuran button responsif
+                              height: 35,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorStyle.fill_stroke,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Tidak",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: constraints.maxWidth * 0.15,
+                              height: 35,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _alertDone("diinput");
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: ColorStyle.button_red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Iya, input",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _alertDone(String isi) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1115,401 +1416,559 @@ class PageProduk extends State<produk> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    global.selectedIndex = 3;
-                    global.selectedScreen = 0;
-                  });
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context) => MyHomePage()));
-                },
-                icon: Transform.translate(
-                  offset: Offset(5, 0), // Geser ikon lebih dekat ke teks
-                  child: Icon(Icons.add, color: Colors.white, size: 22),
-                ),
-                label: const Text("Input Produk",
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorStyle.button_green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
+              Row(
+                children: [
+                  Container(
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // setState(() {
+                        //   global.selectedIndex = 3;
+                        //   global.selectedScreen = 0;
+                        // });
+                        _inputProdukBaru();
+                      },
+                      icon: Transform.translate(
+                        offset: Offset(1, 0), // Geser ikon lebih dekat ke teks
+                        child: Icon(Icons.add, color: Colors.white, size: 22),
+                      ),
+                      label: Transform.translate(
+                        offset: Offset(-3, 0),
+                        child: const Text("Input Produk",
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 16)),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorStyle.button_green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                      ),
+                    ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                ),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Expanded(
+                    child: Container(
+                      height: 40,
+                      // width: 242,
+                      decoration: BoxDecoration(
+                        border:
+                            Border.all(color: ColorStyle.fill_stroke, width: 1),
+                        color: ColorStyle.fill_form,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Padding(padding: EdgeInsets.only(left: 8)),
+                          Icon(
+                            Icons.search_outlined,
+                            color: Color(0XFF1B1442),
+                            size: 30,
+                          ),
+                          Padding(padding: EdgeInsets.only(right: 8)),
+                          Expanded(
+                            child: TextField(
+                              controller: text,
+                              onChanged: filtering,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                // contentPadding: EdgeInsets.only(
+                                //     left: 8, bottom: 13),
+                                hintText: "Search",
+                                hintStyle: TextStyle(
+                                  color: ColorStyle.text_hint,
+                                  fontSize: 16,
+                                ),
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                          Padding(padding: EdgeInsets.only(right: 8))
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Container(
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: () {},
+                      icon: Transform.translate(
+                        offset: Offset(5, 0), // Geser ikon lebih dekat ke teks
+                        child: Icon(Icons.sort_by_alpha_outlined,
+                            color: Colors.black, size: 22),
+                      ),
+                      label: const Text("Sort Ascending",
+                          style: TextStyle(color: Colors.black, fontSize: 12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            side: BorderSide(
+                                color: ColorStyle.button_grey, width: 1)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 5),
+                      ),
+                    ),
+                  ),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Center(
+                    child: SizedBox(
+                      width: 160, // Sesuaikan lebar agar tidak terlalu besar
+                      height:
+                          40, // Tinggi dropdown agar sesuai dengan contoh gambar
+                      child: DropdownButtonFormField2<String>(
+                        isExpanded:
+                            false, // Jangan meluaskan dropdown ke full width
+                        value: _selectedStatus,
+                        hint: Text(
+                          "-- Pilih Status --",
+                          style: TextStyle(
+                              fontSize: 16, color: ColorStyle.text_hint),
+                        ),
+                        items: rowStatus
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(
+                                    e,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: ColorStyle.text_hint),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedStatus = value!;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: ColorStyle.fill_form,
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          constraints: BoxConstraints(maxHeight: 30),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(5), // Border radius halus
+                            borderSide:
+                                BorderSide(color: ColorStyle.button_grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4),
+                            borderSide: BorderSide(
+                                color: ColorStyle
+                                    .text_secondary), // Saat aktif, border lebih gelap
+                          ),
+                        ),
+
+                        // **Atur Tampilan Dropdown**
+                        buttonStyleData: ButtonStyleData(
+                          height: 25, // Tinggi tombol dropdown
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6), // Jarak dalam dropdown
+                        ),
+
+                        // **Atur Tampilan Dropdown yang Muncul**
+                        dropdownStyleData: DropdownStyleData(
+                          width: 160, // Lebar dropdown harus sama dengan input
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: Colors.grey),
+                            color: ColorStyle.fill_form,
+                          ),
+                        ),
+
+                        // **Atur Posisi Item Dropdown**
+                        menuItemStyleData: const MenuItemStyleData(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8), // Padding antar item dropdown
+                        ),
+
+                        // **Ganti Icon Dropdown**
+                        iconStyleData: IconStyleData(
+                          icon: Icon(Icons.keyboard_arrow_down_outlined,
+                              size: 20, color: Colors.black),
+                          openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                              size: 20, color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Container(
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        
+                      },
+                      icon:
+                          Icon(Icons.filter_alt, color: Colors.black, size: 22),
+                      label: const Text("Filter",
+                          style: TextStyle(color: Colors.black, fontSize: 16)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            side: BorderSide(
+                                color: ColorStyle.button_grey, width: 1)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 5),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 15),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: ColorStyle.putih_background,
-                    boxShadow: [
-                      BoxShadow(
-                        color: ColorStyle.shadow.withOpacity(0.25),
-                        spreadRadius: 0,
-                        blurRadius: 4,
-                        offset: Offset(0, 1), // x dan y
-                      ),
-                    ],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          3, // Agar item 1 per baris (sesuai contoh gambar)
+                      childAspectRatio: 2.7, // Lebih panjang secara horizontal
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: paginatedData.length,
+                    itemBuilder: (context, index) {
+                      var produk = paginatedData[index];
+                      return Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Container(
+                          padding: EdgeInsets.only(left: 12, right: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                offset: Offset(0, 0),
+                                blurRadius: 4,
+                                color: Colors.black.withOpacity(0.1),
+                              ),
+                            ],
+                          ),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Container(
-                                  height: 32,
-                                  width: 242,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: ColorStyle.fill_stroke,
-                                        width: 1),
-                                    color: ColorStyle.fill_form,
-                                    borderRadius: BorderRadius.circular(4),
+                              // Gambar dengan latar belakang abu-abu
+                              Container(
+                                height: 59,
+                                width: 59,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    "images/background.jpg",
+                                    fit: BoxFit.cover,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Padding(
-                                          padding: EdgeInsets.only(left: 8)),
-                                      Icon(
-                                        Icons.search_outlined,
-                                        color: ColorStyle.text_secondary,
-                                        size: 24,
-                                      ),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: text,
-                                          onChanged: filtering,
-                                          decoration: InputDecoration(
-                                            isDense: true,
-                                            hintText: "Search",
-                                            hintStyle: TextStyle(
-                                              color: ColorStyle.tulisan_form,
-                                              fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(
+                                  width: 20), // Jarak antara gambar dan teks
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child: Transform.translate(
+                                    offset: Offset(0, -2),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        // Nama obat dan menu 3 titik di satu baris
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                produk.namaObat,
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                ),
+                                                overflow: TextOverflow
+                                                    .ellipsis, // Nama panjang terpotong jika melebihi
+                                              ),
                                             ),
-                                            border: InputBorder.none,
+                                            PopupMenuButton<int>(
+                                              icon: Icon(Icons.more_horiz,
+                                                  color: Colors.black),
+                                              offset: Offset(0, 40),
+                                              color: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(5),
+                                              ),
+                                              onSelected: (value) {
+                                                // Tutup menu otomatis dan jalankan aksi sesuai pilihan
+                                                switch (value) {
+                                                  case 1:
+                                                    _viewDetails(produk);
+                                                    break;
+                                                  case 2:
+                                                    _editProduk(produk);
+                                                    break;
+                                                  case 3:
+                                                    _modalKosongkanObat(produk);
+                                                    break;
+                                                }
+                                              },
+                                              itemBuilder: (context) => [
+                                                PopupMenuItem(
+                                                  value: 1,
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                          Icons
+                                                              .open_in_new_outlined,
+                                                          color:
+                                                              Colors.black54),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        "Lihat Data Obat",
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 2,
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.edit_outlined,
+                                                          color:
+                                                              Colors.black54),
+                                                      SizedBox(width: 8),
+                                                      Text("Edit Data Obat",
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ],
+                                                  ),
+                                                ),
+                                                PopupMenuItem(
+                                                  value: 3,
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                          Icons
+                                                              .delete_outline_outlined,
+                                                          color:
+                                                              Colors.black54),
+                                                      SizedBox(width: 8),
+                                                      Text("Hapus Data Obat",
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold)),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        Transform.translate(
+                                          offset: Offset(0, -6),
+                                          child: Text(
+                                            produk.kode,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 8))
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Spacer(),
-                              Text("Rows per page:"),
-                              Padding(padding: EdgeInsets.only(right: 8)),
-                              // isi
-                              Center(
-                                child: SizedBox(
-                                  width:
-                                      65, // Sesuaikan lebar agar tidak terlalu besar
-                                  height:
-                                      25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                                  child: DropdownButtonFormField2<int>(
-                                    isExpanded:
-                                        false, // Jangan meluaskan dropdown ke full width
-                                    value: _rowsPerPage,
-                                    items: rowItems
-                                        .map((e) => DropdownMenuItem(
-                                              value: e,
-                                              child: Text(
-                                                e.toString(),
-                                                style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.black),
-                                                overflow: TextOverflow.ellipsis,
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              "Stock: ${produk.jumlah} ${produk.satuan}",
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black),
+                                            ),
+                                            // Status Stock: "Sisa" jika <= 10, "Habis" jika 0
+                                            if (produk.jumlah <= 10)
+                                              Container(
+                                                width: 61,
+                                                height: 20,
+                                                alignment: Alignment.center,
+                                                // padding:
+                                                //     const EdgeInsets.symmetric(
+                                                //         horizontal: 15,
+                                                //         vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: produk.jumlah == 0
+                                                      ? ColorStyle.button_red
+                                                          .withOpacity(0.8)
+                                                      : ColorStyle.button_yellow
+                                                          .withOpacity(0.8),
+                                                  borderRadius:
+                                                      BorderRadius.circular(2),
+                                                  border: Border.all(
+                                                    color: produk.jumlah == 0
+                                                        ? ColorStyle.button_red
+                                                        : ColorStyle
+                                                            .button_yellow,
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  produk.jumlah == 0
+                                                      ? "HABIS"
+                                                      : "SISA",
+                                                  style: const TextStyle(
+                                                      color: Colors.white,
+                                                      // fontWeight:
+                                                      //     FontWeight.bold,
+                                                      fontSize: 13),
+                                                  textAlign: TextAlign.center,
+                                                ),
                                               ),
-                                            ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _rowsPerPage = value!;
-                                      });
-                                    },
-
-                                    // **Atur Tampilan Input**
-                                    decoration: InputDecoration(
-                                      contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 4, vertical: 4),
-                                      constraints:
-                                          BoxConstraints(maxHeight: 30),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            5), // Border radius halus
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(5),
-                                        borderSide: BorderSide(
-                                            color: ColorStyle
-                                                .button_grey), // Saat aktif, border lebih gelap
-                                      ),
-                                    ),
-
-                                    // **Atur Tampilan Dropdown**
-                                    buttonStyleData: ButtonStyleData(
-                                      height: 25, // Tinggi tombol dropdown
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal:
-                                              6), // Jarak dalam dropdown
-                                    ),
-
-                                    // **Atur Tampilan Dropdown yang Muncul**
-                                    dropdownStyleData: DropdownStyleData(
-                                      width:
-                                          65, // Lebar dropdown harus sama dengan input
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(5),
-                                        border: Border.all(color: Colors.grey),
-                                        color: Colors.white,
-                                      ),
-                                    ),
-
-                                    // **Atur Posisi Item Dropdown**
-                                    menuItemStyleData: const MenuItemStyleData(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal:
-                                              8), // Padding antar item dropdown
-                                    ),
-
-                                    // **Ganti Icon Dropdown**
-                                    iconStyleData: IconStyleData(
-                                      icon: Icon(Icons.arrow_drop_down,
-                                          size: 20, color: Colors.black),
-                                      openMenuIcon: Icon(Icons.arrow_drop_up,
-                                          size: 20, color: Colors.black),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
-
-                              Padding(padding: EdgeInsets.only(right: 8)),
-
-                              Text("Page $endIndex of ${filterData.length}"),
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.chevron_left),
-                                    onPressed: _currentPage > 0
-                                        ? () {
-                                            setState(() {
-                                              _currentPage--;
-                                            });
-                                          }
-                                        : null,
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.chevron_right),
-                                    onPressed: _currentPage < totalPages - 1
-                                        ? () {
-                                            setState(() {
-                                              _currentPage++;
-                                            });
-                                          }
-                                        : null,
-                                  ),
-                                ],
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            return SingleChildScrollView(
-                              scrollDirection:
-                                  Axis.horizontal, // Scroll kiri-kanan
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                    minWidth: constraints
-                                        .maxWidth), // Buat tabel full width
-                                child: SingleChildScrollView(
-                                  scrollDirection:
-                                      Axis.vertical, // Scroll atas-bawah
-                                  child: DataTable(
-                                    headingRowColor:
-                                        MaterialStateProperty.all(Colors.white),
-                                    columnSpacing: 80, // Jarak antar kolom
-                                    dataRowMinHeight: 60,
-                                    dataRowMaxHeight: 60,
-                                    columns: const [
-                                      DataColumn(
-                                        label: Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Kode Obat',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Nama Obat',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Kategori',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Jumlah Barang',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataColumn(
-                                        label: Expanded(
-                                          child: Center(
-                                            child: Text(
-                                              'Actions',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                    rows: paginatedData.map((item) {
-                                      return DataRow(
-                                        color: MaterialStateProperty.all(
-                                            Colors.white),
-                                        cells: [
-                                          DataCell(Center(
-                                            child: Text(
-                                              item.kode,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          )),
-                                          DataCell(Center(
-                                            child: Text(
-                                              item.namaObat,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          )),
-                                          DataCell(Center(
-                                            child: Text(
-                                              item.kategori,
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          )),
-                                          DataCell(Center(
-                                            child: Text(
-                                              item.jumlah.toString(),
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          )),
-                                          DataCell(Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                IconButton(
-                                                  icon: Icon(
-                                                      Icons
-                                                          .open_in_new_outlined,
-                                                      size: 24,
-                                                      color: ColorStyle
-                                                          .text_secondary),
-                                                  onPressed: () =>
-                                                      _viewDetails(item),
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(
-                                                      Icons.edit_outlined,
-                                                      size: 24,
-                                                      color: ColorStyle
-                                                          .text_secondary),
-                                                  onPressed: () =>
-                                                      _editProduk(item),
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(
-                                                      Icons.delete_outline,
-                                                      size: 24,
-                                                      color: ColorStyle
-                                                          .text_secondary),
-                                                  onPressed: () =>
-                                                      _modalKosongkanObat(item),
-                                                ),
-                                              ],
-                                            ),
-                                          )),
-                                        ],
-                                      );
-                                    }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text("Rows per page:",
+                      style:
+                          TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Center(
+                    child: SizedBox(
+                      width: 65, // Sesuaikan lebar agar tidak terlalu besar
+                      height:
+                          25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                      child: DropdownButtonFormField2<int>(
+                        isExpanded:
+                            false, // Jangan meluaskan dropdown ke full width
+                        value: _rowsPerPage,
+                        items: rowItems
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(
+                                    e.toString(),
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        color: ColorStyle.text_hint),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ),
-                            );
-                          },
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _rowsPerPage = value!;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          contentPadding:
+                              EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          constraints: BoxConstraints(maxHeight: 30),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(5), // Border radius halus
+                            borderSide:
+                                BorderSide(color: ColorStyle.button_grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            borderSide: BorderSide(
+                                color: ColorStyle
+                                    .text_secondary), // Saat aktif, border lebih gelap
+                          ),
                         ),
+
+                        // **Atur Tampilan Dropdown**
+                        buttonStyleData: ButtonStyleData(
+                          height: 25, // Tinggi tombol dropdown
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6), // Jarak dalam dropdown
+                        ),
+
+                        // **Atur Tampilan Dropdown yang Muncul**
+                        dropdownStyleData: DropdownStyleData(
+                          width: 65,
+                          offset: Offset(
+                              0, 200), // Lebar dropdown harus sama dengan input
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(color: ColorStyle.button_grey),
+                            color: Colors.white,
+                          ),
+                        ),
+
+                        // **Atur Posisi Item Dropdown**
+                        menuItemStyleData: const MenuItemStyleData(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8), // Padding antar item dropdown
+                        ),
+
+                        // **Ganti Icon Dropdown**
+                        iconStyleData: IconStyleData(
+                          icon: Icon(Icons.keyboard_arrow_down_outlined,
+                              size: 20, color: Colors.black),
+                          openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                              size: 20, color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(padding: EdgeInsets.only(right: 8)),
+                  Text("Page $endIndex of ${filterData.length}",
+                      style:
+                          TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.chevron_left),
+                        onPressed: _currentPage > 0
+                            ? () {
+                                setState(() {
+                                  _currentPage--;
+                                });
+                              }
+                            : null,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.chevron_right),
+                        onPressed: _currentPage < totalPages - 1
+                            ? () {
+                                setState(() {
+                                  _currentPage++;
+                                });
+                              }
+                            : null,
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -1554,75 +2013,143 @@ class PageProduk extends State<produk> {
   }
 
   Widget detailField(String title, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 35,
-          decoration: BoxDecoration(
-            border: Border.all(color: ColorStyle.fill_stroke),
-            color: ColorStyle.fill_form,
-            borderRadius: BorderRadius.circular(8),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
-            child: Text(
-              value,
-              style: TextStyle(fontSize: 12),
+          SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            height: 35,
+            decoration: BoxDecoration(
+              border: Border.all(color: ColorStyle.fill_stroke),
+              color: ColorStyle.fill_form,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget inputField(String title, TextEditingController edit) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            height: 35,
+            decoration: BoxDecoration(
+              border: Border.all(color: ColorStyle.fill_stroke),
+              color: ColorStyle.fill_form,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextField(
+              controller: edit,
+              style: TextStyle(
+                color: ColorStyle.tulisan_form,
+                fontSize: 12,
+              ),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+                border: InputBorder.none,
+              ),
             ),
           ),
-        )
-      ],
+        ],
+      ),
     );
   }
 
   Widget editFeld(String title, String value, TextEditingController edit) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          height: 35,
-          decoration: BoxDecoration(
-            border: Border.all(color: ColorStyle.fill_stroke),
-            color: ColorStyle.fill_form,
-            borderRadius: BorderRadius.circular(8),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
           ),
-          child: TextField(
-            controller: edit,
-            style: TextStyle(
-              color: ColorStyle.tulisan_form,
-              fontSize: 12,
+          SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            height: 35,
+            decoration: BoxDecoration(
+              border: Border.all(color: ColorStyle.fill_stroke),
+              color: ColorStyle.fill_form,
+              borderRadius: BorderRadius.circular(8),
             ),
-            decoration: InputDecoration(
-              hintText: value,
-              contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-              hintStyle: TextStyle(
+            child: TextField(
+              controller: edit,
+              style: TextStyle(
                 color: ColorStyle.tulisan_form,
                 fontSize: 12,
               ),
-              border: InputBorder.none,
+              decoration: InputDecoration(
+                hintText: value,
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+                border: InputBorder.none,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget buildFormCaraPemakaian(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(left: 23, right: 23),
+      padding: const EdgeInsets.only(left: 16, right: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1661,7 +2188,7 @@ class PageProduk extends State<produk> {
   Widget buildFormCaraPemakaian2(
       String label, String value, TextEditingController text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 23, right: 23),
+      padding: const EdgeInsets.only(left: 16, right: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1700,6 +2227,151 @@ class PageProduk extends State<produk> {
               // biar turun kebawah
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget inputCaraPemakaian(String label, TextEditingController text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            constraints: BoxConstraints(
+              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
+            ),
+            decoration: BoxDecoration(
+              color: ColorStyle.fill_form,
+              border: Border.all(color: ColorStyle.fill_stroke),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            alignment: Alignment.topLeft,
+            child: TextField(
+              controller: text,
+              style: TextStyle(
+                color: ColorStyle.tulisan_form,
+                fontSize: 12,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: "Cara Pemakaian",
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+              ),
+              maxLines: 10,
+              // biar turun kebawah
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget inputImage(String label, TextEditingController text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            constraints: BoxConstraints(
+              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
+            ),
+            decoration: BoxDecoration(
+              color: ColorStyle.fill_form,
+              border: Border.all(color: ColorStyle.fill_stroke),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            alignment: Alignment.topLeft,
+            child: TextField(
+              controller: text,
+              style: TextStyle(
+                color: ColorStyle.tulisan_form,
+                fontSize: 12,
+              ),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: "Cara Pemakaian",
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+              ),
+              maxLines: 10,
+              // biar turun kebawah
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget tanggalInput(String label, String hint, TextEditingController text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Container(
+            height: 45,
+            decoration: BoxDecoration(
+              border: Border.all(color: ColorStyle.fill_stroke),
+              color: ColorStyle.fill_form,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                TextFormField(
+                  readOnly: true,
+                  controller: text,
+                  onTap: () {
+                    _selectedDate(context);
+                  },
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      color: ColorStyle.tulisan_form,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    _selectedDate(context);
+                  },
+                  child: Icon(
+                    Icons.calendar_month_outlined,
+                    color: ColorStyle.tulisan_form,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );

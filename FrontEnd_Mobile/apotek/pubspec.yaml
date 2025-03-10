@@ -74,6 +74,7 @@ flutter:
      - images/stockOpname.png
      - images/delete.png
      - images/done.png
+     - images/input.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

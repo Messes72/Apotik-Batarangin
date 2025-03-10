@@ -1,5 +1,4 @@
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
-import 'package:apotek/Gudang/Stock/coba2.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/main.dart';

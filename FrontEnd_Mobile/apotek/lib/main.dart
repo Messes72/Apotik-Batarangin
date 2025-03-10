@@ -1,6 +1,7 @@
 import 'package:apotek/Gudang/Penerimaan/mencobaa.dart';
+import 'package:apotek/Gudang/Produk/Cobaaaa.dart';
 import 'package:apotek/Gudang/Produk/Kategori.dart';
-import 'package:apotek/Gudang/Stock/coba2.dart';
+import 'package:apotek/Gudang/Produk/mencobaa.dart';
 import 'package:apotek/Gudang/Stock/cobaaa.dart';
 import 'package:apotek/SideBarCoba2.dart';
 import 'package:apotek/login.dart';
@@ -54,7 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
       // body: Coba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
       // body: Produkcoba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
-      body: Kategori(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
+      // body: Kategori(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
+      body: Percobaan(),
     );
   }
 }
