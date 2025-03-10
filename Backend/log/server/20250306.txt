@@ -1,1 +1,0 @@
-<2025-03-06 15:55:35>|| {REQUEST: uri: /login, status: 200, ip:::1, Host:localhost:2688, ContentLength:282, User-Agent:PostmanRuntime/7.43.0, Error:<nil>, Latency:70.1248ms, method:POST ,Protocol:HTTP/1.1, RequestId:, ResponseSize:2732, custom-value: 42}
