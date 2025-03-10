@@ -24,7 +24,6 @@
 		else if (path.startsWith('/product')) $activeHover = 'product';
 		else if (path.startsWith('/stock_opname')) $activeHover = 'stock_opname';
 		else if (path.startsWith('/customer')) $activeHover = 'customer';
-		else if (path.startsWith('/transaksi')) $activeHover = 'transaksi';
 		else if (path.startsWith('/request_barang')) $activeHover = 'request_barang';
 		else if (path.startsWith('/return_barang')) $activeHover = 'return_barang';
 	});
@@ -154,9 +153,9 @@
 											d="M12 12c-1.1 0-2.042-.392-2.825-1.175C8.392 10.042 8 9.1 8 8s.392-2.042 1.175-2.825C9.958 4.392 10.9 4 12 4s2.042.392 2.825 1.175C15.608 5.958 16 6.9 16 8s-.392 2.042-1.175 2.825C14.042 11.608 13.1 12 12 12Zm-8 8v-2.8c0-.567.146-1.087.438-1.562A2.93 2.93 0 0 1 5.6 14.55a14.824 14.824 0 0 1 3.15-1.162 13.813 13.813 0 0 1 6.5 0c1.067.26 2.117.647 3.15 1.162.483.25.871.613 1.163 1.088.292.475.438.996.437 1.562V20H4Zm2-2h12v-.8a.966.966 0 0 0-.5-.85c-.9-.45-1.808-.787-2.725-1.012A11.652 11.652 0 0 0 12 15c-.933 0-1.858.112-2.775.338A13.14 13.14 0 0 0 6.5 16.35a.977.977 0 0 0-.363.35.93.93 0 0 0-.137.5v.8Zm6-8a1.93 1.93 0 0 0 1.413-.587A1.92 1.92 0 0 0 14 8c0-.55-.196-1.021-.587-1.412A1.933 1.933 0 0 0 12 6a1.91 1.91 0 0 0-1.412.588c-.39.393-.586.864-.588 1.412a1.918 1.918 0 0 0 .588 1.413c.394.394.865.59 1.412.587Z"
 										/></svg
 									>
-									Customer
+									Kustomer
 								</a>
-							</li>
+							<!-- </li>
 							<li class={$activeHover === 'transaksi' ? 'rounded-md bg-[#003349]' : ''}>
 								<a
 									href="/transaksi"
@@ -180,7 +179,7 @@
 									>
 									Transaksi
 								</a>
-							</li>
+							</li> -->
 							<li class={$activeHover === 'request_barang' ? 'rounded-md bg-[#003349]' : ''}>
 								<a
 									href="/request_barang"
@@ -376,6 +375,8 @@
 							HOME
 						{:else if $page.url.pathname === '/stock_opname'}
 							STOCK OPNAME
+						{:else if $page.url.pathname === '/customer'}
+							KUSTOMER
 						{:else if $page.url.pathname === '/customer/riwayat_customer'}
 							RIWAYAT CUSTOMER
 						{:else if $page.url.pathname === '/transaksi/laporan'}

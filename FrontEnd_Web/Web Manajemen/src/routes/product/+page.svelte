@@ -187,7 +187,7 @@
 							<span class="font-inter text-[12px] leading-normal text-black">
 								{body.id}
 							</span>
-							<span class="font-inter mt-3 border text-[12px] leading-normal text-black">
+							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
 								Stock : {body.id}
 								{body.id}
 							</span>

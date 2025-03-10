@@ -11,19 +11,19 @@
 </script>
 
 <table class="w-full">
-	<thead class="font-notosanssemi text-center text-[12px] text-[#101018]">
+	<thead class="font-notosanssemi text-[12px] text-[#101018]">
 		<tr>
-			<th>No</th>
+			<th class="w-[5%]">No</th>
 			{#each table_header as head}
 				{#if typeof head === 'string'}
-					<th>{head}</th>
+					<th class="w-[20%]">{head}</th>
 				{:else}
-					<th>{head[1]}</th>
+					<th class="w-[20%]">{head[1]}</th>
 				{/if}
 			{/each}
 		</tr>
 	</thead>
-	<tbody class="font-notosans text-center text-[14px] text-[#35353A]">
+	<tbody class="font-notosans text-[14px] text-[#35353A]">
 		{#each table_data as body, i}
 			<tr>
 				<td class="font-notosansbold">{i + 1}</td>
@@ -47,10 +47,14 @@
 	}
 
 	thead th {
-		@apply py-3 px-2 border-0;
+		@apply py-4 px-6 text-center whitespace-nowrap border-0 border-gray-200;
 	}
 
 	tbody td {
-		@apply py-3 px-2 border-t border-gray-200;
+		@apply py-4 px-6 text-center whitespace-nowrap border-t border-gray-200;
+	}
+
+	tr:hover {
+		@apply bg-gray-50;
 	}
 </style>

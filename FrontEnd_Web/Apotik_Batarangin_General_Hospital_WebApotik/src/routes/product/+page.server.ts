@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, url }) => {
 	const keyword = url.searchParams.get('keyword') || '';
-	const limit = url.searchParams.get('limit') || 10;
+	const limit = url.searchParams.get('limit') || 15;
 	const offset = url.searchParams.get('offset') || 0;
 	const apiUrl = env.BASE_URL + `/master/nakes?keyword=${keyword}&limit=${limit}&offset=${offset}`;
 
