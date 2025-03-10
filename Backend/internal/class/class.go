@@ -96,8 +96,11 @@ type Kategori struct {
 	IDKategori string     `json:"id_kategori" db:"id_kategori"`
 	Nama       string     `json:"nama" db:"nama"`
 	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
+	CreatedBy  *string    `json:"created_by,omitempty" db:"created_by"`
 	UpdatedAt  *time.Time `json:"updated_at" db:"updated_at"`
+	UpdatedBy  *string    `json:"updated_by,omitempty" db:"updated_by"`
 	DeletedAt  *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	DeletedBy  *string    `json:"deleted_by,omitempty" db:"deleted_by"`
 	Catatan    *string    `json:"catatan,omitempty" db:"catatan"`
 }
 type DetailKaryawan struct {

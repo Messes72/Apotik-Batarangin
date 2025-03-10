@@ -62,17 +62,25 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 	tableKartuStok := tables.KartuStok
 	tableCounter := tables.Counter
 
+	//ToDo...
+	//tanyakan apakh perlu ada pengecekan untuk memastikan bahwa depo yang dimasukan user adalah depo yang sesuai dengan jenis...
+	//ToDo...
+
 	var exists string
 	checkQuery := `SELECT 1 FROM ` + tableObat + ` WHERE LOWER(nama) = ? AND id_depo = ? LIMIT 1`
 	err = tx.QueryRowContext(ctx, checkQuery, strings.ToLower(obat.Nama), idDepo).Scan(&exists)
-	if err == nil {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Obat not found, proceed with the transaction.
+		} else {
+			// An actual error occurred during the query.
+			tx.Rollback()
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error checking obat", Data: nil}, nil
+		}
+	} else {
+		// Obat found, rollback the transaction and return a conflict error.
 		tx.Rollback()
 		return class.Response{Status: http.StatusConflict, Message: "Obat sudah ada di depo ini", Data: nil}, nil
-	}
-	if err != sql.ErrNoRows {
-		tx.Rollback()
-		log.Println("Error cek existing obat:", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error cek existing obat", Data: nil}, err
 	}
 
 	var counter int
@@ -97,7 +105,7 @@ func AddObat(ctx context.Context, obat class.Obat, idKategori string, idDepo str
 
 	insertKartuStok := `INSERT INTO ` + tableKartuStok + ` (id_kartustok, id_depo, id_satuan, stok_barang, created_at, created_by, updated_at, deleted_at, catatan) 
 						VALUES (?, ?, ?, ?, NOW(), ?, NULL, NULL, ?)`
-	_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, obat.IDSatuan, obat.StokBarang, idKaryawan, obat.Catatan)
+	_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, obat.IDSatuan, 0, idKaryawan, obat.Catatan)
 	if err != nil {
 		tx.Rollback()
 		log.Printf("Failed to insert kartu_stok: %v\n", err)
@@ -136,7 +144,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int, 
 	}
 
 	tableObat := tables.Obat
-
+	log.Println("idget : ", idget)
 	if idget != "" { //get data sebuah obat
 		var obat class.Obat
 
@@ -220,13 +228,12 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.Obat,
 		return class.Response{Status: http.StatusBadRequest, Message: "Invalid jenis value", Data: nil}, nil
 	}
 
-	// Use the table names dynamically
 	tableObat := tables.Obat
 	tableKartuStok := tables.KartuStok
 
 	var exist bool
-	cekexist := `SELECT EXISTS(SELECT 1 FROM ` + tableObat + ` WHERE id_obat = ? AND id_kategori = ? AND deleted_at IS NULL LIMIT 1)`
-	err = tx.QueryRowContext(ctx, cekexist, idobat, idkategori).Scan(&exist)
+	cekexist := `SELECT EXISTS(SELECT 1 FROM ` + tableObat + ` WHERE id_obat = ? AND deleted_at IS NULL LIMIT 1)`
+	err = tx.QueryRowContext(ctx, cekexist, idobat).Scan(&exist)
 	if err != nil {
 		tx.Rollback()
 		log.Println("error cek existence obat ", err)

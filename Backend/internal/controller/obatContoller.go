@@ -35,7 +35,7 @@ func AddObat(c echo.Context) error {
 	// Get ID Karyawan from JWT token
 	idKaryawan := c.Get("id_karyawan")
 	if idKaryawan == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing id_karyawan in token"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
 	}
 
 	idDepoparam := c.QueryParam("depo")
@@ -90,7 +90,7 @@ func GetObat(c echo.Context) error {
 }
 
 func UpdateObat(c echo.Context) error {
-	idkategori := c.Param("id_kategori")
+	idkategori := c.Param("id_kategori") //ini nanti jadi param untuk cek apakah datanya sudah ada sebelumnya
 	idobat := c.Param("id_obat")
 	idkaryawan, ok := c.Get("id_karyawan").(string)
 	if !ok {
@@ -106,7 +106,7 @@ func UpdateObat(c echo.Context) error {
 
 	var requestBody class.Obat
 	err := c.Bind(&requestBody)
-	log.Println("error r	equest body ", err)
+	// log.Println("error request body ", err)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
 	}

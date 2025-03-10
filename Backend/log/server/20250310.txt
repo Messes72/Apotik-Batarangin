@@ -1,0 +1,1 @@
+<2025-03-10 12:00:22>|| {REQUEST: uri: /product/KAT001/info?id_obat=MDC000000000001&page=1&page_size=10&jenis=gudang, status: 200, ip:::1, Host:localhost:2688, ContentLength:56, User-Agent:PostmanRuntime/7.43.0, Error:<nil>, Latency:9.5137ms, method:GET ,Protocol:HTTP/1.1, RequestId:, ResponseSize:508, custom-value: 42}

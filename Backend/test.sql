@@ -95,14 +95,22 @@ CREATE TABLE Kustomer (
 CREATE TABLE Counter (
     count PRIMARY KEY BIGINT NOT NULL DEFAULT 1 
 ) 
+INSERT INTO Counter (COUNT) VALUES (1)
 
 CREATE TABLE ObatCounter (
     count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
 );
+INSERT INTO ObatCounter (COUNT) VALUES (1)
 
 CREATE TABLE ObatCounterGudang (
     count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
 );
+INSERT INTO ObatCounterGudang (COUNT) VALUES (1)
+
+CREATE TABLE KategoriCounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO KategoriCounter (COUNT) VALUES (1)
 
 -- Depo Table
 CREATE TABLE Depo (
@@ -117,12 +125,15 @@ CREATE TABLE Depo (
 -- Kategori Table
 CREATE TABLE Kategori (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
-    id_depo VARCHAR(10) NOT NULL,             -- FK: Foreign Key referencing Depo
     id_kategori VARCHAR(15) NOT NULL UNIQUE,   -- UQ: Unique constraint
+    id_depo VARCHAR(10) NOT NULL,             -- FK: Foreign Key referencing Depo
     nama VARCHAR(100) NOT NULL,        -- NN: Not Null constraint
-    created_at DATETIME NOT NULL,       -- NN: Not Null constraint
-    deleted_at DATETIME,               -- 0: Optional (NULL allowed)
-    updated_at DATETIME NOT NULL,       -- NN: Not Null constraint
+    created_at DATETIME NOT NULL, 
+    created_by VARCHAR(10) not null,      -- NN: Not Null constraint
+    updated_at DATETIME NULL, 
+    updated_by VARCHAR(10) NULL, 
+    deleted_at DATETIME Null,               -- 0: Optional (NULL allowed)
+    deleted_by VARCHAR(10) NULL,     -- NN: Not Null constraint
     catatan VARCHAR(255),                     -- 0: Optional (NULL allowed)
     FOREIGN KEY (id_depo) REFERENCES Depo(id_depo) -- Define the Foreign Key
 );

@@ -60,6 +60,7 @@ func Init() *echo.Echo {
 	routeKategori.Use(middleware.CheckAPIKey)
 	routeKategori.Use(middleware.JWTMiddleware)
 	routeKategori.GET("", controller.GetKategori)
+	routeKategori.POST("/create", controller.AddKategori)
 
 	routesatuan := e.Group("/satuan")
 	routesatuan.Use(middleware.CheckAPIKey)
