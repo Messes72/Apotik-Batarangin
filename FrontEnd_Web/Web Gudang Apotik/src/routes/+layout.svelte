@@ -308,7 +308,7 @@
 						{#if $page.url.pathname === '/'}
 							HOME
 						{:else if $page.url.pathname === '/product'}
-							KATEGORI OBAT
+							PRODUCT
 						{:else if $page.url.pathname === '/product/input_product'}
 							INPUT PRODUCT
 						{:else if $page.url.pathname.startsWith('/product/')}

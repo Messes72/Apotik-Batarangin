@@ -10,6 +10,7 @@
 	$inspect(page);
 </script>
 
+<title>Gudang - Login</title>
 <main class="relative min-h-screen w-full overflow-hidden">
 	<!-- Background Image -->
 	<img src={gambar_login} alt="gambar_login" class="absolute h-full w-[60%] object-cover" />

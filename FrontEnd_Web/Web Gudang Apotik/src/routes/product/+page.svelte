@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { gambar_logo } from '$lib';
 	import CardObat from '$lib/card/CardObat.svelte';
 	import Dropdown from '$lib/dropdown/Dropdown.svelte';
 	import Checkbox from '$lib/info/Checkbox.svelte';
@@ -123,11 +124,15 @@
 	$inspect(data);
 </script>
 
+<svelte:head>
+	<title>Gudang - Product</title>
+	<link href={gambar_logo} rel="icon" />
+</svelte:head>
+
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<title>Halaman Product</title>
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
@@ -138,7 +143,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Stock Opname</span>
+				<span class="ml-1 text-[16px]">Input Product</span>
 			</button>
 		</div>
 		<div class="ml-2 flex-1"><Search2 /></div>
@@ -741,7 +746,6 @@
 					<Detail label="Satuan" value="Tablet" />
 					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
 					<Detail label="Cara Pemakaian" value="1 kapsul sehari 2 kali" />
-					
 				</form>
 			</div>
 		</div>
