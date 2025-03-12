@@ -52,11 +52,11 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       // body: Sidebar(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
       // body: Sidebarcoba(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
-      // body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
+      body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
       // body: Coba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
       // body: Produkcoba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
       // body: Kategori(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
-      body: Percobaan(),
+      // body: Percobaan(),
     );
   }
 }

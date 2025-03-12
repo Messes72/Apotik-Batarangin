@@ -19,7 +19,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
     with SingleTickerProviderStateMixin {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];
-  final List<String> rowStatus = ["Berhasil", "Gagal"];
+  final List<String> rowStatus = ["Selesai", "Batal", "Proses"];
 
   String? selectedValue;
   String? _selectedStatus;
@@ -111,7 +111,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "3",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "namaSupplier",
@@ -125,7 +125,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "10",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "namaSupplier",
@@ -345,7 +345,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Obat",
+                            "Informasi Data Penerimaan Obat",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -502,7 +502,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Edit Data Obat",
+                            "Edit Data Penerimaan Barang",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -667,7 +667,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Input Data Obat",
+                            "Input Data Penerimaan Barang",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -696,14 +696,14 @@ class pagePenerimaan extends State<PenerimaanBarang>
                           children: [
                             Column(
                               children: [
-                                inputField("Nomor Kartu", nomorKartu_text),
-                                inputField("Nomor Batch", nomorBatch_text),
-                                inputField("Kode", kodeObat_text),
-                                inputField("Kategori", kategori_text),
-                                inputField("Nama Obat", namaObat_text),
+                                inputField("Nomor Kartu","Nomor Kartu", nomorKartu_text),
+                                inputField("Nomor Batch","Nomor Batch", nomorBatch_text),
+                                inputField("Kode","Kode", kodeObat_text),
+                                inputField("Kategori","Kategori", kategori_text),
+                                inputField("Nama Obat", "Nama Obat", namaObat_text),
                                 tanggalInput("Kadaluarsa", "DD/MM/YYYY",
                                     tanggalController),
-                                inputField("Jumlah Barang", jumlahBarang_text),
+                                inputField("Jumlah Barang","Jumlah Barang", jumlahBarang_text),
                                 inputCaraPemakaian(
                                     "Cara Pemakaian", caraPemakaian_text),
                               ],
@@ -810,7 +810,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Alasan Kosongkan Obat",
+                              "Catatan Penerimaan Barang",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -840,7 +840,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                               padding:
                                   const EdgeInsets.only(left: 23, right: 23),
                               child: Text(
-                                  "Alasan \"${item.namaBarang}\" Kosongkan Obat",
+                                  "Catatan Penerimaan Barang",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -864,7 +864,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
-                                    hintText: "Alasan",
+                                    hintText: "Catatan",
                                     hintStyle: TextStyle(
                                       color: ColorStyle.tulisan_form,
                                       fontSize: 14,
@@ -887,7 +887,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                     child: ElevatedButton(
                                       onPressed: () {
                                         Navigator.pop(context);
-                                        _alertDelete(item);
+                                        // _alertDelete(item);
+                                        _alertInput();
                                         // Navigator.pop(
                                         //     context); // Tutup dialog sebelumnya jika masih terbuka
                                         // Future.delayed(Duration(milliseconds: 200),
@@ -1245,6 +1246,18 @@ class pagePenerimaan extends State<PenerimaanBarang>
     _tabController.dispose();
     super.dispose();
   }
+  void filterByStatus(String status) {
+  setState(() {
+    if (status == "Selesai") {
+      filterData = _data.where((item) => item.stok == "10").toList();
+    } else if (status == "Batal") {
+      filterData = _data.where((item) => item.stok != "10").toList();
+    } else {
+      filterData = List.from(_data); // Jika pilih "Semua", tampilkan semua data
+    }
+
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1395,6 +1408,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                               onChanged: (value) {
                                 setState(() {
                                   _selectedStatus = value!;
+                                  filterByStatus(value);
                                 });
                               },
                               decoration: InputDecoration(
@@ -1627,7 +1641,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                                 vertical: 4),
                                                         decoration:
                                                             BoxDecoration(
-                                                          color: item.stok == 10
+                                                          color: item.stok == "10"
                                                               ? ColorStyle
                                                                   .status_green
                                                                   .withOpacity(
@@ -1641,7 +1655,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                                   .circular(5),
                                                           border: Border.all(
                                                             color: item.stok ==
-                                                                    10
+                                                                    "10"
                                                                 ? ColorStyle
                                                                     .status_green
                                                                 : ColorStyle
@@ -1650,9 +1664,9 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                           ),
                                                         ),
                                                         child: Text(
-                                                          item.stok == 10
-                                                              ? "BERHASIL"
-                                                              : "GAGAL",
+                                                          item.stok == "10"
+                                                              ? "SELESAI"
+                                                              : "BATAL",
                                                           style:
                                                               const TextStyle(
                                                                   color: Colors
@@ -1697,6 +1711,11 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                                   item);
                                                               break;
                                                             case 3:
+                                                              // _modalKosongkanObat(
+                                                              //     item);
+                                                              break;
+
+                                                            case 4:
                                                               _modalKosongkanObat(
                                                                   item);
                                                               break;
@@ -1716,7 +1735,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                                 SizedBox(
                                                                     width: 8),
                                                                 Text(
-                                                                  "Lihat Data Obat",
+                                                                  "Lihat Data Penerimaan Barang",
                                                                   style: TextStyle(
                                                                       fontWeight:
                                                                           FontWeight
@@ -1737,7 +1756,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                                 SizedBox(
                                                                     width: 8),
                                                                 Text(
-                                                                    "Edit Data Obat",
+                                                                    "Edit Data Penerimaan Barang",
                                                                     style: TextStyle(
                                                                         fontWeight:
                                                                             FontWeight.bold)),
@@ -1750,13 +1769,32 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                               children: [
                                                                 Icon(
                                                                     Icons
-                                                                        .delete_outline_outlined,
+                                                                        .close_outlined,
                                                                     color: Colors
                                                                         .black54),
                                                                 SizedBox(
                                                                     width: 8),
                                                                 Text(
-                                                                    "Hapus Data Obat",
+                                                                    "Barang Gagal Diterima",
+                                                                    style: TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          PopupMenuItem(
+                                                            value: 4,
+                                                            child: Row(
+                                                              children: [
+                                                                Icon(
+                                                                    Icons
+                                                                        .done,
+                                                                    color: Colors
+                                                                        .black54),
+                                                                SizedBox(
+                                                                    width: 8),
+                                                                Text(
+                                                                    "Barang Berhasil Diterima",
                                                                     style: TextStyle(
                                                                         fontWeight:
                                                                             FontWeight.bold)),
@@ -1988,6 +2026,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
                               onChanged: (value) {
                                 setState(() {
                                   _selectedStatus = value!;
+                                  filterByStatus(value);
                                 });
                               },
                               decoration: InputDecoration(
@@ -2470,7 +2509,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
     );
   }
 
-  Widget inputField(String title, TextEditingController edit) {
+  Widget inputField(String title,String isi, TextEditingController edit) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
       child: Column(
@@ -2507,6 +2546,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                 fontSize: 12,
               ),
               decoration: InputDecoration(
+                                hintText: isi,
+
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,

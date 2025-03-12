@@ -262,14 +262,14 @@ class stokPage extends State<stokopname> {
                           children: [
                             Column(
                               children: [
-                                inputField("Nomor Kartu", nomorKartu_text),
-                                inputField("Nomor Batch", nomorBatch_text),
-                                inputField("Kode Obat", kodeObat_text),
-                                inputField("Kategori Obat", kategori_text),
-                                inputField("Nama Obat", namaObat_text),
+                                inputField("Nomor Kartu","Nomor Kartu", nomorKartu_text),
+                                inputField("Nomor Batch","Nomor Batch", nomorBatch_text),
+                                inputField("Kode Obat","Kode Obat", kodeObat_text),
+                                inputField("Kategori Obat","Kategori Obat", kategori_text),
+                                inputField("Nama Obat","Nama Obat", namaObat_text),
                                 tanggalInput("Kadaluarsa", "DD/MM/YYYY",
                                     tanggalController),
-                                inputField("Stock Barang", jumlahBarang_text),
+                                inputField("Stock Barang", "Stock Barang",jumlahBarang_text),
                                 inputCaraPemakaian(
                                     "Cara Pemakaian", caraPemakaian_text),
                               ],
@@ -1676,7 +1676,7 @@ class stokPage extends State<stokopname> {
     );
   }
 
-  Widget inputField(String title, TextEditingController edit) {
+  Widget inputField(String title, String isi, TextEditingController edit) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
       child: Column(
@@ -1713,6 +1713,7 @@ class stokPage extends State<stokopname> {
                 fontSize: 12,
               ),
               decoration: InputDecoration(
+                hintText: isi,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,

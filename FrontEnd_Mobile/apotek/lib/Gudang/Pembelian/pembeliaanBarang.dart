@@ -20,7 +20,7 @@ class pagePembelian extends State<Pembeliaanbarang>
     with SingleTickerProviderStateMixin {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];
-  final List<String> rowStatus = ["Berhasil", "Gagal"];
+  final List<String> rowStatus = ["Selesai", "Batal", "Proses"];
   String? _selectedStatus;
 
   String? selectedValue;
@@ -35,6 +35,9 @@ class pagePembelian extends State<Pembeliaanbarang>
 
   var text = TextEditingController();
   var text2 = TextEditingController();
+
+  var text3 = TextEditingController();
+  var text4 = TextEditingController();
 
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
@@ -93,7 +96,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Obat",
+                            "Informasi Penerimaan Barang",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -121,7 +124,17 @@ class pagePembelian extends State<Pembeliaanbarang>
                           children: [
                             Column(
                               children: [
-                                // detailField("Nomor Batch", item.noBatch),
+                                detailField(
+                                    "Tanggal Pemesanan",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa)),
+                                detailField(
+                                    "Tanggal Penerimaan",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa)),
+                                detailField("Nama Supplier", item.namaSupplier),
+                                Divider()
+
                                 // detailField("Kode Obat", item.kode),
                                 // detailField(
                                 //     "Kategori Obat", item.kategoriBarang),
@@ -448,8 +461,9 @@ class pagePembelian extends State<Pembeliaanbarang>
                                     tanggalController),
                                 tanggalInput("Tanggal Penerimaan", "DD/MM/YYYY",
                                     tanggalController),
-                                inputField("Nama Supplier", nomorKartu_text),
+                                inputField("Nama Supplier", "Nama Supplier", nomorKartu_text),
                                 Divider(),
+                                Padding(padding: EdgeInsets.only(bottom: 16)),
                                 Row(
                                   children: [
                                     Padding(padding: EdgeInsets.only(left: 16)),
@@ -463,14 +477,9 @@ class pagePembelian extends State<Pembeliaanbarang>
                                       height: 30,
                                       child: ElevatedButton.icon(
                                         onPressed: () {},
-                                        icon: Transform.translate(
-                                          offset: Offset(5,
-                                              0), // Geser ikon lebih dekat ke teks
-                                          child: Icon(
-                                              Icons.refresh,
-                                              color: ColorStyle.button_yellow,
-                                              size: 22),
-                                        ),
+                                        icon: Icon(Icons.refresh,
+                                            color: ColorStyle.button_yellow,
+                                            size: 22),
                                         label: const Text("Muat Ulang",
                                             style: TextStyle(
                                                 color: ColorStyle.button_yellow,
@@ -480,12 +489,11 @@ class pagePembelian extends State<Pembeliaanbarang>
                                               vertical: 6),
                                           backgroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            side: BorderSide(
-                                                  color: ColorStyle.button_yellow
-                                                )
-                                          ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              side: BorderSide(
+                                                  color: ColorStyle
+                                                      .button_yellow)),
                                         ),
                                       ),
                                     ),
@@ -496,28 +504,38 @@ class pagePembelian extends State<Pembeliaanbarang>
                                       child: ElevatedButton.icon(
                                         onPressed: () {},
                                         icon: Icon(Icons.add,
-                                            color: ColorStyle.text_dalam_kolom, size: 22),
+                                            color: ColorStyle.text_dalam_kolom,
+                                            size: 22),
                                         label: const Text("Tambah Barang",
                                             style: TextStyle(
-                                                color: ColorStyle.text_dalam_kolom,
+                                                color:
+                                                    ColorStyle.text_dalam_kolom,
                                                 fontSize: 12)),
                                         style: ElevatedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 6, horizontal: 2),
                                           backgroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                                side: BorderSide(
-                                                  color: ColorStyle.text_dalam_kolom
-                                                )
-                                          ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              side: BorderSide(
+                                                  color: ColorStyle
+                                                      .text_dalam_kolom)),
                                         ),
                                       ),
                                     ),
-                                    Padding(padding: EdgeInsets.only(right: 16))
+                                    Padding(
+                                        padding: EdgeInsets.only(right: 16)),
                                   ],
                                 ),
+                                Padding(padding: EdgeInsets.only(top: 16)),
+                                InputForm(
+                                    "Nama Obat",
+                                    "Nama Obat",
+                                    "Jumlah Barang yang Dipesan",
+                                    "Jumlah Barang yang Dipesan",
+                                    text3,
+                                    text4),
                               ],
                             ),
                             Padding(
@@ -622,7 +640,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Alasan Kosongkan Obat",
+                              "Catatan Penerimaan Barang",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -652,7 +670,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                               padding:
                                   const EdgeInsets.only(left: 23, right: 23),
                               child: Text(
-                                  "Alasan \"${item.nama}\" Kosongkan Obat",
+                                  "Apakah ada Catatan untuk Barang ini?",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -676,7 +694,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
-                                    hintText: "Alasan",
+                                    hintText: "Catatan",
                                     hintStyle: TextStyle(
                                       color: ColorStyle.tulisan_form,
                                       fontSize: 14,
@@ -699,7 +717,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                     child: ElevatedButton(
                                       onPressed: () {
                                         Navigator.pop(context);
-                                        _alertDelete(item);
+                                        // _alertDelete(item);
+                                        _alertInput();
                                         // Navigator.pop(
                                         //     context); // Tutup dialog sebelumnya jika masih terbuka
                                         // Future.delayed(Duration(milliseconds: 200),
@@ -775,7 +794,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        "Apakah Anda yakin \n mengosongkan \"${item.nama}\" ini?",
+                        "Apakah Anda yakin \n menghapus data ini?",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: constraints.maxWidth *
@@ -1087,6 +1106,19 @@ class pagePembelian extends State<Pembeliaanbarang>
     });
   }
 
+  void filterByStatus(String status) {
+    setState(() {
+      if (status == "Selesai") {
+        filterData = _data.where((item) => item.stokBarang == 10).toList();
+      } else if (status == "Batal") {
+        filterData = _data.where((item) => item.stokBarang != 10).toList();
+      } else {
+        filterData =
+            List.from(_data); // Jika pilih "Semua", tampilkan semua data
+      }
+    });
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -1246,6 +1278,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   onChanged: (value) {
                                     setState(() {
                                       _selectedStatus = value!;
+                                      filterByStatus(value);
                                     });
                                   },
                                   decoration: InputDecoration(
@@ -1525,8 +1558,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                             child: Text(
                                                               item.stokBarang ==
                                                                       10
-                                                                  ? "BERHASIL"
-                                                                  : "GAGAL",
+                                                                  ? "SELESAI"
+                                                                  : "BATAL",
                                                               style: const TextStyle(
                                                                   color: Colors
                                                                       .white,
@@ -1565,8 +1598,10 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                 size: 24,
                                                               ),
                                                               onPressed: () {
-                                                                _editProduk(
+                                                                _modalKosongkanObat(
                                                                     item);
+                                                                // _editProduk(
+                                                                //     item);
                                                               }),
                                                           IconButton(
                                                               icon: Icon(
@@ -1576,8 +1611,10 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                 size: 24,
                                                               ),
                                                               onPressed: () {
-                                                                _modalKosongkanObat(
+                                                                _alertDelete(
                                                                     item);
+                                                                // _modalKosongkanObat(
+                                                                //     item);
                                                               }),
                                                         ],
                                                       ),
@@ -1808,6 +1845,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   onChanged: (value) {
                                     setState(() {
                                       _selectedStatus = value!;
+                                      filterByStatus(value);
                                     });
                                   },
                                   decoration: InputDecoration(
@@ -2284,6 +2322,22 @@ class pagePembelian extends State<Pembeliaanbarang>
     );
   }
 
+  Widget InputForm(String label1, String hint1, String label2, String hint2,
+      TextEditingController edit, TextEditingController edit2) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Row(
+        children: [
+          Expanded(child: inputField(label1, hint1, edit)),
+          const SizedBox(width: 4),
+          if (label2.isNotEmpty) Expanded(child: inputField(label2, hint2, edit2)),
+          Padding(padding: EdgeInsets.only(right: 4)),
+          Icon(Icons.delete_outline, color: ColorStyle.button_red)
+        ],
+      ),
+    );
+  }
+
   Widget detailField(String title, String value) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16),
@@ -2316,7 +2370,7 @@ class pagePembelian extends State<Pembeliaanbarang>
     );
   }
 
-  Widget inputField(String title, TextEditingController edit) {
+  Widget inputField(String title, String isi, TextEditingController edit) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
       child: Column(
@@ -2353,6 +2407,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                 fontSize: 12,
               ),
               decoration: InputDecoration(
+                hintText: isi,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
@@ -2602,10 +2657,14 @@ class pagePembelian extends State<Pembeliaanbarang>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
           const SizedBox(height: 8),
           Container(
-            height: 45,
+            height: 35,
             decoration: BoxDecoration(
               border: Border.all(color: ColorStyle.fill_stroke),
               color: ColorStyle.fill_form,
@@ -2622,10 +2681,11 @@ class pagePembelian extends State<Pembeliaanbarang>
                     _selectedDate(context);
                   },
                   decoration: InputDecoration(
+                    contentPadding: EdgeInsets.only(left: 2, bottom: 12.5),
                     hintText: hint,
                     hintStyle: TextStyle(
                       color: ColorStyle.tulisan_form,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                     border: InputBorder.none,
                   ),

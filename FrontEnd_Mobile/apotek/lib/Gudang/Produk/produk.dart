@@ -1,11 +1,15 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
-import 'package:apotek/main.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/global.dart' as global;
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart' as im;
 
 class produk extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -39,18 +43,23 @@ class PageProduk extends State<produk> {
   final TextEditingController minHargaController = TextEditingController();
   final TextEditingController maxHargaController = TextEditingController();
 
-//
-
   final List<int> rowItems = [10, 25, 50, 100];
   String? _selectedStatus;
   final List<String> rowStatus = ["Habis", "Sisa"];
 
   String? selectedValue;
+  bool isAscending = true; // Menyimpan status sorting
 
   final _formKey = GlobalKey<FormState>();
 
   var text = TextEditingController();
   var text2 = TextEditingController();
+
+  // Image picker
+  im.ImagePicker picker = im.ImagePicker();
+  File? pickedImage;
+  bool uploadFile = false;
+  Uint8List pickedImageByte = Uint8List(0);
 
   // var nomorKartu_text = TextEditingController();
   // var nomorBatch_text = TextEditingController();
@@ -77,7 +86,7 @@ class PageProduk extends State<produk> {
         nomorBatch: "0833276",
         kategori: "Obat Panas",
         kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
+        jumlah: 89,
         kode: "D1425",
         namaObat: "Paracetamol",
         caraPemakaian:
@@ -90,7 +99,7 @@ class PageProduk extends State<produk> {
         kadaluarsa: DateTime(2030, 2, 12),
         jumlah: 10,
         kode: "kode",
-        namaObat: "namaObat",
+        namaObat: "Panadol",
         caraPemakaian: "caraPemakaian",
         satuan: "satuan"),
     Produk(
@@ -98,7 +107,27 @@ class PageProduk extends State<produk> {
         nomorBatch: "nomorBatch",
         kategori: "kategori",
         kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
+        jumlah: 0,
+        kode: "kode",
+        namaObat: "A obat",
+        caraPemakaian: "caraPemakaian",
+        satuan: "satuan"),
+    Produk(
+        nomorKartu: "nomorKartu",
+        nomorBatch: "nomorBatch",
+        kategori: "kategori",
+        kadaluarsa: DateTime(2030, 2, 12),
+        jumlah: 50,
+        kode: "kode",
+        namaObat: " Bobat B",
+        caraPemakaian: "caraPemakaian",
+        satuan: "satuan"),
+    Produk(
+        nomorKartu: "nomorKartu",
+        nomorBatch: "nomorBatch",
+        kategori: "kategori",
+        kadaluarsa: DateTime(2030, 2, 12),
+        jumlah: 100,
         kode: "kode",
         namaObat: "namaObat",
         caraPemakaian: "caraPemakaian",
@@ -108,27 +137,7 @@ class PageProduk extends State<produk> {
         nomorBatch: "nomorBatch",
         kategori: "kategori",
         kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
+        jumlah: 9,
         kode: "kode",
         namaObat: "namaObat",
         caraPemakaian: "caraPemakaian",
@@ -453,6 +462,20 @@ class PageProduk extends State<produk> {
     }
   }
 
+  void filterByStatus(String status) {
+    setState(() {
+      if (status == "Habis") {
+        filterData = _data.where((item) => item.jumlah == 0).toList();
+      } else if (status == "Sisa") {
+        filterData = _data
+            .where((item) => item.jumlah > 0 && item.jumlah <= 10)
+            .toList();
+      } else {
+        filterData = List.from(_data); // Tampilkan semua jika tidak ada filter
+      }
+    });
+  }
+
   void _viewDetails(Produk item) {
     showDialog(
       context: context,
@@ -508,8 +531,7 @@ class PageProduk extends State<produk> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16),
-
+                    // SizedBox(height: 16),
                     Expanded(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(8.0),
@@ -531,6 +553,7 @@ class PageProduk extends State<produk> {
                                 detailField("Satuan", item.satuan),
                                 detailField(
                                     "Jumlah Barang", item.jumlah.toString()),
+                                inputImage(),
                                 buildFormCaraPemakaian(
                                     "Cara Pemakaian", item.caraPemakaian)
                               ],
@@ -664,7 +687,7 @@ class PageProduk extends State<produk> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 16),
+                    // SizedBox(height: 16),
 
                     Expanded(
                       child: SingleChildScrollView(
@@ -684,15 +707,13 @@ class PageProduk extends State<produk> {
                                     kategoriController),
                                 editFeld("Nama Obat", item.namaObat,
                                     namaObatController),
-                                editFeld(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa),
-                                    kadaluarsaController),
+                                tanggalEdit("Kadaluarsa", DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa), kadaluarsaController),
                                 editFeld(
                                     "Satuan", item.satuan, satuanController),
                                 editFeld("Jumlah Barang",
                                     item.jumlah.toString(), jumlahController),
+                                inputImage(),
                                 buildFormCaraPemakaian2(
                                     "Cara Pemakaian",
                                     item.caraPemakaian,
@@ -785,139 +806,253 @@ class PageProduk extends State<produk> {
     showDialog(
       context: context,
       builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: ColorStyle.button_grey, width: 1))),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Input Data Obat",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: ColorStyle.text_dalam_kolom,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: ColorStyle.text_dalam_kolom),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
+        return StatefulBuilder(
+          builder: (context, setState2) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Container(
+                    width: constraints.maxWidth *
+                        0.6, // Sesuaikan dengan ukuran layar
+                    height: constraints.maxHeight *
+                        0.9, // Batasi tinggi agar tidak terlalu besar
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            Column(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Container(
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                topRight: Radius.circular(10),
+                              ),
+                              border: Border(
+                                  bottom: BorderSide(
+                                      color: ColorStyle.button_grey,
+                                      width: 1))),
+                          padding: const EdgeInsets.only(
+                              top: 8, left: 23, bottom: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Input Data Obat",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: ColorStyle.text_dalam_kolom,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 23),
+                                child: IconButton(
+                                  icon: Icon(Icons.close,
+                                      color: ColorStyle.text_dalam_kolom),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // SizedBox(height: 12),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Wrap(
+                              spacing: 16,
+                              runSpacing: 16,
                               children: [
-                                inputField("Nomor Kartu", nomorKartu_text),
-                                inputField("Nomor Batch", nomorBatch_text),
-                                inputField("Kode", kodeObat_text),
-                                inputField("Kategori", kategori_text),
-                                inputField("Nama Obat", namaObat_text),
-                                tanggalInput("Kadaluarsa", "DD/MM/YYYY",
-                                    tanggalController),
-                                inputField("Jumlah Barang", jumlahBarang_text),
-                                inputCaraPemakaian(
-                                    "Cara Pemakaian", caraPemakaian_text),
-                              ],
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16, right: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox(
-                                    width: 120,
-                                    height: 30,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        // _alertDone(item, "diedit");
-                                        _alertInput();
-                                        // _alertDone("diinput");
-                                        // _updateProduk(
-                                        //     item,
-                                        //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
-                                        //     kategoriController,
-                                        //     namaObatController,
-                                        //     kadaluarsaController,
-                                        //     satuanController,
-                                        //     jumlahController,
-                                        //     caraPemakaianController);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
+                                Column(
+                                  children: [
+                                    inputField("Nomor Kartu", "Nomor Kartu",
+                                        nomorKartu_text),
+                                    inputField("Nomor Batch", "Nomor Batch",
+                                        nomorBatch_text),
+                                    inputField("Kode", "Kode", kodeObat_text),
+                                    inputField(
+                                        "Kategori", "Kategori", kategori_text),
+                                    inputField("Nama Obat", "Nama Obat",
+                                        namaObat_text),
+                                    tanggalInput("Kadaluarsa", "DD/MM/YYYY",
+                                        tanggalController),
+                                    inputField("Jumlah Barang", "Jumlah Barang",
+                                        jumlahBarang_text),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 16, right: 16, top: 10.27),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Upload Gambar Kategori Obat",
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14),
+                                              ),
+                                              Text(
+                                                " *",
+                                                style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    color:
+                                                        ColorStyle.button_red),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 8),
+                                          InkWell(
+                                            onTap: () async {
+                                              final im.XFile? photo =
+                                                  await picker.pickImage(
+                                                      source: im
+                                                          .ImageSource.gallery);
+                                              if (photo != null) {
+                                                print("Berhasil pick photo");
+                                                setState2(() {
+                                                  pickedImage =
+                                                      File(photo.path);
+                                                  uploadFile = true;
+                                                });
+                                                pickedImageByte = await photo
+                                                    .readAsBytes()
+                                                    .whenComplete(() {
+                                                  setState2(() {
+                                                    uploadFile = true;
+                                                  });
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                                width: double.infinity,
+                                                height: 120,
+                                                decoration: BoxDecoration(
+                                                  color: ColorStyle.fill_form,
+                                                ),
+                                                child: DottedBorder(
+                                                    color: Colors.black,
+                                                    strokeWidth: 1,
+                                                    dashPattern: [14, 8],
+                                                    borderType:
+                                                        BorderType.RRect,
+                                                    // radius: Radius.circular(10),
+                                                    child: Center(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(16.0),
+                                                        child: uploadFile ==
+                                                                true
+                                                            ? Image.file(
+                                                                pickedImage!,
+                                                                height:
+                                                                    80, // Atur ukuran sesuai kebutuhan
+                                                                width: 80,
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                              )
+                                                            : Column(
+                                                                children: [
+                                                                  Image.asset(
+                                                                    "images/upload_pict.png",
+                                                                    height: 50,
+                                                                    width: 50,
+                                                                  ),
+                                                                  Padding(
+                                                                      padding: EdgeInsets.only(
+                                                                          bottom:
+                                                                              8)),
+                                                                  Text(
+                                                                    "Click to Upload",
+                                                                    style: TextStyle(
+                                                                        color: ColorStyle
+                                                                            .alert_ungu,
+                                                                        fontSize:
+                                                                            16,
+                                                                        fontWeight:
+                                                                            FontWeight.bold),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                      ),
+                                                    ))),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    inputCaraPemakaian(
+                                        "Cara Pemakaian", caraPemakaian_text),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 16, right: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      SizedBox(
+                                        width: 120,
+                                        height: 30,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            // _alertDone(item, "diedit");
+                                            _alertInput();
+                                            // _alertDone("diinput");
+                                            // _updateProduk(
+                                            //     item,
+                                            //     nomorKartuController,
+                                            //     nomorBatchController,
+                                            //     kodeController,
+                                            //     kategoriController,
+                                            //     namaObatController,
+                                            //     kadaluarsaController,
+                                            //     satuanController,
+                                            //     jumlahController,
+                                            //     caraPemakaianController);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 6),
+                                            backgroundColor:
+                                                ColorStyle.button_green,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          child: const Text("SAVE",
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold)),
                                         ),
                                       ),
-                                      child: const Text("SAVE",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
+                                    ],
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
 
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
+                        SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -1365,6 +1500,15 @@ class PageProduk extends State<produk> {
     );
   }
 
+  void sortByName() {
+    setState(() {
+      filterData.sort((a, b) => isAscending
+          ? a.namaObat.compareTo(b.namaObat)
+          : b.namaObat.compareTo(a.namaObat));
+      isAscending = !isAscending; // Toggle sorting state
+    });
+  }
+
   @override
   void initState() {
     // TODO: implement initState
@@ -1494,7 +1638,9 @@ class PageProduk extends State<produk> {
                   Container(
                     height: 40,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        sortByName();
+                      },
                       icon: Transform.translate(
                         offset: Offset(5, 0), // Geser ikon lebih dekat ke teks
                         child: Icon(Icons.sort_by_alpha_outlined,
@@ -1543,6 +1689,7 @@ class PageProduk extends State<produk> {
                         onChanged: (value) {
                           setState(() {
                             _selectedStatus = value!;
+                            filterByStatus(value);
                           });
                         },
                         decoration: InputDecoration(
@@ -1602,9 +1749,7 @@ class PageProduk extends State<produk> {
                   Container(
                     height: 40,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        
-                      },
+                      onPressed: () {},
                       icon:
                           Icon(Icons.filter_alt, color: Colors.black, size: 22),
                       label: const Text("Filter",
@@ -1977,44 +2122,9 @@ class PageProduk extends State<produk> {
     );
   }
 
-  Widget RowForm(String label1, String hint1, String label2, String hint2) {
+ Widget detailField(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.only(left: 23),
-      child: Row(
-        children: [
-          Expanded(child: detailField(label1, hint1)),
-          const SizedBox(width: 19),
-          if (label2.isNotEmpty)
-            Expanded(
-                child: detailField(
-              label2,
-              hint2,
-            )),
-          Padding(padding: EdgeInsets.only(right: 24))
-        ],
-      ),
-    );
-  }
-
-  Widget RowEditForm(String label1, String hint1, String label2, String hint2,
-      TextEditingController edit, TextEditingController edit2) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 23),
-      child: Row(
-        children: [
-          Expanded(child: editFeld(label1, hint1, edit)),
-          const SizedBox(width: 19),
-          if (label2.isNotEmpty)
-            Expanded(child: editFeld(label2, hint2, edit2)),
-          Padding(padding: EdgeInsets.only(right: 24))
-        ],
-      ),
-    );
-  }
-
-  Widget detailField(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2044,9 +2154,9 @@ class PageProduk extends State<produk> {
     );
   }
 
-  Widget inputField(String title, TextEditingController edit) {
+  Widget inputField(String title, String isi, TextEditingController edit) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2081,6 +2191,7 @@ class PageProduk extends State<produk> {
                 fontSize: 12,
               ),
               decoration: InputDecoration(
+                hintText: isi,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
@@ -2097,7 +2208,7 @@ class PageProduk extends State<produk> {
 
   Widget editFeld(String title, String value, TextEditingController edit) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2149,7 +2260,7 @@ class PageProduk extends State<produk> {
 
   Widget buildFormCaraPemakaian(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2188,7 +2299,7 @@ class PageProduk extends State<produk> {
   Widget buildFormCaraPemakaian2(
       String label, String value, TextEditingController text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2234,7 +2345,7 @@ class PageProduk extends State<produk> {
 
   Widget inputCaraPemakaian(String label, TextEditingController text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2253,7 +2364,7 @@ class PageProduk extends State<produk> {
               border: Border.all(color: ColorStyle.fill_stroke),
               borderRadius: BorderRadius.circular(8),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             alignment: Alignment.topLeft,
             child: TextField(
               controller: text,
@@ -2278,68 +2389,118 @@ class PageProduk extends State<produk> {
     );
   }
 
-  Widget inputImage(String label, TextEditingController text) {
+  Widget inputImage() {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              Text(
+                "Upload Gambar Kategori Obat",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
           ),
           SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
-            ),
-            decoration: BoxDecoration(
-              color: ColorStyle.fill_form,
-              border: Border.all(color: ColorStyle.fill_stroke),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            alignment: Alignment.topLeft,
-            child: TextField(
-              controller: text,
-              style: TextStyle(
-                color: ColorStyle.tulisan_form,
-                fontSize: 12,
-              ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: "Cara Pemakaian",
-                hintStyle: TextStyle(
-                  color: ColorStyle.tulisan_form,
-                  fontSize: 12,
+          InkWell(
+            onTap: () async {
+              final im.XFile? photo =
+                  await picker.pickImage(source: im.ImageSource.gallery);
+              if (photo != null) {
+                print("Berhasil pick photo");
+                setState(() {
+                  pickedImage = File(photo.path);
+                  uploadFile = true;
+                });
+                pickedImageByte = await photo.readAsBytes().whenComplete(() {
+                  setState(() {
+                    uploadFile = true;
+                  });
+                });
+              }
+            },
+            child: Container(
+                width: double.infinity,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: ColorStyle.fill_form,
                 ),
-              ),
-              maxLines: 10,
-              // biar turun kebawah
-            ),
+                child: DottedBorder(
+                    color: Colors.black,
+                    strokeWidth: 1,
+                    dashPattern: [14, 8],
+                    borderType: BorderType.RRect,
+                    // radius: Radius.circular(10),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: uploadFile == true
+                            ? Image.file(
+                                pickedImage!,
+                                height: 80, // Atur ukuran sesuai kebutuhan
+                                width: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : Column(
+                                children: [
+                                  Image.asset(
+                                    "images/upload_pict.png",
+                                    height: 50,
+                                    width: 50,
+                                  ),
+                                  Padding(padding: EdgeInsets.only(bottom: 8)),
+                                  Text(
+                                    "Click to Upload",
+                                    style: TextStyle(
+                                        color: ColorStyle.alert_ungu,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                  )
+                                ],
+                              ),
+                      ),
+                    ))),
           ),
         ],
       ),
     );
   }
 
-  Widget tanggalInput(String label, String hint, TextEditingController text) {
+  Widget tanggalEdit(String label, String hint, TextEditingController text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Container(
-            height: 45,
+            height: 35,
             decoration: BoxDecoration(
               border: Border.all(color: ColorStyle.fill_stroke),
               color: ColorStyle.fill_form,
               borderRadius: BorderRadius.circular(8),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Stack(
               alignment: Alignment.centerRight,
               children: [
@@ -2351,27 +2512,98 @@ class PageProduk extends State<produk> {
                   },
                   decoration: InputDecoration(
                     hintText: hint,
+                    contentPadding: EdgeInsets.only(left: 8, bottom: 17),
                     hintStyle: TextStyle(
                       color: ColorStyle.tulisan_form,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                     border: InputBorder.none,
                   ),
                 ),
-                InkWell(
-                  onTap: () {
-                    _selectedDate(context);
-                  },
-                  child: Icon(
-                    Icons.calendar_month_outlined,
-                    color: ColorStyle.tulisan_form,
-                    size: 24,
+                Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: () {
+                      _selectedDate(context);
+                    },
+                    child: Icon(
+                      Icons.calendar_month_outlined,
+                      color: ColorStyle.tulisan_form,
+                      size: 20,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          // const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget tanggalInput(String label, String hint, TextEditingController text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 35,
+            decoration: BoxDecoration(
+              border: Border.all(color: ColorStyle.fill_stroke),
+              color: ColorStyle.fill_form,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: [
+                TextFormField(
+                  readOnly: true,
+                  controller: text,
+                  onTap: () {
+                    _selectedDate(context);
+                  },
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    contentPadding: EdgeInsets.only(left: 8, bottom: 17),
+                    hintStyle: TextStyle(
+                      color: ColorStyle.tulisan_form,
+                      fontSize: 12,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: () {
+                      _selectedDate(context);
+                    },
+                    child: Icon(
+                      Icons.calendar_month_outlined,
+                      color: ColorStyle.tulisan_form,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // const SizedBox(height: 16),
         ],
       ),
     );
