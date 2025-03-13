@@ -39,15 +39,22 @@ export const actions: Actions = {
             const result_json = await result.json();
             console.log("Login response:", result_json);
 
-            if (result_json.message) {
+            if (result_json.message && !result_json.token) {
                 return fail(401, { message: result_json.message });
             }
 
-            cookies.set('session', JSON.stringify(result_json), {
+            const token = result_json.token || result_json.accessToken || result_json;
+            
+            const sessionData = {
+                ...result_json,
+                accessToken: typeof token === 'string' ? token : JSON.stringify(token)
+            };
+
+            cookies.set('session', JSON.stringify(sessionData), {
                 sameSite: 'strict',
                 path: '/',
-                httpOnly: false,
-                secure: false,
+                httpOnly: true,
+                secure: env.NODE_ENV === 'production',
                 maxAge: 60 * 60 * 24
             });
 

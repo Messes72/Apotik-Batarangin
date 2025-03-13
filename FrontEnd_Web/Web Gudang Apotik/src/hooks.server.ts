@@ -4,7 +4,13 @@ export const handle = async ({ event, resolve }: { event: any, resolve: any }) =
     const session = event.cookies.get('session');
 
     if (session) {
-        event.locals.session = JSON.parse(session);
+        const sessionData = JSON.parse(session);
+        event.locals.session = sessionData;
+        
+        if (sessionData.accessToken) {
+            event.locals.token = sessionData.accessToken;
+        }
+        
         if (event.url.pathname === '/login' || event.url.pathname === '/') {
             throw redirect(303, '/dashboard');
         }
