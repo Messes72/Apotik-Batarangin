@@ -98,16 +98,30 @@
 	}
 
 	function getSortedData() {
-		if (!data.data_table.data) return [];
+		if (!data || !data.data_table || !data.data_table.data) return [];
+
+		const safeData = data.data_table.data.map((item: any) => ({
+			...item,
+			created_at: item.created_at || new Date().toISOString(),
+			nama: item.nama || 'Unknown Product'
+		}));
 
 		if (!isFiltered) {
-			return [...data.data_table.data].sort((a, b) => {
-				return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			return [...safeData].sort((a, b) => {
+				try {
+					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+				} catch (e) {
+					return 0;
+				}
 			});
 		}
 
-		return [...data.data_table.data].sort((a, b) => {
-			return a.nama.localeCompare(b.nama);
+		return [...safeData].sort((a, b) => {
+			try {
+				return a.nama.localeCompare(b.nama);
+			} catch (e) {
+				return 0;
+			}
 		});
 	}
 
@@ -189,13 +203,19 @@
 				{#snippet children({ body })}
 					<div class="space-y-2">
 						<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
-							<span>{body.nama.split(' ')[1].slice(0, 10)}</span>
+							<span>
+								{#if body.nama && body.nama.split(' ').length > 1}
+									{body.nama.split(' ')[0].slice(0, 10)}
+								{:else if body.nama}
+									{body.nama.slice(0, 10)}
+								{/if}
+							</span>
 							<span class="font-inter text-[12px] leading-normal text-black">
-								{body.id}
+								{body.id_obat}
 							</span>
 							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-								Stock : {body.id}
-								{body.id}
+								Stock : {body.stock}
+								{body.id_satuan}
 							</span>
 						</div>
 					</div>

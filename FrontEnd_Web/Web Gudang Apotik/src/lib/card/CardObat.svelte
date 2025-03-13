@@ -35,9 +35,9 @@
 		<div
 			class="font-montserrat w-auto flex-shrink-0 items-center rounded-xl border border-[#D9D9D9] bg-white px-4 py-2 text-[20px]"
 		>
-			<div class="grid h-full grid-cols-4 gap-0">
+			<div class="grid h-full grid-cols-[20%_60%_20%] gap-0">
 				<!-- Grid pertama -->
-				<div class="flex w-16 items-center justify-start">
+				<div class="flex w-full items-center justify-start">
 					<svg xmlns="http://www.w3.org/2000/svg" width="59" height="59" fill="none"
 						><path
 							fill="#D9D9D9"
@@ -62,8 +62,6 @@
 						{/if}
 					</div>
 				</div>
-
-				<br />
 
 				<!-- Grid ketiga -->
 				<div class="flex h-full flex-col justify-between">
