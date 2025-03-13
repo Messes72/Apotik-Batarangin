@@ -8,6 +8,7 @@ declare global {
 				accessToken: string;
 				[key: string]: any;
 			} | null;
+			token?: string;
 		}
 		// interface PageData {}
 		// interface PageState {}

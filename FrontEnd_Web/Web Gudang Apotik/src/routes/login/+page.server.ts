@@ -22,7 +22,6 @@ export const actions: Actions = {
 
         const myHeaders = new Headers();
         myHeaders.append("x-api-key", "helopanda");
-        myHeaders.append("Authorization", "");
 
         const submitFormData = new FormData();
         submitFormData.append("username", username.toString());
@@ -39,15 +38,32 @@ export const actions: Actions = {
             const result_json = await result.json();
             console.log("Login response:", result_json);
 
-            if (result_json.message) {
-                return fail(401, { message: result_json.message });
+            if (!result.ok || (result_json.message && !result_json.token)) {
+                return fail(401, { message: result_json.message || 'Login gagal' });
             }
 
-            cookies.set('session', JSON.stringify(result_json), {
+            // Extract token safely, ensuring it's a string
+            let token = result_json.token || result_json.accessToken;
+            
+            // Memastikan token string
+            if (typeof token !== 'string' && token) {
+                token = JSON.stringify(token);
+            }
+            
+            if (!token) {
+                return fail(401, { message: 'Token tidak ditemukan dalam respon login' });
+            }
+
+            const sessionData = {
+                ...result_json,
+                accessToken: token
+            };
+
+            cookies.set('session', JSON.stringify(sessionData), {
                 sameSite: 'strict',
                 path: '/',
-                httpOnly: false,
-                secure: false,
+                httpOnly: true,
+                secure: env.NODE_ENV === 'production',
                 maxAge: 60 * 60 * 24
             });
 

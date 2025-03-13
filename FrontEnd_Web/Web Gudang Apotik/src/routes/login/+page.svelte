@@ -10,6 +10,7 @@
 	$inspect(page);
 </script>
 
+<title>Gudang - Login</title>
 <main class="relative min-h-screen w-full overflow-hidden">
 	<!-- Background Image -->
 	<img src={gambar_login} alt="gambar_login" class="absolute h-full w-[60%] object-cover" />
@@ -46,7 +47,7 @@
 				>
 					Selamat Datang!
 				</h1>
-				<div class="mb-7">
+				<div class="flex flex-col mb-7 gap-2">
 					<Input id="username" label="Username" placeholder="Enter Username" />
 					<Input type="password" id="password" label="Password" placeholder="Password" />
 				</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { gambar_logo } from '$lib';
 	import CardObat from '$lib/card/CardObat.svelte';
 	import Dropdown from '$lib/dropdown/Dropdown.svelte';
 	import Checkbox from '$lib/info/Checkbox.svelte';
@@ -97,16 +98,30 @@
 	}
 
 	function getSortedData() {
-		if (!data.data_table.data) return [];
+		if (!data || !data.data_table || !data.data_table.data) return [];
+
+		const safeData = data.data_table.data.map((item: any) => ({
+			...item,
+			created_at: item.created_at || new Date().toISOString(),
+			nama: item.nama || 'Unknown Product'
+		}));
 
 		if (!isFiltered) {
-			return [...data.data_table.data].sort((a, b) => {
-				return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+			return [...safeData].sort((a, b) => {
+				try {
+					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+				} catch (e) {
+					return 0;
+				}
 			});
 		}
 
-		return [...data.data_table.data].sort((a, b) => {
-			return a.nama.localeCompare(b.nama);
+		return [...safeData].sort((a, b) => {
+			try {
+				return a.nama.localeCompare(b.nama);
+			} catch (e) {
+				return 0;
+			}
 		});
 	}
 
@@ -123,11 +138,15 @@
 	$inspect(data);
 </script>
 
+<svelte:head>
+	<title>Gudang - Product</title>
+	<link href={gambar_logo} rel="icon" />
+</svelte:head>
+
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<title>Halaman Product</title>
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
@@ -138,7 +157,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Stock Opname</span>
+				<span class="ml-1 text-[16px]">Input Product</span>
 			</button>
 		</div>
 		<div class="ml-2 flex-1"><Search2 /></div>
@@ -184,13 +203,19 @@
 				{#snippet children({ body })}
 					<div class="space-y-2">
 						<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
-							<span>{body.nama.split(' ')[1].slice(0, 10)}</span>
+							<span>
+								{#if body.nama && body.nama.split(' ').length > 1}
+									{body.nama.split(' ')[0].slice(0, 10)}
+								{:else if body.nama}
+									{body.nama.slice(0, 10)}
+								{/if}
+							</span>
 							<span class="font-inter text-[12px] leading-normal text-black">
-								{body.id}
+								{body.id_obat}
 							</span>
 							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-								Stock : {body.id}
-								{body.id}
+								Stock : {body.stock}
+								{body.id_satuan}
 							</span>
 						</div>
 					</div>
@@ -741,7 +766,6 @@
 					<Detail label="Satuan" value="Tablet" />
 					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
 					<Detail label="Cara Pemakaian" value="1 kapsul sehari 2 kali" />
-					
 				</form>
 			</div>
 		</div>
