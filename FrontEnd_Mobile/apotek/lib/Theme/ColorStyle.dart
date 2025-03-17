@@ -20,8 +20,7 @@ class ColorStyle {
   static const text_hint = Color(0xff6E6E71);
   static const status_green = Color(0xff3EC210);
   static const status_red = Color(0xffFF3B30);
+  static const tulisan_hitam_filter = Color(0xff171717);
 }
 
-class TextStyleModel{
-  
-}
+class TextStyleModel {}

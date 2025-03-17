@@ -20,6 +20,8 @@ class produk extends StatefulWidget {
   @override
   State<produk> createState() => PageProduk();
 }
+bool _isChecked = true;
+String _currText = '';
 
 class PageProduk extends State<produk> {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
@@ -38,6 +40,14 @@ class PageProduk extends State<produk> {
     {"name": "< 5", "selected": false},
     {"name": "< 10", "selected": false},
   ];
+  final List<String> rowKategori = ["Obat Panas", "Obat Batuk", "Obat Flu"];
+  final List<String> rowSatuan = ["Strip", "Botol", "Pcs"];
+  
+  String? _selectedKategori;
+  String? _selectedSatuan;
+  String? _selectedKategoriEdit;
+  String? _selectedSatuanEdit;
+
 
   String? selectedSatuan;
   final TextEditingController minHargaController = TextEditingController();
@@ -702,15 +712,16 @@ class PageProduk extends State<produk> {
                                     nomorKartuController),
                                 editFeld("Nomor Batch", item.nomorBatch,
                                     nomorBatchController),
-                                editFeld("Kode", item.kode, kodeController),
-                                editFeld("Kategori", item.kategori,
-                                    kategoriController),
+                                editFeld("Kode Obat", item.kode, kodeController),
+                               dropdownKategoriEdit(item.kategori),
                                 editFeld("Nama Obat", item.namaObat,
                                     namaObatController),
-                                tanggalEdit("Kadaluarsa", DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa), kadaluarsaController),
-                                editFeld(
-                                    "Satuan", item.satuan, satuanController),
+                                tanggalEdit(
+                                    "Kadaluarsa",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa),
+                                    kadaluarsaController),
+                               dropdownSatuanEdit(item.satuan),
                                 editFeld("Jumlah Barang",
                                     item.jumlah.toString(), jumlahController),
                                 inputImage(),
@@ -741,13 +752,13 @@ class PageProduk extends State<produk> {
                                               nomorBatchController.text;
                                           item.kode = kodeController.text;
                                           item.kategori =
-                                              kategoriController.text;
+                                              _selectedKategoriEdit ?? item.kategori;
                                           item.namaObat =
                                               namaObatController.text;
                                           item.kadaluarsa =
                                               DateFormat('dd/MM/yyyy').parse(
                                                   kadaluarsaController.text);
-                                          item.satuan = satuanController.text;
+                                          item.satuan = _selectedSatuanEdit ?? item.satuan;
                                           item.jumlah =
                                               int.parse(jumlahController.text);
                                           item.caraPemakaian =
@@ -776,7 +787,7 @@ class PageProduk extends State<produk> {
                                               BorderRadius.circular(8),
                                         ),
                                       ),
-                                      child: const Text("SAVE",
+                                      child: const Text("SIMPAN",
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 11,
@@ -877,13 +888,13 @@ class PageProduk extends State<produk> {
                                         nomorKartu_text),
                                     inputField("Nomor Batch", "Nomor Batch",
                                         nomorBatch_text),
-                                    inputField("Kode", "Kode", kodeObat_text),
-                                    inputField(
-                                        "Kategori", "Kategori", kategori_text),
+                                    inputField("Kode Obat", "Kode", kodeObat_text),
+                                    dropdownKategori(),
                                     inputField("Nama Obat", "Nama Obat",
                                         namaObat_text),
                                     tanggalInput("Kadaluarsa", "DD/MM/YYYY",
                                         tanggalController),
+                                    dropdownSatuan(),
                                     inputField("Jumlah Barang", "Jumlah Barang",
                                         jumlahBarang_text),
                                     Padding(
@@ -1032,7 +1043,7 @@ class PageProduk extends State<produk> {
                                                   BorderRadius.circular(8),
                                             ),
                                           ),
-                                          child: const Text("SAVE",
+                                          child: const Text("KONFIRMASI",
                                               style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 11,
@@ -1139,24 +1150,48 @@ class PageProduk extends State<produk> {
                                   const EdgeInsets.only(left: 23, right: 23),
                               child: Container(
                                 height: 225,
-                                decoration: BoxDecoration(
-                                  color: ColorStyle.fill_form,
-                                  border:
-                                      Border.all(color: ColorStyle.fill_stroke),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                // decoration: BoxDecoration(
+                                //   color: ColorStyle.fill_form,
+                                //   border:
+                                //       Border.all(color: ColorStyle.fill_stroke),
+                                //   borderRadius: BorderRadius.circular(8),
+                                // ),
+                                // padding:
+                                //     const EdgeInsets.symmetric(horizontal: 12),
                                 alignment: Alignment.topLeft,
                                 child: TextField(
                                   controller: text2,
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
                                     hintText: "Alasan",
                                     hintStyle: TextStyle(
                                       color: ColorStyle.tulisan_form,
                                       fontSize: 14,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.fill_stroke,
+                                          width: 1), // Warna abu-abu
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+
+                                    // Border saat ditekan (fokus)
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: Colors.black,
+                                          width: 1), // Warna biru saat fokus
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+
+                                    // Border saat error
+                                    errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_red,
+                                          width: 1), // Warna merah jika error
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
                                   maxLines: 10,
@@ -1597,40 +1632,49 @@ class PageProduk extends State<produk> {
                     child: Container(
                       height: 40,
                       // width: 242,
-                      decoration: BoxDecoration(
-                        border:
-                            Border.all(color: ColorStyle.fill_stroke, width: 1),
-                        color: ColorStyle.fill_form,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        children: [
-                          Padding(padding: EdgeInsets.only(left: 8)),
-                          Icon(
-                            Icons.search_outlined,
-                            color: Color(0XFF1B1442),
-                            size: 30,
-                          ),
-                          Padding(padding: EdgeInsets.only(right: 8)),
-                          Expanded(
-                            child: TextField(
-                              controller: text,
-                              onChanged: filtering,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                // contentPadding: EdgeInsets.only(
-                                //     left: 8, bottom: 13),
-                                hintText: "Search",
-                                hintStyle: TextStyle(
-                                  color: ColorStyle.text_hint,
-                                  fontSize: 16,
-                                ),
-                                border: InputBorder.none,
-                              ),
+                      // decoration: BoxDecoration(
+                      //   border:
+                      //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+                      //   color: ColorStyle.fill_form,
+                      //   borderRadius: BorderRadius.circular(4),
+                      // ),
+                      child: TextField(
+                        controller: text,
+                        onChanged: filtering,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: ColorStyle.fill_form,
+
+                          // Menambahkan ikon di dalam TextField
+                          prefixIcon: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Icon(
+                              Icons.search_outlined,
+                              color: Color(0XFF1B1442),
+                              size: 30, // Sesuaikan ukuran ikon
                             ),
                           ),
-                          Padding(padding: EdgeInsets.only(right: 8))
-                        ],
+
+                          hintText: "Search",
+                          contentPadding: EdgeInsets.only(bottom: 12.5),
+                          hintStyle: TextStyle(
+                            color: ColorStyle.text_hint,
+                            fontSize: 16,
+                          ),
+
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: ColorStyle.fill_stroke, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -1749,7 +1793,9 @@ class PageProduk extends State<produk> {
                   Container(
                     height: 40,
                     child: ElevatedButton.icon(
-                      onPressed: () {},
+                      onPressed: () {
+                        filterDropdown();
+                      },
                       icon:
                           Icon(Icons.filter_alt, color: Colors.black, size: 22),
                       label: const Text("Filter",
@@ -2122,7 +2168,7 @@ class PageProduk extends State<produk> {
     );
   }
 
- Widget detailField(String title, String value) {
+  Widget detailField(String title, String value) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
@@ -2179,11 +2225,11 @@ class PageProduk extends State<produk> {
           Container(
             width: double.infinity,
             height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
             child: TextField(
               controller: edit,
               style: TextStyle(
@@ -2192,12 +2238,33 @@ class PageProduk extends State<produk> {
               ),
               decoration: InputDecoration(
                 hintText: isi,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
                 ),
-                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -2231,11 +2298,11 @@ class PageProduk extends State<produk> {
           Container(
             width: double.infinity,
             height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
             child: TextField(
               controller: edit,
               style: TextStyle(
@@ -2244,12 +2311,33 @@ class PageProduk extends State<produk> {
               ),
               decoration: InputDecoration(
                 hintText: value,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
                 ),
-                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
@@ -2313,12 +2401,12 @@ class PageProduk extends State<produk> {
             constraints: BoxConstraints(
               maxHeight: 150, // Batasi tinggi agar bisa di-scroll
             ),
-            decoration: BoxDecoration(
-              color: ColorStyle.fill_form,
-              border: Border.all(color: ColorStyle.fill_stroke),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            // decoration: BoxDecoration(
+            //   color: ColorStyle.fill_form,
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
+            // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             alignment: Alignment.topLeft,
             child: TextField(
               controller: text,
@@ -2327,11 +2415,32 @@ class PageProduk extends State<produk> {
                 fontSize: 12,
               ),
               decoration: InputDecoration(
-                border: InputBorder.none,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
                 hintText: "Cara Pemakaian",
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               maxLines: 10,
@@ -2359,12 +2468,12 @@ class PageProduk extends State<produk> {
             constraints: BoxConstraints(
               maxHeight: 150, // Batasi tinggi agar bisa di-scroll
             ),
-            decoration: BoxDecoration(
-              color: ColorStyle.fill_form,
-              border: Border.all(color: ColorStyle.fill_stroke),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            // decoration: BoxDecoration(
+            //   color: ColorStyle.fill_form,
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
+            // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             alignment: Alignment.topLeft,
             child: TextField(
               controller: text,
@@ -2373,11 +2482,32 @@ class PageProduk extends State<produk> {
                 fontSize: 12,
               ),
               decoration: InputDecoration(
-                border: InputBorder.none,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
                 hintText: "Cara Pemakaian",
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               maxLines: 10,
@@ -2483,7 +2613,9 @@ class PageProduk extends State<produk> {
         children: [
           Row(
             children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14)),
               Text(
                 " *",
                 style: TextStyle(
@@ -2542,7 +2674,7 @@ class PageProduk extends State<produk> {
     );
   }
 
-  Widget tanggalInput(String label, String hint, TextEditingController text) {
+ Widget tanggalInput(String label, String hint, TextEditingController text) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
@@ -2563,49 +2695,470 @@ class PageProduk extends State<produk> {
           const SizedBox(height: 8),
           Container(
             height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Stack(
-              alignment: Alignment.centerRight,
-              children: [
-                TextFormField(
-                  readOnly: true,
-                  controller: text,
-                  onTap: () {
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
+            // padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextFormField(
+              // readOnly: true,
+              controller: text,
+
+              // onTap: () {
+              //   _selectedDate(context);
+              // },
+              decoration: InputDecoration(
+                // isDense: true,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
+                suffixIcon: IconButton(
+                  onPressed: () {
                     _selectedDate(context);
                   },
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    contentPadding: EdgeInsets.only(left: 8, bottom: 17),
-                    hintStyle: TextStyle(
-                      color: ColorStyle.tulisan_form,
-                      fontSize: 12,
-                    ),
-                    border: InputBorder.none,
+                  icon: Icon(
+                    Icons.calendar_month_outlined,
+                    color: ColorStyle.tulisan_form,
+                    size: 24,
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () {
-                      _selectedDate(context);
-                    },
-                    child: Icon(
-                      Icons.calendar_month_outlined,
-                      color: ColorStyle.tulisan_form,
-                      size: 20,
-                    ),
-                  ),
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
                 ),
-              ],
+                // Border sebelum ditekan
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
           ),
-          // const SizedBox(height: 16),
         ],
       ),
     );
   }
+   Widget dropdownKategori() {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Kategori Obat",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedKategori,
+                hint: Text(
+                  "Pilih Kategori Obat",
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedKategori = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+Widget dropdownKategoriEdit(String isi) {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Kategori Obat",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedKategoriEdit,
+                hint: Text(
+                  isi,
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedKategoriEdit = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+  Widget dropdownSatuan() {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Satuan",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuan,
+                hint: Text(
+                  "Pilih Satuan",
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSatuan = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+Widget dropdownSatuanEdit(String isi) {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Satuan",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuanEdit,
+                hint: Text(
+                  isi,
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSatuanEdit = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+Widget filterDropdown(){
+  return Container(
+    width: 226,
+    child: Column(
+      children: [
+        Row(
+          children: [
+            Icon(Icons.filter_alt, color: ColorStyle.tulisan_hitam_filter, size: 20),
+            Text("Filter", style: TextStyle(fontWeight: FontWeight.bold, color: ColorStyle.tulisan_hitam_filter, fontSize: 15),),
+          ],
+        ),
+        Divider(),
+        Text("Kategori Obat"),
+        // Column(
+        //   children: 
+        //     rowKategori.map((v) => CheckboxListTile(
+        //       title: Text(v), value: _isChecked, onChanged: (val){
+        //       setState(() {
+        //         _isChecked = val;
+        //         if(val == true){
+        //           _currText = v;
+        //         }
+        //       });
+        //     },)).toList(),
+          
+        // )
+    
+    
+      ],
+    ),
+  );
+}
 }

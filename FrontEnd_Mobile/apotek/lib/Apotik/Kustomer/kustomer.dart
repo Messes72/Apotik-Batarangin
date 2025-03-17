@@ -6,17 +6,17 @@ import 'package:flutter/material.dart';
 import 'package:http/retry.dart';
 import 'package:intl/intl.dart';
 
-class PenerimaanBarang extends StatefulWidget {
+class KustomerApotek extends StatefulWidget {
   final VoidCallback toggleSidebar;
   final bool isExpanded;
-  const PenerimaanBarang(
+  const KustomerApotek(
       {super.key, required this.isExpanded, required this.toggleSidebar});
 
   @override
-  State<PenerimaanBarang> createState() => pagePenerimaan();
+  State<KustomerApotek> createState() => kustomerApotek();
 }
 
-class pagePenerimaan extends State<PenerimaanBarang>
+class kustomerApotek extends State<KustomerApotek>
     with SingleTickerProviderStateMixin {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];

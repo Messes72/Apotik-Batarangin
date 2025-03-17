@@ -21,10 +21,16 @@ class pagePembelian extends State<Pembeliaanbarang>
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];
   final List<String> rowStatus = ["Selesai", "Batal", "Proses"];
+  final List<String> rowKategori = ["Obat Panas", "Obat Batuk", "Obat Flu"];
+  final List<String> rowSatuan = ["Strip", "Botol", "Pcs"];
   String? _selectedStatus;
 
   String? selectedValue;
 
+  String? _selectedKategori;
+  String? _selectedSatuan;
+  String? _selectedKategoriEdit;
+  String? _selectedSatuanEdit;
   final _formKey = GlobalKey<FormState>();
 
   void onMenuPressed() {
@@ -38,6 +44,26 @@ class pagePembelian extends State<Pembeliaanbarang>
 
   var text3 = TextEditingController();
   var text4 = TextEditingController();
+
+  TextEditingController textController1 = TextEditingController();
+  TextEditingController textController2 = TextEditingController();
+  List<TextEditingController> isi = [];
+  List<TextEditingController> isi2 = [];
+
+  // untuk menambahkan input untuk barang
+
+  List<Widget> inputBarang = [];
+  void tambahInputForm() {
+    setState(() {
+      inputBarang.add(InputForm(
+          "Nama Obat",
+          "Nama Obat",
+          "Jumlah Barang yang Dipesan",
+          "Jumlah Barang yang Dipesan",
+          isi[inputBarang.length],
+          isi2[inputBarang.length]));
+    });
+  }
 
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
@@ -123,6 +149,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                           runSpacing: 16,
                           children: [
                             Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 detailField(
                                     "Tanggal Pemesanan",
@@ -133,7 +160,27 @@ class pagePembelian extends State<Pembeliaanbarang>
                                     DateFormat('dd/MM/yyyy')
                                         .format(item.kadaluarsa)),
                                 detailField("Nama Supplier", item.namaSupplier),
-                                Divider()
+                                SizedBox(
+                                  height: 15,
+                                ),
+                                Divider(),
+                                SizedBox(height: 10),
+
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 16, right: 16),
+                                  child: Text(
+                                    "Daftar Barang",
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                                SizedBox(height: 15),
+                                // hrs e di  loop
+                                DetailForm(
+                                    "Nama Obat",
+                                    item.nama,
+                                    "Jumlah Barang yang Dipesan",
+                                    "${item.stokBarang.toString()} ${item.satuan}")
 
                                 // detailField("Kode Obat", item.kode),
                                 // detailField(
@@ -392,211 +439,239 @@ class pagePembelian extends State<Pembeliaanbarang>
     showDialog(
       context: context,
       builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
+        return StatefulBuilder(builder: (context, setState2) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: ColorStyle.button_grey, width: 1))),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Input Data Pembelian Barang",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: ColorStyle.text_dalam_kolom,
+                child: Container(
+                  width: constraints.maxWidth *
+                      0.6, // Sesuaikan dengan ukuran layar
+                  height: constraints.maxHeight *
+                      0.9, // Batasi tinggi agar tidak terlalu besar
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: ColorStyle.text_dalam_kolom),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
+                            border: Border(
+                                bottom: BorderSide(
+                                    color: ColorStyle.button_grey, width: 1))),
+                        padding:
+                            const EdgeInsets.only(top: 8, left: 23, bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              children: [
-                                tanggalInput("Tanggal Pemesanan", "DD/MM/YYYY",
-                                    tanggalController),
-                                tanggalInput("Tanggal Penerimaan", "DD/MM/YYYY",
-                                    tanggalController),
-                                inputField("Nama Supplier", "Nama Supplier", nomorKartu_text),
-                                Divider(),
-                                Padding(padding: EdgeInsets.only(bottom: 16)),
-                                Row(
-                                  children: [
-                                    Padding(padding: EdgeInsets.only(left: 16)),
-                                    Text("Daftar Barang",
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            color: ColorStyle.tulisan_form)),
-                                    Spacer(),
-                                    SizedBox(
-                                      width: 120,
-                                      height: 30,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {},
-                                        icon: Icon(Icons.refresh,
-                                            color: ColorStyle.button_yellow,
-                                            size: 22),
-                                        label: const Text("Muat Ulang",
-                                            style: TextStyle(
-                                                color: ColorStyle.button_yellow,
-                                                fontSize: 12)),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 6),
-                                          backgroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              side: BorderSide(
-                                                  color: ColorStyle
-                                                      .button_yellow)),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(padding: EdgeInsets.only(left: 16)),
-                                    SizedBox(
-                                      width: 150,
-                                      height: 30,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {},
-                                        icon: Icon(Icons.add,
-                                            color: ColorStyle.text_dalam_kolom,
-                                            size: 22),
-                                        label: const Text("Tambah Barang",
-                                            style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_dalam_kolom,
-                                                fontSize: 12)),
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 6, horizontal: 2),
-                                          backgroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              side: BorderSide(
-                                                  color: ColorStyle
-                                                      .text_dalam_kolom)),
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                        padding: EdgeInsets.only(right: 16)),
-                                  ],
-                                ),
-                                Padding(padding: EdgeInsets.only(top: 16)),
-                                InputForm(
-                                    "Nama Obat",
-                                    "Nama Obat",
-                                    "Jumlah Barang yang Dipesan",
-                                    "Jumlah Barang yang Dipesan",
-                                    text3,
-                                    text4),
-                              ],
+                            Text(
+                              "Input Data Pembelian Barang",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: ColorStyle.text_dalam_kolom,
+                              ),
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16, right: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox(
-                                    width: 120,
-                                    height: 30,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        // _alertDone(item, "diedit");
-                                        _alertInput();
-                                        // _alertDone("diinput");
-                                        // _updateProduk(
-                                        //     item,
-                                        //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
-                                        //     kategoriController,
-                                        //     namaObatController,
-                                        //     kadaluarsaController,
-                                        //     satuanController,
-                                        //     jumlahController,
-                                        //     caraPemakaianController);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                      ),
-                                      child: const Text("SAVE",
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ),
-                                ],
+                              padding: const EdgeInsets.only(right: 23),
+                              child: IconButton(
+                                icon: Icon(Icons.close,
+                                    color: ColorStyle.text_dalam_kolom),
+                                onPressed: () => Navigator.pop(context),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
+                      SizedBox(height: 12),
 
-                    SizedBox(height: 16),
-                  ],
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: [
+                              Column(
+                                children: [
+                                  tanggalInput("Tanggal Pemesanan",
+                                      "DD/MM/YYYY", tanggalController),
+                                  tanggalInput2("Tanggal Penerimaan",
+                                      "DD/MM/YYYY", tanggalController),
+                                  inputField("Nama Supplier", "Nama Supplier",
+                                      nomorKartu_text),
+                                  Divider(),
+                                  Padding(padding: EdgeInsets.only(bottom: 16)),
+                                  Row(
+                                    children: [
+                                      Padding(
+                                          padding: EdgeInsets.only(left: 16)),
+                                      Text("Daftar Barang",
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              color: ColorStyle.tulisan_form)),
+                                      Spacer(),
+                                      SizedBox(
+                                        width: 120,
+                                        height: 30,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {},
+                                          icon: Icon(Icons.refresh,
+                                              color: ColorStyle.button_yellow,
+                                              size: 22),
+                                          label: const Text("Muat Ulang",
+                                              style: TextStyle(
+                                                  color:
+                                                      ColorStyle.button_yellow,
+                                                  fontSize: 12)),
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 6),
+                                            backgroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                side: BorderSide(
+                                                    color: ColorStyle
+                                                        .button_yellow)),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                          padding: EdgeInsets.only(left: 16)),
+                                      SizedBox(
+                                        width: 150,
+                                        height: 30,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            setState2(() {
+                                              TextEditingController isiNama =
+                                                  TextEditingController();
+                                              TextEditingController
+                                                  jumlahBarang =
+                                                  TextEditingController();
+
+                                              isi.add(isiNama);
+                                              isi2.add(jumlahBarang);
+
+                                              tambahInputForm();
+                                            });
+                                            print(inputBarang.length);
+                                          },
+                                          icon: Icon(Icons.add,
+                                              color:
+                                                  ColorStyle.text_dalam_kolom,
+                                              size: 22),
+                                          label: const Text("Tambah Barang",
+                                              style: TextStyle(
+                                                  color: ColorStyle
+                                                      .text_dalam_kolom,
+                                                  fontSize: 12)),
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 6, horizontal: 2),
+                                            backgroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                side: BorderSide(
+                                                    color: ColorStyle
+                                                        .text_dalam_kolom)),
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                          padding: EdgeInsets.only(right: 16)),
+                                    ],
+                                  ),
+                                  Padding(padding: EdgeInsets.only(top: 16)),
+                                  // Column(
+                                  //   children: inputBarang
+                                  // ),
+                                  Column(
+                                    children: [
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: inputBarang.length,
+                                        itemBuilder: (context, index) {
+                                          return inputBarang[index];
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 16, right: 16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    SizedBox(
+                                      width: 120,
+                                      height: 30,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          // _alertDone(item, "diedit");
+                                          _alertInput();
+                                          // _alertDone("diinput");
+                                          // _updateProduk(
+                                          //     item,
+                                          //     nomorKartuController,
+                                          //     nomorBatchController,
+                                          //     kodeController,
+                                          //     kategoriController,
+                                          //     namaObatController,
+                                          //     kadaluarsaController,
+                                          //     satuanController,
+                                          //     jumlahController,
+                                          //     caraPemakaianController);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 6),
+                                          backgroundColor:
+                                              ColorStyle.button_green,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: const Text("KONFIRMASI",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
+              );
+            },
+          );
+        });
       },
     );
   }
@@ -640,7 +715,7 @@ class pagePembelian extends State<Pembeliaanbarang>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Catatan Penerimaan Barang",
+                              "Catatan Pembelian Barang",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -680,24 +755,47 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   const EdgeInsets.only(left: 23, right: 23),
                               child: Container(
                                 height: 225,
-                                decoration: BoxDecoration(
-                                  color: ColorStyle.fill_form,
-                                  border:
-                                      Border.all(color: ColorStyle.fill_stroke),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                // decoration: BoxDecoration(
+                                //   color: ColorStyle.fill_form,
+                                //   border:
+                                //       Border.all(color: ColorStyle.fill_stroke),
+                                //   borderRadius: BorderRadius.circular(8),
+                                // ),
+                                // padding:
+                                //     const EdgeInsets.symmetric(horizontal: 12),
                                 alignment: Alignment.topLeft,
                                 child: TextField(
                                   controller: text2,
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
-                                    border: InputBorder.none,
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
                                     hintText: "Catatan",
                                     hintStyle: TextStyle(
                                       color: ColorStyle.tulisan_form,
                                       fontSize: 14,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.fill_stroke,
+                                          width: 1), // Warna abu-abu
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+
+                                    // Border saat ditekan (fokus)
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: Colors.black,
+                                          width: 1), // Warna biru saat fokus
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+
+                                    // Border saat error
+                                    errorBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.button_red,
+                                          width: 1), // Warna merah jika error
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
                                   maxLines: 10,
@@ -1078,6 +1176,29 @@ class pagePembelian extends State<Pembeliaanbarang>
   void initState() {
     // TODO: implement initState
     super.initState();
+    // setState(() {
+    //   inputBarang.add(InputForm(
+    //       "Nama Obat",
+    //       "Nama Obat",
+    //       "Jumlah Barang yang Dipesan",
+    //       "Jumlah Barang yang Dipesan",
+    //       textController1,
+    //       textController2));
+    //   inputBarang.add(InputForm(
+    //       "Nama Obat",
+    //       "Nama Obat",
+    //       "Jumlah Barang yang Dipesan",
+    //       "Jumlah Barang yang Dipesan",
+    //       textController1,
+    //       textController2));
+    //   inputBarang.add(InputForm(
+    //       "Nama Obat",
+    //       "Nama Obat",
+    //       "Jumlah Barang yang Dipesan",
+    //       "Jumlah Barang yang Dipesan",
+    //       textController1,
+    //       textController2));
+    // });
     filterData = List.from(_data);
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
@@ -1209,40 +1330,51 @@ class pagePembelian extends State<Pembeliaanbarang>
                               child: Container(
                                 height: 40,
                                 // width: 242,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: ColorStyle.fill_stroke, width: 1),
-                                  color: ColorStyle.fill_form,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Padding(padding: EdgeInsets.only(left: 8)),
-                                    Icon(
-                                      Icons.search_outlined,
-                                      color: Color(0XFF1B1442),
-                                      size: 30,
-                                    ),
-                                    Padding(padding: EdgeInsets.only(right: 8)),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: text,
-                                        onChanged: filtering,
-                                        decoration: InputDecoration(
-                                          isDense: true,
-                                          // contentPadding: EdgeInsets.only(
-                                          //     left: 8, bottom: 13),
-                                          hintText: "Search",
-                                          hintStyle: TextStyle(
-                                            color: ColorStyle.text_hint,
-                                            fontSize: 16,
-                                          ),
-                                          border: InputBorder.none,
-                                        ),
+                                // decoration: BoxDecoration(
+                                //   border: Border.all(
+                                //       color: ColorStyle.fill_stroke, width: 1),
+                                //   color: ColorStyle.fill_form,
+                                //   borderRadius: BorderRadius.circular(4),
+                                // ),
+                                child: TextField(
+                                  controller: text,
+                                  onChanged: filtering,
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
+
+                                    // Menambahkan ikon di dalam TextField
+                                    prefixIcon: Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 8, right: 8),
+                                      child: Icon(
+                                        Icons.search_outlined,
+                                        color: Color(0XFF1B1442),
+                                        size: 30, // Sesuaikan ukuran ikon
                                       ),
                                     ),
-                                    Padding(padding: EdgeInsets.only(right: 8))
-                                  ],
+                                    contentPadding:
+                                        EdgeInsets.only(left: 8, bottom: 12.5),
+                                    hintText: "Search",
+                                    hintStyle: TextStyle(
+                                      color: ColorStyle.text_hint,
+                                      fontSize: 16,
+                                    ),
+
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.fill_stroke,
+                                          width: 1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: Colors.black, width: 1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -1611,10 +1743,10 @@ class pagePembelian extends State<Pembeliaanbarang>
                                                                 size: 24,
                                                               ),
                                                               onPressed: () {
-                                                                _alertDelete(
-                                                                    item);
-                                                                // _modalKosongkanObat(
+                                                                // _alertDelete(
                                                                 //     item);
+                                                                _modalKosongkanObat(
+                                                                    item);
                                                               }),
                                                         ],
                                                       ),
@@ -1776,40 +1908,52 @@ class pagePembelian extends State<Pembeliaanbarang>
                               child: Container(
                                 height: 40,
                                 // width: 242,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: ColorStyle.fill_stroke, width: 1),
-                                  color: ColorStyle.fill_form,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Padding(padding: EdgeInsets.only(left: 8)),
-                                    Icon(
-                                      Icons.search_outlined,
-                                      color: Color(0XFF1B1442),
-                                      size: 30,
-                                    ),
-                                    Padding(padding: EdgeInsets.only(right: 8)),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: text,
-                                        onChanged: filtering,
-                                        decoration: InputDecoration(
-                                          isDense: true,
-                                          // contentPadding: EdgeInsets.only(
-                                          //     left: 8, bottom: 13),
-                                          hintText: "Search",
-                                          hintStyle: TextStyle(
-                                            color: ColorStyle.text_hint,
-                                            fontSize: 16,
-                                          ),
-                                          border: InputBorder.none,
-                                        ),
+                                // decoration: BoxDecoration(
+                                //   border: Border.all(
+                                //       color: ColorStyle.fill_stroke, width: 1),
+                                //   color: ColorStyle.fill_form,
+                                //   borderRadius: BorderRadius.circular(4),
+                                // ),
+                                child: TextField(
+                                  controller: text,
+                                  onChanged: filtering,
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    filled: true,
+                                    fillColor: ColorStyle.fill_form,
+
+                                    // Menambahkan ikon di dalam TextField
+                                    prefixIcon: Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 8, right: 8),
+                                      child: Icon(
+                                        Icons.search_outlined,
+                                        color: Color(0XFF1B1442),
+                                        size: 30, // Sesuaikan ukuran ikon
                                       ),
                                     ),
-                                    Padding(padding: EdgeInsets.only(right: 8))
-                                  ],
+                                    contentPadding:
+                                        EdgeInsets.only(left: 8, bottom: 12.5),
+
+                                    hintText: "Search",
+                                    hintStyle: TextStyle(
+                                      color: ColorStyle.text_hint,
+                                      fontSize: 16,
+                                    ),
+
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: ColorStyle.fill_stroke,
+                                          width: 1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                          color: Colors.black, width: 1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -2325,22 +2469,180 @@ class pagePembelian extends State<Pembeliaanbarang>
   Widget InputForm(String label1, String hint1, String label2, String hint2,
       TextEditingController edit, TextEditingController edit2) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
-      child: Row(
-        children: [
-          Expanded(child: inputField(label1, hint1, edit)),
-          const SizedBox(width: 4),
-          if (label2.isNotEmpty) Expanded(child: inputField(label2, hint2, edit2)),
-          Padding(padding: EdgeInsets.only(right: 4)),
-          Icon(Icons.delete_outline, color: ColorStyle.button_red)
-        ],
+      padding: EdgeInsets.only(bottom: 15),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Nama Obat",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        " *",
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ColorStyle.button_red),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 35,
+                    // decoration: BoxDecoration(
+                    //   border: Border.all(color: ColorStyle.fill_stroke),
+                    //   color: ColorStyle.fill_form,
+                    //   borderRadius: BorderRadius.circular(8),
+                    // ),
+                    child: TextField(
+                      onChanged: (value) {
+                        print(isi[0].text);
+                      },
+                      controller: edit,
+                      style: TextStyle(
+                        color: ColorStyle.tulisan_form,
+                        fontSize: 12,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: ColorStyle.fill_form,
+                        hintText: "Nama Obat",
+                        contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                        hintStyle: TextStyle(
+                          color: ColorStyle.tulisan_form,
+                          fontSize: 12,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: ColorStyle.fill_stroke,
+                              width: 1), // Warna abu-abu
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+
+                        // Border saat ditekan (fokus)
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 1), // Warna biru saat fokus
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+
+                        // Border saat error
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: ColorStyle.button_red,
+                              width: 1), // Warna merah jika error
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Jumlah Barang yang Dipesan",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        " *",
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ColorStyle.button_red),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        // Gunakan Expanded agar TextField tidak menyebabkan infinite width error
+                        child: Container(
+                          height: 35,
+                          // decoration: BoxDecoration(
+                          //   border: Border.all(color: ColorStyle.fill_stroke),
+                          //   color: ColorStyle.fill_form,
+                          //   borderRadius: BorderRadius.circular(8),
+                          // ),
+                          child: TextField(
+                            controller: edit2,
+                            style: TextStyle(
+                              color: ColorStyle.tulisan_form,
+                              fontSize: 12,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: ColorStyle.fill_form,
+                              hintText: "Jumlah Barang yang Dipesan",
+                              contentPadding:
+                                  EdgeInsets.only(left: 8, bottom: 12.5),
+                              hintStyle: TextStyle(
+                                color: ColorStyle.tulisan_form,
+                                fontSize: 12,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorStyle.fill_stroke,
+                                    width: 1), // Warna abu-abu
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              // Border saat ditekan (fokus)
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.black,
+                                    width: 1), // Warna biru saat fokus
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              // Border saat error
+                              errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorStyle.button_red,
+                                    width: 1), // Warna merah jika error
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      InkWell(
+                        onTap: () {},
+                        child: Icon(Icons.delete_outline,
+                            color: ColorStyle.button_red, size: 25),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget detailField(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2348,7 +2650,7 @@ class pagePembelian extends State<Pembeliaanbarang>
             title,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           Container(
             width: double.infinity,
             height: 35,
@@ -2366,6 +2668,78 @@ class pagePembelian extends State<Pembeliaanbarang>
             ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget DetailForm(String label1, String hint1, String label2, String hint2) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 15),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Nama Obat",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 35,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: ColorStyle.fill_stroke),
+                      color: ColorStyle.fill_form,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.only(left: 8, bottom: 8, top: 8),
+                      child: Text(
+                        hint1,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Jumlah Barang yang Dipesan",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 35,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: ColorStyle.fill_stroke),
+                      color: ColorStyle.fill_form,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.only(left: 8, bottom: 8, top: 8),
+                      child: Text(
+                        hint2,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2395,11 +2769,11 @@ class pagePembelian extends State<Pembeliaanbarang>
           Container(
             width: double.infinity,
             height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
             child: TextField(
               controller: edit,
               style: TextStyle(
@@ -2408,17 +2782,108 @@ class pagePembelian extends State<Pembeliaanbarang>
               ),
               decoration: InputDecoration(
                 hintText: isi,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
                 ),
-                border: InputBorder.none,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget inputField2(String title, String isi, TextEditingController edit) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          height: 35,
+          // decoration: BoxDecoration(
+          //   border: Border.all(color: ColorStyle.fill_stroke),
+          //   color: ColorStyle.fill_form,
+          //   borderRadius: BorderRadius.circular(8),
+          // ),
+          child: TextField(
+            controller: edit,
+            style: TextStyle(
+              color: ColorStyle.tulisan_form,
+              fontSize: 12,
+            ),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: ColorStyle.fill_form,
+              hintText: isi,
+              contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+              hintStyle: TextStyle(
+                color: ColorStyle.tulisan_form,
+                fontSize: 12,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                borderRadius: BorderRadius.circular(8),
+              ),
+
+              // Border saat ditekan (fokus)
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: Colors.black, width: 1), // Warna biru saat fokus
+                borderRadius: BorderRadius.circular(8),
+              ),
+
+              // Border saat error
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.button_red,
+                    width: 1), // Warna merah jika error
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -2660,48 +3125,165 @@ class pagePembelian extends State<Pembeliaanbarang>
           Row(
             children: [
               Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Container(
             height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Stack(
-              alignment: Alignment.centerRight,
-              children: [
-                TextFormField(
-                  readOnly: true,
-                  controller: text,
-                  onTap: () {
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
+            // padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextFormField(
+              // readOnly: true,
+              controller: text,
+
+              // onTap: () {
+              //   _selectedDate(context);
+              // },
+              decoration: InputDecoration(
+                // isDense: true,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
+                suffixIcon: IconButton(
+                  onPressed: () {
                     _selectedDate(context);
                   },
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.only(left: 2, bottom: 12.5),
-                    hintText: hint,
-                    hintStyle: TextStyle(
-                      color: ColorStyle.tulisan_form,
-                      fontSize: 12,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    _selectedDate(context);
-                  },
-                  child: Icon(
+                  icon: Icon(
                     Icons.calendar_month_outlined,
                     color: ColorStyle.tulisan_form,
                     size: 24,
                   ),
                 ),
-              ],
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+                // Border sebelum ditekan
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget tanggalInput2(String label, String hint, TextEditingController text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 35,
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
+            //   borderRadius: BorderRadius.circular(8),
+            // ),
+            // padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: TextFormField(
+              // readOnly: true,
+              controller: text,
+
+              // onTap: () {
+              //   _selectedDate(context);
+              // },
+              decoration: InputDecoration(
+                // isDense: true,
+                filled: true,
+                fillColor: ColorStyle.fill_form,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    _selectedDate(context);
+                  },
+                  icon: Icon(
+                    Icons.calendar_month_outlined,
+                    color: ColorStyle.tulisan_form,
+                    size: 24,
+                  ),
+                ),
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 12,
+                ),
+                // Border sebelum ditekan
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat ditekan (fokus)
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: Colors.black, width: 1), // Warna biru saat fokus
+                  borderRadius: BorderRadius.circular(8),
+                ),
+
+                // Border saat error
+                errorBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: ColorStyle.button_red,
+                      width: 1), // Warna merah jika error
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 2.04,
+          ),
+          Text(
+            "Ketik (-) jika tidak ada kepastian tanggal penerimaan",
+            style: TextStyle(fontSize: 10, color: ColorStyle.text_dalam_kolom),
           ),
           const SizedBox(height: 16),
         ],
@@ -2745,4 +3327,376 @@ class pagePembelian extends State<Pembeliaanbarang>
       ),
     );
   }
+   Widget dropdownKategori() {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Kategori Obat",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedKategori,
+                hint: Text(
+                  "Pilih Kategori Obat",
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedKategori = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+Widget dropdownKategoriEdit(String isi) {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Kategori Obat",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedKategoriEdit,
+                hint: Text(
+                  isi,
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedKategoriEdit = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+  Widget dropdownSatuan() {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Satuan",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuan,
+                hint: Text(
+                  "Pilih Satuan",
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSatuan = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
+Widget dropdownSatuanEdit(String isi) {
+  return Padding(
+    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Satuan",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              " *",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: ColorStyle.button_red),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuanEdit,
+                hint: Text(
+                  isi,
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSatuanEdit = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 }

@@ -6,17 +6,17 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class stokopname extends StatefulWidget {
+class TransaksiApotek extends StatefulWidget {
   final VoidCallback toggleSidebar;
   final bool isExpanded;
-  const stokopname(
+  const TransaksiApotek(
       {super.key, required this.isExpanded, required this.toggleSidebar});
 
   @override
-  State<stokopname> createState() => stokPage();
+  State<TransaksiApotek> createState() => stokPage();
 }
 
-class stokPage extends State<stokopname> {
+class stokPage extends State<TransaksiApotek> {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
 
   void onMenuPressed() {

@@ -160,12 +160,12 @@ class LoginPage extends State<Login> {
                               height: 44,
                               // width: 400,
                               width: double.infinity,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: ColorStyle.fill_stroke, width: 1),
-                                color: ColorStyle.fill_form,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                              // decoration: BoxDecoration(
+                              //   border: Border.all(
+                              //       color: ColorStyle.fill_stroke, width: 1),
+                              //   color: ColorStyle.fill_form,
+                              //   borderRadius: BorderRadius.circular(10),
+                              // ),
                               child: TextField(
                                 decoration: InputDecoration(
                                   // contentPadding: EdgeInsets.symmetric(
@@ -174,11 +174,34 @@ class LoginPage extends State<Login> {
                                       EdgeInsets.only(left: 8, bottom: 8),
 
                                   hintText: "Enter Email",
+                                  filled: true,
+                                  fillColor: ColorStyle.fill_form,
                                   hintStyle: TextStyle(
                                     color: ColorStyle.tulisan_form,
                                     fontSize: 18,
                                   ),
-                                  border: InputBorder.none,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.fill_stroke,
+                                        width: 1), // Warna abu-abu
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+
+                                  // Border saat ditekan (fokus)
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black,
+                                        width: 1), // Warna biru saat fokus
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+
+                                  // Border saat error
+                                  errorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.button_red,
+                                        width: 1), // Warna merah jika error
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               ),
                             ),
@@ -213,12 +236,12 @@ class LoginPage extends State<Login> {
                               height: 44,
                               width: double.infinity,
                               // width: 400,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: ColorStyle.fill_stroke, width: 1),
-                                color: ColorStyle.fill_form,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                              // decoration: BoxDecoration(
+                              //   border: Border.all(
+                              //       color: ColorStyle.fill_stroke, width: 1),
+                              //   color: ColorStyle.fill_form,
+                              //   borderRadius: BorderRadius.circular(10),
+                              // ),
                               child: TextField(
                                 obscureText: true,
                                 decoration: InputDecoration(
@@ -227,11 +250,34 @@ class LoginPage extends State<Login> {
                                   contentPadding:
                                       EdgeInsets.only(left: 8, bottom: 8),
                                   hintText: "Password",
+                                  filled: true,
+                                  fillColor: ColorStyle.fill_form,
                                   hintStyle: TextStyle(
                                     color: ColorStyle.tulisan_form,
                                     fontSize: 18,
                                   ),
-                                  border: InputBorder.none,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.fill_stroke,
+                                        width: 1), // Warna abu-abu
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+
+                                  // Border saat ditekan (fokus)
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black,
+                                        width: 1), // Warna biru saat fokus
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+
+                                  // Border saat error
+                                  errorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.button_red,
+                                        width: 1), // Warna merah jika error
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
                               ),
                             ),
