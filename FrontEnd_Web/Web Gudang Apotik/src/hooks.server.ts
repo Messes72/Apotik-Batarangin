@@ -4,15 +4,25 @@ export const handle = async ({ event, resolve }: { event: any, resolve: any }) =
     const session = event.cookies.get('session');
 
     if (session) {
-        const sessionData = JSON.parse(session);
-        event.locals.session = sessionData;
-        
-        if (sessionData.accessToken) {
-            event.locals.token = sessionData.accessToken;
-        }
-        
-        if (event.url.pathname === '/login' || event.url.pathname === '/') {
-            throw redirect(303, '/dashboard');
+        try {
+            const sessionData = JSON.parse(session);
+            event.locals.session = sessionData;
+            
+            // Check multiple possible token fields 
+            if (sessionData.accessToken) {
+                event.locals.token = sessionData.accessToken;
+            } else if (sessionData.jwttoken) {
+                event.locals.token = sessionData.jwttoken;
+            } else if (sessionData.token) {
+                event.locals.token = sessionData.token;
+            }
+            
+            if (event.url.pathname === '/login' || event.url.pathname === '/') {
+                throw redirect(303, '/dashboard');
+            }
+        } catch (e) {
+            // Invalid session - clear it
+            event.cookies.delete('session', { path: '/' });
         }
     } else if (event.url.pathname !== '/login' && event.url.pathname !== '/') {
         throw redirect(303, '/login');

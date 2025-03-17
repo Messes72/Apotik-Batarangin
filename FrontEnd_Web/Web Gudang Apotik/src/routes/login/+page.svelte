@@ -6,6 +6,7 @@
 	import Input from '$lib/info/inputEdit/Input.svelte';
 
 	let isLoading = $state(false);
+	let errorMessage = $state('');
 
 	$inspect(page);
 </script>
@@ -24,10 +25,12 @@
 			method="POST"
 			use:enhance={({ formData }) => {
 				isLoading = true;
+				errorMessage = '';
 				return async ({ result }) => {
 					isLoading = false;
 					if (result.type === 'failure') {
-						alert(result.data?.message || result.data?.error || 'Gagal login');
+						errorMessage = String(result.data?.message || result.data?.error || 'Gagal login');
+						console.error('Login error details:', result.data);
 					} else if (result.type === 'success') {
 						goto('/dashboard');
 					}
@@ -50,6 +53,9 @@
 				<div class="flex flex-col mb-7 gap-2">
 					<Input id="username" label="Username" placeholder="Enter Username" />
 					<Input type="password" id="password" label="Password" placeholder="Password" />
+					{#if errorMessage}
+						<div class="mt-2 text-red-500 text-sm">{errorMessage}</div>
+					{/if}
 				</div>
 				<button
 					type="submit"

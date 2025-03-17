@@ -2,6 +2,36 @@ import { env } from "$env/dynamic/private";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "../$types";
 
+/**
+ * Helper function to recursively search for token in any object structure
+ */
+function findTokenInResponse(obj: any): string | null {
+    if (!obj || typeof obj !== 'object') return null;
+    
+    // Direct token properties
+    const tokenProps = ['token', 'accessToken', 'access_token', 'jwt', 'auth_token', 'idToken', 'id_token', 'jwttoken'];
+    
+    // Check direct properties first
+    for (const prop of tokenProps) {
+        if (obj[prop] && (typeof obj[prop] === 'string' || typeof obj[prop] === 'object')) {
+            return typeof obj[prop] === 'string' ? obj[prop] : JSON.stringify(obj[prop]);
+        }
+    }
+    
+    // Check nested properties (go only one level deep)
+    for (const key in obj) {
+        if (obj[key] && typeof obj[key] === 'object') {
+            for (const prop of tokenProps) {
+                if (obj[key][prop] && (typeof obj[key][prop] === 'string' || typeof obj[key][prop] === 'object')) {
+                    return typeof obj[key][prop] === 'string' ? obj[key][prop] : JSON.stringify(obj[key][prop]);
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
 export const load: PageServerLoad = async ({ cookies }) => {
     const session = cookies.get('session');
     if (session) {
@@ -36,22 +66,24 @@ export const actions: Actions = {
             });
 
             const result_json = await result.json();
-            console.log("Login response:", result_json);
 
-            if (!result.ok || (result_json.message && !result_json.token)) {
-                return fail(401, { message: result_json.message || 'Login gagal' });
+            // First check if the response indicates failure
+            if (!result.ok) {
+                return fail(401, { message: result_json.message || 'Terjadi Kesalah Pada Server' });
             }
 
-            // Extract token safely, ensuring it's a string
-            let token = result_json.token || result_json.accessToken;
+            // Direct check for the jwttoken property that we know exists in the response
+            let token = result_json.jwttoken;
             
-            // Memastikan token string
-            if (typeof token !== 'string' && token) {
-                token = JSON.stringify(token);
+            // If not found, use the helper function to search more thoroughly
+            if (!token) {
+                token = findTokenInResponse(result_json);
             }
             
             if (!token) {
-                return fail(401, { message: 'Token tidak ditemukan dalam respon login' });
+                return fail(401, { 
+                    message: 'Token tidak ditemukan. Silakan hubungi administrator.'
+                });
             }
 
             const sessionData = {
@@ -69,8 +101,7 @@ export const actions: Actions = {
 
             return { success: true };
         } catch (error) {
-            console.error("Login error:", error);
-            return fail(500, { message: 'Terjadi kesalahan saat login' });
+            return fail(500, { message: 'Username atau Password Salah' });
         }
     }
 };
