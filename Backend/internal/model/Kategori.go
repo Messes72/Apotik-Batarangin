@@ -123,7 +123,7 @@ func AddKategori(ctx context.Context, kategori class.Kategori, idkaryawan string
 	return class.Response{Status: http.StatusOK, Message: "Berhasil menambahkan data Kategori"}, nil
 }
 
-func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan string) (class.Response, error) {
+func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan string, idkategori string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to database: %v\n", err)
@@ -138,20 +138,20 @@ func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan str
 	}
 
 	var exists bool //cek apakah ada id yg mau did delte itu
-	err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROm Kategori WHere id_kategori=? OR LOWER(nama)=? )`, kategori.IDKategori, kategori.Nama).Scan(&exists)
+	err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROm Kategori WHere id_kategori=? )`, idkategori).Scan(&exists)
 	if err != nil {
 		tx.Rollback()
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error checking Kategori existence"}, err
 
 	}
-	if exists {
+	if !exists {
 		tx.Rollback()
-		return class.Response{Status: http.StatusNotFound, Message: "Kategori sudah ada"}, nil
+		return class.Response{Status: http.StatusNotFound, Message: "Kategori tidak ditemukan"}, nil
 
 	}
 
-	statementupdate := `UPDATE Kategori SET id_depo = ? , nama = ? , catatan=? , updated_at= NOW(), updated_by= ?`
-	_, err = tx.ExecContext(ctx, statementupdate, kategori.IDDepo, kategori.Nama, kategori.Catatan, idkaryawan)
+	statementupdate := `UPDATE Kategori SET id_depo = ? , nama = ? , catatan=? , updated_at= NOW(), updated_by= ? WHERE id_kategori = ? WHERE deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, statementupdate, kategori.IDDepo, kategori.Nama, kategori.Catatan, idkaryawan, idkategori)
 	if err != nil {
 		tx.Rollback()
 		log.Println("error in update:", err)
@@ -166,4 +166,49 @@ func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan str
 	}
 
 	return class.Response{Status: http.StatusOK, Message: "Berhasil mengupdate data Kategori"}, nil
+}
+
+func DeleteKategori(ctx context.Context, idkaryawan string, iddelete string) (class.Response, error) {
+	con, err := db.DbConnection()
+	if err != nil {
+		log.Printf("Failed to connect to database: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
+	}
+	defer db.DbClose(con)
+
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start failed", Data: nil}, err
+	}
+
+	var exists bool //cek apakah ada id yg mau did delte itu
+	err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROm Kategori WHere id_kategori=? )`, iddelete).Scan(&exists)
+	if err != nil {
+		tx.Rollback()
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error checking Kategori existence"}, err
+
+	}
+	if !exists {
+		tx.Rollback()
+		return class.Response{Status: http.StatusNotFound, Message: "Kategori tidak ditemukan"}, nil
+
+	}
+
+	statementdelete := `UPDATE Kategori SET deleted_at = NOW(), deleted_by = ? WHERE id_kategori = ?`
+	_, err = tx.ExecContext(ctx, statementdelete, idkaryawan, iddelete)
+	if err != nil {
+		tx.Rollback()
+		log.Println("error in delete:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Delete data Kategori gagal"}, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return class.Response{Status: http.StatusInternalServerError, Message: "transaction commit error"}, err
+
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Berhasil menghapus data Kategori"}, nil
 }

@@ -115,27 +115,24 @@ type DetailKaryawan struct {
 	Catatan    string     `json:"catatan,omitempty" db:"catatan"`
 }
 
-type Obat struct {
-	ID          int        `json:"id"`
-	IDObat      string     `json:"id_obat"`
-	IDSatuan    string     `json:"id_satuan"`
-	IDDepo      string     `json:"id_depo"`
-	IDKartuStok string     `json:"id_kartustok"`
-	IDKategori  string     `json:"id_kategori"`
-	Nama        string     `json:"nama"`
-	HargaJual   uint       `json:"harga_jual"`
-	HargaBeli   uint       `json:"harga_beli"`
-	StokBarang  uint       `json:"stok_barang"`
-	Uprate      uint       `json:"uprate"`
-	NoBatch     string     `json:"no_batch"`
-	Kadaluarsa  string     `json:"kadaluarsa"`
-	CreatedAt   time.Time  `json:"created_at"`
-	CreatedBy   string     `json:"created_by"`
-	UpdatedBy   *string    `json:"updated_by,omitempty"`
-	DeletedBy   *string    `json:"deleted_by,omitempty"`
-	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
-	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
-	Catatan     *string    `json:"catatan,omitempty"`
+type ObatJadi struct {
+	ID             int        `db:"id" json:"id"`
+	IDObat         string     `db:"id_obat" json:"id_obat"`
+	IDSatuan       string     `db:"id_satuan" json:"id_satuan"`
+	IDKategori     string     `db:"id_kategori" json:"id_kategori"`
+	NamaObat       string     `db:"nama_obat" json:"nama_obat"`
+	HargaJual      float64    `db:"harga_jual" json:"harga_jual"`
+	HargaBeli      float64    `db:"harga_beli" json:"harga_beli"`
+	StokMinimum    uint       `db:"stok_minimun" json:"stok_minimun"`
+	Uprate         *float64   `db:"uprate" json:"uprate,omitempty"`
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+	CreatedBy      string     `db:"created_by" json:"created_by"`
+	UpdatedAt      *time.Time `db:"updated_at" json:"updated_at,omitempty"`
+	UpdatedBy      *string    `db:"updated_by" json:"updated_by,omitempty"`
+	DeletedAt      *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+	DeletedBy      *string    `db:"deleted_by" json:"deleted_by,omitempty"`
+	LinkGambarObat *string    `db:"link_gambar_obat" json:"link_gambar_obat,omitempty"`
+	Keterangan     *string    `db:"keterangan" json:"keterangan,omitempty"`
 }
 
 type Satuan struct {

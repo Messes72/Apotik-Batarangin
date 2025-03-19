@@ -10,6 +10,7 @@ import (
 func Init() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSMiddleware())
+	e.Static("/uploads", "uploads")
 
 	// e.Static("/uploads", "uploads")
 
@@ -61,6 +62,8 @@ func Init() *echo.Echo {
 	routeKategori.Use(middleware.JWTMiddleware)
 	routeKategori.GET("", controller.GetKategori)
 	routeKategori.POST("/create", controller.AddKategori)
+	routeKategori.PUT("/:id_kategori/edit", controller.UpdateKategori)
+	routeKategori.DELETE("/:id_kategori/delete", controller.DeleteKategori)
 
 	routesatuan := e.Group("/satuan")
 	routesatuan.Use(middleware.CheckAPIKey)
@@ -74,11 +77,10 @@ func Init() *echo.Echo {
 
 	routeProduk := e.Group("/product")
 	routeProduk.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
-	routeProduk.POST("/:id_kategori/create", controller.AddObat)
+	routeProduk.POST("/:id_kategori/:id_depo/create", controller.AddObat)
 	routeProduk.GET("/:id_kategori/info", controller.GetObat)
-	routeProduk.GET("/:id_kategori/:id_obat/info", controller.GetObat)
 	routeProduk.PUT("/:id_kategori/:id_obat/edit", controller.UpdateObat)
-	routeProduk.DELETE("/:id_kategori/:id_obat/delete", controller.DeleteObat)
+	routeProduk.DELETE("/:id_obat/delete", controller.DeleteObat)
 	return e
 
 }
