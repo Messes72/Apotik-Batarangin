@@ -330,7 +330,6 @@ CREATE TABLE satuan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_satuan VARCHAR(10) NOT NULL UNIQUE,
     nama_satuan VARCHAR(50) NOT NULL,
-    jumlah INT UNSIGNED NOT NULL,
     catatan VARCHAR(255),
     created_at DATETIME
 );
