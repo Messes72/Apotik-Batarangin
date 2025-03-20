@@ -16,8 +16,36 @@
 	import Pagination from '$lib/table/Pagination.svelte';
 	import Search from '$lib/table/Search.svelte';
 	import Search2 from '$lib/table/Search2.svelte';
+	import { onMount } from 'svelte';
 
 	const { data } = $props();
+	let isLoading = $state(true);
+	let showKapsul = $state(false);
+	let showButiran = $state(false);
+	let showTutup = $state(false);
+	let showSpin = $state(false);
+	let centerKapsul = $state(false);
+	let minTimeElapsed = $state(false);
+
+	function startLoadingAnimation() {
+		showKapsul = showButiran = showTutup = showSpin = centerKapsul = false;
+		setTimeout(() => {
+			showKapsul = showButiran = true;
+			setTimeout(() => {
+				showTutup = true;
+				setTimeout(() => {
+					centerKapsul = true;
+					setTimeout(() => showSpin = true, 200);
+				}, 770);
+			}, 1400);
+		}, 70);
+		
+		// Set durasi minimum 1 detik
+		minTimeElapsed = false;
+		setTimeout(() => {
+			minTimeElapsed = true;
+		}, 1000);
+	}
 
 	let isModalInputOpen = $state(false);
 	let isModalEditOpen = $state(false);
@@ -135,6 +163,28 @@
 		}
 	});
 
+	// Data loading effect
+	$effect(() => {
+		if (data && minTimeElapsed) {
+			// Hanya sembunyikan loading setelah data tersedia DAN waktu minimum telah berlalu
+			isLoading = false;
+		}
+	});
+
+	// Start animation on mount
+	onMount(() => {
+		// Set loading ke true di awal untuk menampilkan loading animation saat navigasi
+		if (!data) {
+			isLoading = true;
+			startLoadingAnimation();
+		} else {
+			isLoading = true;
+			startLoadingAnimation();
+		}
+		
+		return () => {};
+	});
+
 	$inspect(data);
 </script>
 
@@ -199,75 +249,77 @@
 	<!-- Card Obat -->
 	<div class="flex">
 		<div class="w-10/12 justify-start">
-			<CardObat card_data={sortedData}>
-				{#snippet children({ body })}
-					<div class="space-y-2">
-						<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
-							<span>
-								{#if body.nama && body.nama.split(' ').length > 1}
-									{body.nama.split(' ')[0].slice(0, 10)}
-								{:else if body.nama}
-									{body.nama.slice(0, 10)}
-								{/if}
-							</span>
-							<span class="font-inter text-[12px] leading-normal text-black">
-								{body.id_obat}
-							</span>
-							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-								Stock : {body.stock}
-								{body.id_satuan}
-							</span>
+			{#if !isLoading}
+				<CardObat card_data={sortedData}>
+					{#snippet children({ body })}
+						<div class="space-y-2">
+							<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
+								<span>
+									{#if body.nama_obat && body.nama_obat.split(' ').length > 1}
+										{body.nama_obat.split(' ')[0].slice(0, 10)}
+									{:else if body.nama_obat}
+										{body.nama_obat.slice(0, 10)}
+									{/if}
+								</span>
+								<span class="font-inter text-[12px] leading-normal text-black">
+									{body.id_obat}
+								</span>
+								<span class="font-inter mt-3 text-[12px] leading-normal text-black">
+									Stock : {body.stock}
+									{body.id_satuan}
+								</span>
+							</div>
 						</div>
-					</div>
-				{/snippet}
-				{#snippet actions({ body })}
-					<div class="py-1">
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalDetailOpen = true;
-							}}
-							><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
-								><path
-									stroke="#000"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width=".857"
-									d="M14.464 8.571v4.822a1.071 1.071 0 0 1-1.071 1.071H1.607a1.071 1.071 0 0 1-1.071-1.071V1.607A1.071 1.071 0 0 1 1.607.536H6.43m4.285 0h3.75m0 0v3.75m0-3.75L7.5 7.5"
-								/></svg
+					{/snippet}
+					{#snippet actions({ body })}
+						<div class="py-1">
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								on:click={() => {
+									isModalDetailOpen = true;
+								}}
+								><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+									><path
+										stroke="#000"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width=".857"
+										d="M14.464 8.571v4.822a1.071 1.071 0 0 1-1.071 1.071H1.607a1.071 1.071 0 0 1-1.071-1.071V1.607A1.071 1.071 0 0 1 1.607.536H6.43m4.285 0h3.75m0 0v3.75m0-3.75L7.5 7.5"
+									/></svg
+								>
+								<span class="ml-2 text-black">Lihat Data Kategori</span>
+							</button>
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								on:click={() => {
+									isModalEditOpen = true;
+								}}
+								><svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
+									><path
+										fill="#000"
+										d="M2.167 13.333h1.05l8.531-8.53-1.05-1.051-8.531 8.53v1.051Zm-.497 1.25a.729.729 0 0 1-.537-.216.729.729 0 0 1-.216-.537v-1.444a1.501 1.501 0 0 1 .44-1.063L11.908.777c.126-.115.265-.203.417-.266a1.25 1.25 0 0 1 .48-.093c.166 0 .328.03.485.089.156.059.295.153.416.283l1.017 1.03c.13.12.222.26.277.417a1.416 1.416 0 0 1-.003.951 1.182 1.182 0 0 1-.274.417L4.176 14.144a1.502 1.502 0 0 1-1.062.44H1.67Zm9.544-10.296-.517-.535 1.051 1.05-.534-.515Z"
+									/></svg
+								>
+								<span class="ml-2 text-black">Edit Data Kategori</span>
+							</button>
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
+								on:click={() => {
+									isModalAlasanOpen = true;
+								}}
 							>
-							<span class="ml-2 text-black">Lihat Data Kategori</span>
-						</button>
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalEditOpen = true;
-							}}
-							><svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
-								><path
-									fill="#000"
-									d="M2.167 13.333h1.05l8.531-8.53-1.05-1.051-8.531 8.53v1.051Zm-.497 1.25a.729.729 0 0 1-.537-.216.729.729 0 0 1-.216-.537v-1.444a1.501 1.501 0 0 1 .44-1.063L11.908.777c.126-.115.265-.203.417-.266a1.25 1.25 0 0 1 .48-.093c.166 0 .328.03.485.089.156.059.295.153.416.283l1.017 1.03c.13.12.222.26.277.417a1.416 1.416 0 0 1-.003.951 1.182 1.182 0 0 1-.274.417L4.176 14.144a1.502 1.502 0 0 1-1.062.44H1.67Zm9.544-10.296-.517-.535 1.051 1.05-.534-.515Z"
-								/></svg
-							>
-							<span class="ml-2 text-black">Edit Data Kategori</span>
-						</button>
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalAlasanOpen = true;
-							}}
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
-								><path
-									fill="#000"
-									d="M3.09 14.583a1.45 1.45 0 0 1-1.064-.442 1.45 1.45 0 0 1-.443-1.064V2.5h-.208a.605.605 0 0 1-.445-.18.605.605 0 0 1-.18-.445c0-.177.06-.326.18-.446s.268-.179.445-.179H4.5a.71.71 0 0 1 .216-.522.71.71 0 0 1 .521-.215h3.526a.71.71 0 0 1 .521.215.71.71 0 0 1 .216.522h3.125c.177 0 .325.06.445.18s.18.268.18.445-.06.326-.18.445a.605.605 0 0 1-.445.18h-.208v10.577c0 .414-.148.769-.443 1.064a1.45 1.45 0 0 1-1.064.442H3.09ZM11.167 2.5H2.833v10.577a.25.25 0 0 0 .072.184.25.25 0 0 0 .185.072h7.82a.25.25 0 0 0 .184-.072.25.25 0 0 0 .073-.184V2.5Zm-5.705 9.167c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Zm3.077 0c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Z"
-								/></svg
-							>
-							<span class="ml-2 text-black">Hapus</span>
-						</button>
-					</div>
-				{/snippet}
-			</CardObat>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
+									><path
+										fill="#000"
+										d="M3.09 14.583a1.45 1.45 0 0 1-1.064-.442 1.45 1.45 0 0 1-.443-1.064V2.5h-.208a.605.605 0 0 1-.445-.18.605.605 0 0 1-.18-.445c0-.177.06-.326.18-.446s.268-.179.445-.179H4.5a.71.71 0 0 1 .216-.522.71.71 0 0 1 .521-.215h3.526a.71.71 0 0 1 .521.215.71.71 0 0 1 .216.522h3.125c.177 0 .325.06.445.18s.18.268.18.445-.06.326-.18.445a.605.605 0 0 1-.445.18h-.208v10.577c0 .414-.148.769-.443 1.064a1.45 1.45 0 0 1-1.064.442H3.09ZM11.167 2.5H2.833v10.577a.25.25 0 0 0 .072.184.25.25 0 0 0 .185.072h7.82a.25.25 0 0 0 .184-.072.25.25 0 0 0 .073-.184V2.5Zm-5.705 9.167c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Zm3.077 0c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Z"
+									/></svg
+								>
+								<span class="ml-2 text-black">Hapus</span>
+							</button>
+						</div>
+					{/snippet}
+				</CardObat>
+			{/if}
 		</div>
 		<div class="flex w-2/12 flex-col gap-2 px-8">
 			<div class="justify flex">
@@ -412,12 +464,6 @@
 	<div class="mt-4 flex justify-end">
 		<Pagination total_content={data.data_table.total_content} />
 	</div>
-	<!-- <div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
-		<div class="mb-8 flex items-center justify-between px-2">
-			<Pagination total_content={data.data_table.total_content} />
-		</div>
-
-	</div> -->
 	{#if isModalInputOpen}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
@@ -779,7 +825,211 @@
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>
 
+{#if isLoading}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
+		<div class="container">
+			<div class="butiran-container">
+				{#if showButiran}
+					<div class="butiran butiran-1"></div>
+					<div class="butiran butiran-2"></div>
+					<div class="butiran butiran-3"></div>
+				{/if}
+			</div>
+			<div class="kapsul-wrapper" class:spin={showSpin} class:centered={centerKapsul}>
+				{#if showKapsul}
+					<div class="kapsul"></div>
+				{/if}
+				{#if showTutup}
+					<div class="kapsul-tutup"></div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
+
 <style>
+	.container {
+		position: relative;
+		width: 192px;
+		height: 224px;
+		image-rendering: pixelated;
+	}
+
+	.butiran-container {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	.kapsul-wrapper {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		transition: transform 0.3s steps(5);
+	}
+
+	.kapsul-wrapper.centered {
+		transform: translateY(-17%);
+	}
+
+	.kapsul-wrapper.spin {
+		animation: spin 1.4s steps(8) infinite;
+		transform-origin: center 67%;
+	}
+
+	.kapsul-wrapper.centered.spin {
+		animation: spin-centered 1.4s steps(8) infinite;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes spin-centered {
+		0% {
+			transform: translateY(-17%) rotate(0deg);
+		}
+		100% {
+			transform: translateY(-17%) rotate(360deg);
+		}
+	}
+
+	.kapsul {
+		width: 58px;
+		height: 77px;
+		border: 3px solid #000;
+		border-radius: 13px 13px 38px 38px;
+		background: #f00;
+		position: absolute;
+		left: 50%;
+		top: 100%;
+		transform: translateX(-50%) translateY(-100%);
+		box-shadow: inset -13px 0 0 0 #c00;
+	}
+
+	.butiran {
+		position: absolute;
+		margin-top: 65%;
+		left: 53%;
+		transform: translateX(-53%);
+		width: 6px;
+		height: 6px;
+		background: #fff;
+		border: 2px solid #000;
+		border-radius: 2px;
+	}
+
+	.butiran-1 {
+		animation: jatuhLuar-1 1.4s steps(10);
+		animation-fill-mode: forwards;
+	}
+
+	.butiran-2 {
+		animation: jatuhLuar-2 1.4s steps(10);
+		margin-top: 57%;
+		left: 44%;
+		transform: rotateX(-44%);
+		animation-delay: 0.42s;
+		animation-fill-mode: forwards;
+	}
+
+	.butiran-3 {
+		animation: jatuhLuar-3 1.4s steps(10);
+		margin-top: 53%;
+		left: 56%;
+		transform: translateX(-56%);
+		animation-delay: 0.84s;
+		animation-fill-mode: forwards;
+	}
+
+	@keyframes jatuhLuar-1 {
+		0% {
+			transform: translate(-54%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-75%, 30px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 30px);
+			opacity: 0;
+		}
+	}
+
+	@keyframes jatuhLuar-2 {
+		0% {
+			transform: translate(-50%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-76%, 52px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 52px);
+			opacity: 0;
+		}
+	}
+
+	@keyframes jatuhLuar-3 {
+		0% {
+			transform: translate(-56%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-75%, 70px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 70px);
+			opacity: 0;
+		}
+	}
+
+	.kapsul-tutup {
+		width: 58px;
+		height: 77px;
+		border: 3px solid #000;
+		border-radius: 38px 38px 13px 13px;
+		background: #fff;
+		position: absolute;
+		top: 0;
+		left: 100%;
+		transform: translateX(-100%) rotate(35deg);
+		animation: kapsul-tutup 0.77s steps(6) forwards;
+		animation-fill-mode: forwards;
+		box-shadow: inset -13px 0 0 0 #eee;
+	}
+
+	@keyframes kapsul-tutup {
+		0% {
+			top: 0;
+			left: 100%;
+			transform: translateX(-100%) rotate(35deg);
+		}
+		100% {
+			top: 34%;
+			left: 50%;
+			transform: translateX(-50%) rotate(0deg);
+		}
+	}
+
 	select option {
 		color: #000000;
 	}

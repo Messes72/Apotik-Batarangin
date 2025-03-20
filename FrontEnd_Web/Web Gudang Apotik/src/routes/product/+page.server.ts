@@ -1,6 +1,6 @@
 import { env } from '$env/dynamic/private';
-import { error } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { error, fail } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 import { fetchWithAuth } from '$lib/api';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 	const pathSegments = url.pathname.split('/');
 	const categoryId = pathSegments[pathSegments.length - 1] || 'KAT001';
 	
-	const apiUrl = `${env.BASE_URL3}/product/${categoryId}/info?page=${page}&page_size=${page_size}&jenis=${jenis}`;
+	const apiUrl = `${env.BASE_URL3}/product/${categoryId}/info`;
 
 	try {
 		console.log('Fetching product data from:', apiUrl);
@@ -61,5 +61,74 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 				total_content: 0
 			}
 		};
+	}
+};
+
+export const actions: Actions = {
+	createProduct: async ({ request, fetch, locals }) => {
+		try {
+			const formData = await request.formData();
+			
+			// Validasi field yang diperlukan
+			const requiredFields = ['nama_obat', 'id_satuan', 'harga_jual', 'harga_beli'];
+			for (const field of requiredFields) {
+				if (!formData.get(field)) {
+					return fail(400, { 
+						success: false, 
+						message: `Field ${field} is required` 
+					});
+				}
+			}
+			
+			// Cek apakah ada file gambar
+			const imageFile = formData.get('image') as File;
+			if (!imageFile || imageFile.size === 0) {
+				return fail(400, { 
+					success: false, 
+					message: 'Image file is required' 
+				});
+			}
+			
+			// Tambahkan categoryId untuk URL API
+			const categoryId = formData.get('categoryId') || 'KAT002';
+			
+			// Kirim data ke API
+			const apiUrl = `${env.BASE_URL3}/product/${categoryId}/10/create`;
+			
+			const headers = new Headers();
+			headers.append('x-api-key', 'helopanda');
+			
+			// Gunakan token yang sudah ada di locals
+			if (locals.token) {
+				headers.append('Authorization', locals.token);
+			}
+			
+			const response = await fetch(apiUrl, {
+				method: 'POST',
+				headers,
+				body: formData,
+				redirect: 'follow'
+			});
+			
+			const result = await response.json();
+			
+			if (!response.ok) {
+				return fail(response.status, { 
+					success: false, 
+					message: result.message || 'Error creating product' 
+				});
+			}
+			
+			return { 
+				success: true, 
+				data: result 
+			};
+		} catch (err) {
+			console.error('Create Product Error:', err);
+			return fail(500, { 
+				success: false, 
+				message: err instanceof Error ? err.message : 'Unknown error occurred' 
+			});
+		}
 	}
 };
