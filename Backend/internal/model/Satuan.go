@@ -22,7 +22,7 @@ func GetSatuan(ctx context.Context) (class.Response, error) {
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start failed", Data: nil}, err
 	}
 
-	statement := `SELECT id_satuan, nama_satuan,catatan, created_at FROM Satuan `
+	statement := `SELECT id_satuan, nama_satuan,catatan, created_at FROM satuan `
 
 	rows, err := tx.QueryContext(ctx, statement)
 
