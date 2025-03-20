@@ -35,7 +35,7 @@ class _SideBarPage extends State<Sidebarcoba2> {
     super.initState();
     isExpanded = widget.isExpanded;
     screenApp = [
-      produk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
+      PageProduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
       stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
       PenerimaanBarang(
           isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2

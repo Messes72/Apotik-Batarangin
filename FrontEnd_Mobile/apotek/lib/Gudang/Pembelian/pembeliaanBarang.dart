@@ -47,6 +47,7 @@ class pagePembelian extends State<Pembeliaanbarang>
 
   TextEditingController textController1 = TextEditingController();
   TextEditingController textController2 = TextEditingController();
+
   List<TextEditingController> isi = [];
   List<TextEditingController> isi2 = [];
 
@@ -55,15 +56,40 @@ class pagePembelian extends State<Pembeliaanbarang>
   List<Widget> inputBarang = [];
   void tambahInputForm() {
     setState(() {
+      TextEditingController isiNama = TextEditingController();
+      TextEditingController jumlahBarang = TextEditingController();
+
+      isi.add(isiNama);
+      isi2.add(jumlahBarang);
+      int index = isi.length - 1; // Dapatkan indeks terbaru
       inputBarang.add(InputForm(
           "Nama Obat",
           "Nama Obat",
           "Jumlah Barang yang Dipesan",
           "Jumlah Barang yang Dipesan",
           isi[inputBarang.length],
-          isi2[inputBarang.length]));
+          isi2[inputBarang.length], () => hapusInputForm(index),));
     });
   }
+
+  void muatUlang() {
+    setState(() {
+      isi.clear();
+      isi2.clear();
+      inputBarang.clear();
+      tambahInputForm();
+    });
+  }
+
+  void hapusInputForm(int index) {
+  setState(() {
+    if (index < inputBarang.length) {
+      inputBarang.removeAt(index);
+      isi.removeAt(index);
+      isi2.removeAt(index);
+    }
+  });
+}
 
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
@@ -402,16 +428,18 @@ class pagePembelian extends State<Pembeliaanbarang>
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.button_green,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("SAVE",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.button_green,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -519,14 +547,19 @@ class pagePembelian extends State<Pembeliaanbarang>
                                           padding: EdgeInsets.only(left: 16)),
                                       Text("Daftar Barang",
                                           style: TextStyle(
-                                              fontSize: 16,
-                                              color: ColorStyle.tulisan_form)),
+                                              fontSize: 18,
+                                              color: ColorStyle.tulisan_form,
+                                              fontWeight: FontWeight.bold)),
                                       Spacer(),
                                       SizedBox(
                                         width: 120,
                                         height: 30,
                                         child: ElevatedButton.icon(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            setState2(() {
+                                              muatUlang();
+                                            });
+                                          },
                                           icon: Icon(Icons.refresh,
                                               color: ColorStyle.button_yellow,
                                               size: 22),
@@ -534,7 +567,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                               style: TextStyle(
                                                   color:
                                                       ColorStyle.button_yellow,
-                                                  fontSize: 12)),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold)),
                                           style: ElevatedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 6),
@@ -556,15 +590,6 @@ class pagePembelian extends State<Pembeliaanbarang>
                                         child: ElevatedButton.icon(
                                           onPressed: () {
                                             setState2(() {
-                                              TextEditingController isiNama =
-                                                  TextEditingController();
-                                              TextEditingController
-                                                  jumlahBarang =
-                                                  TextEditingController();
-
-                                              isi.add(isiNama);
-                                              isi2.add(jumlahBarang);
-
                                               tambahInputForm();
                                             });
                                             print(inputBarang.length);
@@ -577,7 +602,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                               style: TextStyle(
                                                   color: ColorStyle
                                                       .text_dalam_kolom,
-                                                  fontSize: 12)),
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold)),
                                           style: ElevatedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 6, horizontal: 2),
@@ -642,16 +668,18 @@ class pagePembelian extends State<Pembeliaanbarang>
                                         style: ElevatedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
                                               vertical: 6),
-                                          backgroundColor:
-                                              ColorStyle.button_green,
+                                          backgroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(8),
+                                            side: const BorderSide(
+                                                color: ColorStyle.button_green,
+                                                width: 1),
                                           ),
                                         ),
                                         child: const Text("KONFIRMASI",
                                             style: TextStyle(
-                                                color: Colors.white,
+                                                color: ColorStyle.button_green,
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.bold)),
                                       ),
@@ -828,16 +856,18 @@ class pagePembelian extends State<Pembeliaanbarang>
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.primary,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("KONFIRMASI",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.primary,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -942,15 +972,17 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   text2.clear();
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.button_red,
+                                  backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                        color: ColorStyle.button_red, width: 1),
                                   ),
                                 ),
                                 child: const Text(
                                   "Iya, hapus",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: ColorStyle.button_red,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1051,15 +1083,18 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   _alertDone("diinput");
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.button_red,
+                                  backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                        color: ColorStyle.button_yellow,
+                                        width: 1),
                                   ),
                                 ),
                                 child: const Text(
                                   "Iya, input",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: ColorStyle.button_yellow,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1176,6 +1211,7 @@ class pagePembelian extends State<Pembeliaanbarang>
   void initState() {
     // TODO: implement initState
     super.initState();
+    tambahInputForm();
     // setState(() {
     //   inputBarang.add(InputForm(
     //       "Nama Obat",
@@ -1316,7 +1352,8 @@ class pagePembelian extends State<Pembeliaanbarang>
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 16)),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.button_green,
+                                  backgroundColor:
+                                      ColorStyle.hover.withOpacity(0.7),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(5),
                                   ),
@@ -2467,7 +2504,7 @@ class pagePembelian extends State<Pembeliaanbarang>
   }
 
   Widget InputForm(String label1, String hint1, String label2, String hint2,
-      TextEditingController edit, TextEditingController edit2) {
+      TextEditingController edit, TextEditingController edit2,VoidCallback onDelete ) {
     return Padding(
       padding: EdgeInsets.only(bottom: 15),
       child: Padding(
@@ -2625,7 +2662,9 @@ class pagePembelian extends State<Pembeliaanbarang>
                       ),
                       SizedBox(width: 10),
                       InkWell(
-                        onTap: () {},
+                        onTap: () {
+                          onDelete;
+                        },
                         child: Icon(Icons.delete_outline,
                             color: ColorStyle.button_red, size: 25),
                       )
@@ -3327,376 +3366,388 @@ class pagePembelian extends State<Pembeliaanbarang>
       ),
     );
   }
-   Widget dropdownKategori() {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Kategori Obat",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedKategori,
-                hint: Text(
-                  "Pilih Kategori Obat",
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowKategori
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedKategori = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
 
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+  Widget dropdownKategori() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Kategori Obat",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
-Widget dropdownKategoriEdit(String isi) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Kategori Obat",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedKategoriEdit,
-                hint: Text(
-                  isi,
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowKategori
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedKategoriEdit = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedKategori,
+                  hint: Text(
+                    "Pilih Kategori Obat",
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowKategori
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedKategori = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget dropdownKategoriEdit(String isi) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Kategori Obat",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedKategoriEdit,
+                  hint: Text(
+                    isi,
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowKategori
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedKategoriEdit = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget dropdownSatuan() {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Satuan",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedSatuan,
-                hint: Text(
-                  "Pilih Satuan",
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowSatuan
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSatuan = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Satuan",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
-Widget dropdownSatuanEdit(String isi) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Satuan",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedSatuanEdit,
-                hint: Text(
-                  isi,
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowSatuan
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSatuanEdit = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedSatuan,
+                  hint: Text(
+                    "Pilih Satuan",
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowSatuan
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSatuan = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget dropdownSatuanEdit(String isi) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Satuan",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedSatuanEdit,
+                  hint: Text(
+                    isi,
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowSatuan
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSatuanEdit = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }
