@@ -114,10 +114,10 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 	if idget != "" { //get data sebuah obat
 		var obat class.ObatJadi
 
-		queryoneobat := `SELECT id_obat, id_satuan, id_kategori,nama_obat,harga_jual, harga_beli,stok_minimum,uprate,created_at,updated_at,link_gambar_obat, keterangan 
-				  FROM obat_jadi WHERE id_obat = ? AND deleted_at IS NULL`
+		queryoneobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.id_obat = ? AND o.deleted_at IS NULL`
 		err := con.QueryRowContext(ctx, queryoneobat, idget).Scan(&obat.IDObat, &obat.IDSatuan, &obat.IDKategori, &obat.NamaObat, &obat.HargaJual, &obat.HargaBeli, &obat.StokMinimum,
-			&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan)
+			&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan)
 
 		if err == sql.ErrNoRows {
 			return class.Response{Status: http.StatusNotFound, Message: "Data obat tidak ditemukan", Data: nil}, nil
@@ -130,8 +130,8 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 		offset := (page - 1) * pagesize
 		var sliceobat []class.ObatJadi
 
-		querymanyobat := `SELECT id_obat, id_satuan, id_kategori,nama_obat,harga_jual, harga_beli,stok_minimum,uprate,created_at,updated_at,link_gambar_obat, keterangan 
-				  FROM obat_jadi WHERE deleted_at IS NULL  LIMIT ? OFFSET ?`
+		querymanyobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL  LIMIT ? OFFSET ?`
 
 		rows, err := con.QueryContext(ctx, querymanyobat, pagesize, offset)
 		if err != nil {
@@ -144,7 +144,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 			var obat class.ObatJadi
 			err := rows.Scan(
 				&obat.IDObat, &obat.IDSatuan, &obat.IDKategori, &obat.NamaObat, &obat.HargaJual, &obat.HargaBeli, &obat.StokMinimum,
-				&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan)
+				&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan)
 			if err != nil {
 				log.Println("gagal get data individual obat di model obat", err)
 				return class.Response{Status: http.StatusInternalServerError, Message: "gagal mengambil data obat"}, nil

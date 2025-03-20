@@ -133,6 +133,7 @@ type ObatJadi struct {
 	DeletedBy      *string    `db:"deleted_by" json:"deleted_by,omitempty"`
 	LinkGambarObat *string    `db:"link_gambar_obat" json:"link_gambar_obat,omitempty"`
 	Keterangan     *string    `db:"keterangan" json:"keterangan,omitempty"`
+	NamaSatuan     string     `json:"nama_satuan"`
 }
 
 type Satuan struct {
