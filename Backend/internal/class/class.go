@@ -140,7 +140,6 @@ type Satuan struct {
 	ID         int       `json:"id"`
 	IDSatuan   string    `json:"id_satuan"`
 	NamaSatuan string    `json:"nama_satuan"`
-	Jumlah     uint      `json:"jumlah"`
 	Catatan    *string   `json:"catatan,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }
