@@ -102,7 +102,7 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idDepo
 	return class.Response{Status: http.StatusCreated, Message: "Obat successfully added", Data: nil}, nil
 }
 
-func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) (class.Response, error) {
+func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -115,7 +115,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 		var obat class.ObatJadi
 
 		queryoneobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
-				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.id_obat = ? AND o.deleted_at IS NULL`
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.id_obat = ? AND o.deleted_at IS NULL ORDER BY o.id_obat ASC`
 		err := con.QueryRowContext(ctx, queryoneobat, idget).Scan(&obat.IDObat, &obat.IDSatuan, &obat.IDKategori, &obat.NamaObat, &obat.HargaJual, &obat.HargaBeli, &obat.StokMinimum,
 			&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan)
 
@@ -131,7 +131,7 @@ func GetObat(ctx context.Context, idget, idkategori string, page, pagesize int) 
 		var sliceobat []class.ObatJadi
 
 		querymanyobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
-				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL  LIMIT ? OFFSET ?`
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL ORDER BY o.id_obat ASC LIMIT ? OFFSET ?`
 
 		rows, err := con.QueryContext(ctx, querymanyobat, pagesize, offset)
 		if err != nil {

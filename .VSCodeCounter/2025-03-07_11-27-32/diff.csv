@@ -1,0 +1,7 @@
+"filename", "language", "Go", "MS SQL", "comment", "blank", "total"
+"s:\magang\proyekApotik\Backend\internal\class\class.go", "Go", 3, 0, 0, 0, 3
+"s:\magang\proyekApotik\Backend\internal\controller\kategoriController.go", "Go", 21, 0, 0, 4, 25
+"s:\magang\proyekApotik\Backend\internal\model\Kategori.go", "Go", 54, 0, 24, 17, 95
+"s:\magang\proyekApotik\Backend\routes\routes.go", "Go", 1, 0, 0, 0, 1
+"s:\magang\proyekApotik\Backend\test.sql", "MS SQL", 0, 10, 0, 1, 11
+"Total", "-", 79, 10, 24, 22, 135

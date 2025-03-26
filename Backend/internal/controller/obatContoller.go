@@ -64,7 +64,7 @@ func AddObat(c echo.Context) error {
 	}
 	idDepoparam := c.Param("id_depo")
 	// log.Println("contoller", idDepoparam)
-	idKategori := c.Param("id_kategori")
+	idKategori := c.FormValue("id_kategori")
 
 	hargaJual, err := strconv.ParseFloat(hargaJualStr, 64)
 	if err != nil {
@@ -112,7 +112,6 @@ func GetObat(c echo.Context) error {
 	idobat := c.QueryParam("id_obat")
 	pageparam := c.QueryParam("page")
 	pagesizeparam := c.QueryParam("page_size")
-	idkategori := c.Param("id_kategori")
 
 	page := 1
 	pageSize := 10
@@ -128,7 +127,7 @@ func GetObat(c echo.Context) error {
 		}
 	}
 
-	result, err := model.GetObat(c.Request().Context(), idobat, idkategori, page, pageSize)
+	result, err := model.GetObat(c.Request().Context(), idobat, page, pageSize)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})

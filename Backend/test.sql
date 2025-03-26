@@ -335,4 +335,26 @@ CREATE TABLE satuan(
 );
 
 
+CREATE TABLE pembelian_penerimaan(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL UNIQUE,
+    id_supplier VARCHAR(50) NOT NULL,
+    total_harga FLOAT UNSIGNED NOT NULL,
+    keterangan VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL,
+    created_by VARCHAR(10) NOT NULL,
+    updated_at DATETIME NULL,
+    updated_by VARCHAR(10) NULL,
+    deleted_at DATETIME NULL,
+    deleted_by VARCHAR(10) NULL
+)
+
+CREATE TABLE detail_pembelian_penerimaan(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL, 
+    id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL,
+    id_karyawan VARCHAR(10) 
+)
+
+
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend
