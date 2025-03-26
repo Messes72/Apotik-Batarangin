@@ -77,7 +77,7 @@ func Init() *echo.Echo {
 
 	routeProduk := e.Group("/product")
 	routeProduk.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
-	routeProduk.POST("/:id_depo/create", controller.AddObat)
+	routeProduk.POST("/create", controller.AddObat)
 	routeProduk.GET("/info", controller.GetObat)
 	routeProduk.PUT("/:id_kategori/:id_obat/edit", controller.UpdateObat)
 	routeProduk.DELETE("/:id_obat/delete", controller.DeleteObat)

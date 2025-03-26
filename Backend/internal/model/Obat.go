@@ -11,7 +11,7 @@ import (
 	"proyekApotik/internal/db"
 )
 
-func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idDepo string, idKaryawan string) (class.Response, error) {
+func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKaryawan string) (class.Response, error) {
 	con, err := db.DbConnection()
 	if err != nil {
 		log.Printf("Failed to connect to the database: %v\n", err)
@@ -75,22 +75,32 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idDepo
 		log.Printf("Failed to insert obat: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to insert obat", Data: nil}, err
 	}
-
-	insertKartuStok := `INSERT INTO kartu_stok (id_kartustok, id_depo, id_obat, stok_barang, created_at, created_by, keterangan) 
-							VALUES (?, ?, ?, ?, NOW(), ?, ?)`
-	_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, newIDObat, 0, idKaryawan, obat.Keterangan)
-
-	if err != nil {
-		log.Printf("FK constraint error when inserting into kartu_stok. Details: newIDObat=%s, idDepo=%s, obat.IDObat=%s, idKaryawan=%s, keterangan=%v. Error: %v",
-			newIDObat, idDepo, obat.IDObat, idKaryawan, obat.Keterangan, err)
-
-		log.Println("new id obat", newIDObat)
-		// Handle the error further if needed
-	}
+	depoquery := `SELECT id_depo FROM Depo`
+	rows, err := tx.QueryContext(ctx, depoquery)
 	if err != nil {
 		tx.Rollback()
-		log.Printf("Failed to generate kartu_stok: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to generate kartu_stok", Data: nil}, err
+
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to retrieve depo list", Data: nil}, err
+	}
+	defer rows.Close()
+	insertKartuStok := `INSERT INTO kartu_stok (id_kartustok, id_depo, id_obat, stok_barang, created_at, created_by, keterangan) 
+							VALUES (?, ?, ?, ?, NOW(), ?, ?)`
+	for rows.Next() {
+		var idDepo string
+		if err := rows.Scan(&idDepo); err != nil {
+			tx.Rollback()
+			log.Println("error di scan rows addobat kartu stok", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Eror saat Pembuatan Kartu stok", Data: nil}, err
+		}
+		// log.Println("scan", idDepo)
+		log.Println(con.PingContext(ctx))
+		_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, newIDObat, 0, idKaryawan, obat.Keterangan)
+		log.Println(con.PingContext(ctx))
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Failed to insert kartu_stok for depo %s: %v\n", idDepo, err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal membuat kartu_stok", Data: nil}, err
+		}
 	}
 
 	err = tx.Commit()

@@ -62,7 +62,6 @@ func AddObat(c echo.Context) error {
 	if idKaryawan == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
 	}
-	idDepoparam := c.Param("id_depo")
 	// log.Println("contoller", idDepoparam)
 	idKategori := c.FormValue("id_kategori")
 
@@ -100,7 +99,7 @@ func AddObat(c echo.Context) error {
 	}
 
 	// Call the model function
-	result, err := model.AddObat(c.Request().Context(), obat, idKategori, idDepoparam, idKaryawan.(string))
+	result, err := model.AddObat(c.Request().Context(), obat, idKategori, idKaryawan.(string))
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}
