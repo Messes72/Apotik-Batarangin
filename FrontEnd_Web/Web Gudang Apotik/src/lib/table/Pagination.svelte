@@ -1,18 +1,29 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { mutateQueryParams } from '$lib';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		total_content: number;
 	}
 
 	const { total_content }: Props = $props();
-
+	
 	let interval = $state<string>(page.url.searchParams.get('limit') || '15');
+	
+	// Initialize with default values if not set
+	onMount(() => {
+		if (!page.url.searchParams.has('limit')) {
+			mutateQueryParams('limit', () => '15');
+		}
+		if (!page.url.searchParams.has('offset')) {
+			mutateQueryParams('offset', () => '0');
+		}
+	});
 
-	const max_page = $derived<number>(Math.ceil(total_content / Number(interval)));
+	const max_page = $derived<number>(Math.ceil(total_content / Number(interval)) || 1);
 	const page_now = $derived<number>(
-		Math.floor(Number(page.url.searchParams.get('offset')) / Number(interval) + 1)
+		Math.floor(Number(page.url.searchParams.get('offset') || '0') / Number(interval) + 1)
 	);
 </script>
 
@@ -23,6 +34,8 @@
 		style="width: 70px; height: 30px; padding: 0 20px; line-height: 30px;"
 		bind:value={interval}
 		onchange={() => {
+			// Reset offset to 0 when changing page size
+			mutateQueryParams('offset', () => '0');
 			mutateQueryParams('limit', () => interval);
 		}}
 	>

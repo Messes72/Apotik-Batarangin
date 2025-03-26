@@ -43,10 +43,10 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
-				on:click={() => (isModalOpen = true)}
+				on:click={() => goto('/stock_opname/input_stock_opname')}
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
@@ -55,13 +55,6 @@
 			</button>
 		</div>
 		<div class="flex-1"><Search2 /></div>
-		<div>
-			<Dropdown
-				options={kategoriOptions}
-				placeholder="-- Pilih Kategori Obat --"
-				on:change={(e) => (selectedKategori = e.detail.value)}
-			/>
-		</div>
 	</div>
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">

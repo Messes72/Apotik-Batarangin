@@ -35,11 +35,11 @@
 				showTutup = true;
 				setTimeout(() => {
 					centerKapsul = true;
-					setTimeout(() => showSpin = true, 200);
+					setTimeout(() => (showSpin = true), 200);
 				}, 770);
 			}, 1400);
 		}, 70);
-		
+
 		// Set durasi minimum 1 detik
 		minTimeElapsed = false;
 		setTimeout(() => {
@@ -181,7 +181,7 @@
 			isLoading = true;
 			startLoadingAnimation();
 		}
-		
+
 		return () => {};
 	});
 
@@ -199,7 +199,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalInputOpen = true)}
@@ -207,7 +207,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Product</span>
+				<span class="ml-1 text-[16px]">Input Produk</span>
 			</button>
 		</div>
 		<div class="ml-2 flex-1"><Search2 /></div>
@@ -265,8 +265,8 @@
 									{body.id_obat}
 								</span>
 								<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-									Stock : {body.stock}
-									{body.id_satuan}
+									Stock : {body.stok_minimun}
+									{body.nama_satuan}
 								</span>
 							</div>
 						</div>
@@ -472,7 +472,7 @@
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Input Data Obat
+						Input Data Produk
 					</div>
 					<button class="h-[35px] w-[35px]" on:click={() => (isModalInputOpen = false)}
 						><svg
@@ -494,9 +494,7 @@
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
 				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
-					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
-					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
+					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<div class="flex flex-col gap-2">
 						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Kategori Obat</label
@@ -509,8 +507,8 @@
 							<option value="tablet">Tablet</option>
 						</select>
 					</div>
-					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
-					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
+					<Input id="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
+					<Input id="harga_jual" label="Harga Jual" placeholder="Harga Jual" />
 					<div class="flex flex-col gap-2">
 						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
 						<select
@@ -533,83 +531,94 @@
 						label="Jumlah Barang"
 						placeholder="Jumlah Barang"
 					/>
+					<Input
+						id="stock_minimum"
+						type="number"
+						label="Stock Minimum"
+						placeholder="Stock Minimum"
+					/>
 					<label
 						for="upload_gambar"
 						class="font-intersemi text-[16px] leading-normal text-[#1E1E1E]"
 						>Upload Gambar Kategori Obat</label
 					>
-					<label class="w-full cursor-pointer">
-						<div
-							class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
-							on:dragover|preventDefault
-							on:drop|preventDefault={handleDrop}
-						>
-							{#if selectedImage}
-								<div class="relative h-full w-full">
-									<img src={selectedImage} alt="Preview" class="h-full w-full object-contain p-2" />
-									<!-- Tombol hapus -->
-									<button
-										class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-										on:click|preventDefault={() => (selectedImage = null)}
-									>
+					<div class="flex flex-col gap-[4px]">
+						<label class="w-full cursor-pointer">
+							<div
+								class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
+								on:dragover|preventDefault
+								on:drop|preventDefault={handleDrop}
+							>
+								{#if selectedImage}
+									<div class="relative h-full w-full">
+										<img
+											src={selectedImage}
+											alt="Preview"
+											class="h-full w-full object-contain p-2"
+										/>
+										<!-- Tombol hapus -->
+										<button
+											class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+											on:click|preventDefault={() => (selectedImage = null)}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+										</button>
+									</div>
+								{:else}
+									<div class="flex flex-col items-center gap-2">
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
-											class="h-4 w-4"
+											width="50"
+											height="50"
+											viewBox="0 0 50 50"
 											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
 										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/>
+											<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
+												<path
+													id="Vector"
+													d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
+													fill="#515151"
+												/>
+											</g>
 										</svg>
-									</button>
-								</div>
-							{:else}
-								<div class="flex flex-col items-center gap-2">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="50"
-										height="50"
-										viewBox="0 0 50 50"
-										fill="none"
-									>
-										<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
-											<path
-												id="Vector"
-												d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
-												fill="#515151"
-											/>
-										</g>
-									</svg>
-									<div
-										class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
-									>
-										<p class="text-black">Drag and Drop atau</p>
-										<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span>
+										<div
+											class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
+										>
+											<p class="text-black">Drag and Drop atau</p>
+											<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span
+											>
+										</div>
 									</div>
-								</div>
-							{/if}
-						</div>
-						<input
-							type="file"
-							class="hidden"
-							accept=".jpg,.jpeg,.png"
-							on:change={handleFileUpload}
-						/>
-					</label>
-					<div class="flex flex-col gap-[4px]">
-						<TextArea id="cara_pemakaian" label="Cara Pemakaian" placeholder="Cara Pemakaian" />
+								{/if}
+							</div>
+							<input
+								type="file"
+								class="hidden"
+								accept=".jpg,.jpeg,.png"
+								on:change={handleFileUpload}
+							/>
+						</label>
 						<div class="font-inter text-[12px] text-[#515151]">
-							Ketik (-) jika tidak ada catatan tambahan
+							Note: Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB
 						</div>
 					</div>
+					<TextArea id="keterangan" label="Keterangan" placeholder="Keterangan" />
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
 								isModalInputOpen = false;
 								isModalKonfirmInputOpen = true;
@@ -630,7 +639,7 @@
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Edit Data Obat
+						Edit Data Produk
 					</div>
 					<button class="h-[35px] w-[35px]" on:click={() => (isModalEditOpen = false)}
 						><svg
@@ -652,9 +661,7 @@
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
 				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
-					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
-					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
+					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<div class="flex flex-col gap-2">
 						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Kategori Obat</label
@@ -667,8 +674,8 @@
 							<option value="tablet">Tablet</option>
 						</select>
 					</div>
-					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
-					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
+					<Input id="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
+					<Input id="harga_jual" label="Harga Jual" placeholder="Harga Jual" />
 					<div class="flex flex-col gap-2">
 						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
 						<select
@@ -691,89 +698,100 @@
 						label="Jumlah Barang"
 						placeholder="Jumlah Barang"
 					/>
+					<Input
+						id="stock_minimum"
+						type="number"
+						label="Stock Minimum"
+						placeholder="Stock Minimum"
+					/>
 					<label
 						for="upload_gambar"
 						class="font-intersemi text-[16px] leading-normal text-[#1E1E1E]"
 						>Upload Gambar Kategori Obat</label
 					>
-					<label class="w-full cursor-pointer">
-						<div
-							class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
-							on:dragover|preventDefault
-							on:drop|preventDefault={handleDrop}
-						>
-							{#if selectedImage}
-								<div class="relative h-full w-full">
-									<img src={selectedImage} alt="Preview" class="h-full w-full object-contain p-2" />
-									<!-- Tombol hapus -->
-									<button
-										class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-										on:click|preventDefault={() => (selectedImage = null)}
-									>
+					<div class="flex flex-col gap-[4px]">
+						<label class="w-full cursor-pointer">
+							<div
+								class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
+								on:dragover|preventDefault
+								on:drop|preventDefault={handleDrop}
+							>
+								{#if selectedImage}
+									<div class="relative h-full w-full">
+										<img
+											src={selectedImage}
+											alt="Preview"
+											class="h-full w-full object-contain p-2"
+										/>
+										<!-- Tombol hapus -->
+										<button
+											class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+											on:click|preventDefault={() => (selectedImage = null)}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+										</button>
+									</div>
+								{:else}
+									<div class="flex flex-col items-center gap-2">
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
-											class="h-4 w-4"
+											width="50"
+											height="50"
+											viewBox="0 0 50 50"
 											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
 										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/>
+											<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
+												<path
+													id="Vector"
+													d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
+													fill="#515151"
+												/>
+											</g>
 										</svg>
-									</button>
-								</div>
-							{:else}
-								<div class="flex flex-col items-center gap-2">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="50"
-										height="50"
-										viewBox="0 0 50 50"
-										fill="none"
-									>
-										<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
-											<path
-												id="Vector"
-												d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
-												fill="#515151"
-											/>
-										</g>
-									</svg>
-									<div
-										class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
-									>
-										<p class="text-black">Drag and Drop atau</p>
-										<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span>
+										<div
+											class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
+										>
+											<p class="text-black">Drag and Drop atau</p>
+											<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span
+											>
+										</div>
 									</div>
-								</div>
-							{/if}
-						</div>
-						<input
-							type="file"
-							class="hidden"
-							accept=".jpg,.jpeg,.png"
-							on:change={handleFileUpload}
-						/>
-					</label>
-					<div class="flex flex-col gap-[4px]">
-						<TextArea id="cara_pemakaian" label="Cara Pemakaian" placeholder="Cara Pemakaian" />
+								{/if}
+							</div>
+							<input
+								type="file"
+								class="hidden"
+								accept=".jpg,.jpeg,.png"
+								on:change={handleFileUpload}
+							/>
+						</label>
 						<div class="font-inter text-[12px] text-[#515151]">
-							Ketik (-) jika tidak ada catatan tambahan
+							Note: Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB
 						</div>
 					</div>
+					<TextArea id="keterangan" label="Keterangan" placeholder="Keterangan" />
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
 								isModalEditOpen = false;
 								isModalKonfirmEditOpen = true;
 							}}
 						>
-							SAVE
+							SIMPAN
 						</button>
 					</div>
 				</form>
@@ -800,19 +818,15 @@
 						>
 					</button>
 				</div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Detail label="Nomor Kartu" value="APT-0001" />
-					<Detail label="Nomor Batch" value="BT001" />
-					<Detail label="Kode Obat" value="OB001" />
-					<Detail label="Kategori Obat" value="Obat Panas" />
+				<form class="flex flex-col gap-4 px-10 py-6 mb-4">
 					<Detail label="Nama Obat" value="Paracetamol" />
+					<Detail label="Kategori Obat" value="Obat Panas" />
 					<Detail label="Harga Beli" value="10.000" />
-					<Detail label="Kadaluarsa" value="12/05/2026" />
-					<Detail label="Jumlah Barang" value="100" />
+					<Detail label="Harga Jual" value="12.000" />
 					<Detail label="Satuan" value="Tablet" />
+					<Detail label="Jumlah Barang" value="100" />
 					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
-					<Detail label="Cara Pemakaian" value="1 kapsul sehari 2 kali" />
-				</form>
+					<Detail label="Keterangan" value="Digunakan untuk meredakan nyeri dan demam" />
 			</div>
 		</div>
 	{/if}
