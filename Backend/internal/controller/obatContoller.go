@@ -215,7 +215,7 @@ func UpdateObat(c echo.Context) error {
 
 	namaObat := c.FormValue("nama_obat")
 	idSatuan := c.FormValue("id_satuan")
-	idKategori := c.Param("id_kategori")
+	idKategori := c.FormValue("id_kategori")
 	idObat := c.Param("id_obat")
 	hargaJualStr := c.FormValue("harga_jual")
 	hargaBeliStr := c.FormValue("harga_beli")
