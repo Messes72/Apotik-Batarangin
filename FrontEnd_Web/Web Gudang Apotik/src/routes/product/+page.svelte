@@ -17,8 +17,9 @@
 	import Search from '$lib/table/Search.svelte';
 	import Search2 from '$lib/table/Search2.svelte';
 	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
 
-	const { data } = $props();
+	const { data, form } = $props();
 	let isLoading = $state(true);
 	let showKapsul = $state(false);
 	let showButiran = $state(false);
@@ -66,16 +67,35 @@
 
 	let selectedStatus = $state('');
 	let selectedSatuan = $state('');
+	let selectedCategory = $state('');
 	const statusOptions = [{ value: 'habis', label: 'Habis' }];
-	const satuanOptions = [
-		{ value: 'tablet', label: 'Tablet' },
-		{ value: 'kapsul', label: 'Kapsul' },
-		{ value: 'botol', label: 'Botol' },
-		{ value: 'strip', label: 'Strip' },
-		{ value: 'ampul', label: 'Ampul' },
-		{ value: 'vial', label: 'Vial' },
-		{ value: 'tube', label: 'Tube' }
-	];
+	
+	// Define the type for dropdown options
+	interface DropdownOption {
+		value: string;
+		label: string;
+	}
+	
+	// Initialize with empty arrays
+	let categoryOptions: DropdownOption[] = $state([]);
+	let satuanOptions: DropdownOption[] = $state([]);
+	
+	// Update options when data changes
+	$effect(() => {
+		if (data?.categories) {
+			categoryOptions = data.categories.map((category: {id_kategori: string, nama: string}) => ({
+				value: category.id_kategori,
+				label: category.nama
+			}));
+		}
+		
+		if (data?.satuans) {
+			satuanOptions = data.satuans.map((satuan: {id_satuan: string, nama_satuan: string}) => ({
+				value: satuan.id_satuan,
+				label: satuan.nama_satuan
+			}));
+		}
+	});
 
 	function handleFileUpload(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -493,46 +513,64 @@
 					>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
+				<form 
+					class="flex flex-col gap-4 px-10 py-6" 
+					method="POST" 
+					action="?/createProduct" 
+					enctype="multipart/form-data"
+					use:enhance={() => {
+						// Before form submission
+						return ({ result, update }) => {
+							// After form submission
+							if (result.type === 'success') {
+								// Close modal and show success notification
+								isModalInputOpen = false;
+								isModalSuccessInputOpen = true;
+							} else if (result.type === 'failure') {
+								// Show error message
+								alert(result.data?.message || 'An error occurred while creating the product');
+							}
+							// Update the form
+							update();
+						};
+					}}
+				>
+					<Input id="nama_obat" name="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<div class="flex flex-col gap-2">
 						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Kategori Obat</label
 						>
 						<select
 							id="kategori_obat"
+							name="id_kategori"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={selectedCategory}
 						>
 							<option value="" disabled selected>Pilih Kategori Obat</option>
-							<option value="tablet">Tablet</option>
+							{#each categoryOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
-					<Input id="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
-					<Input id="harga_jual" label="Harga Jual" placeholder="Harga Jual" />
+					<Input id="harga_beli" name="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
+					<Input id="harga_jual" name="harga_jual" label="Harga Jual" placeholder="Harga Jual" />
 					<div class="flex flex-col gap-2">
 						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
 						<select
 							id="satuan"
+							name="id_satuan"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							bind:value={selectedSatuan}
 						>
 							<option value="" disabled selected>Pilih Satuan</option>
-							<option value="tablet">Tablet</option>
-							<option value="kapsul">Kapsul</option>
-							<option value="botol">Botol</option>
-							<option value="strip">Strip</option>
-							<option value="ampul">Ampul</option>
-							<option value="vial">Vial</option>
-							<option value="tube">Tube</option>
+							{#each satuanOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
 					<Input
-						id="jumlah_barang"
-						type="number"
-						label="Jumlah Barang"
-						placeholder="Jumlah Barang"
-					/>
-					<Input
 						id="stock_minimum"
+						name="stok_minimum"
 						type="number"
 						label="Stock Minimum"
 						placeholder="Stock Minimum"
@@ -606,6 +644,7 @@
 							</div>
 							<input
 								type="file"
+								name="image"
 								class="hidden"
 								accept=".jpg,.jpeg,.png"
 								on:change={handleFileUpload}
@@ -615,14 +654,16 @@
 							Note: Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB
 						</div>
 					</div>
-					<TextArea id="keterangan" label="Keterangan" placeholder="Keterangan" />
+					<TextArea id="keterangan" name="keterangan" label="Keterangan" placeholder="Keterangan" />
+					{#if form?.error}
+						<div class="bg-red-100 text-red-700 p-2 rounded-md">
+							{form.message || 'An error occurred while creating the product'}
+						</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
+							type="submit"
 							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
-							on:click={() => {
-								isModalInputOpen = false;
-								isModalKonfirmInputOpen = true;
-							}}
 						>
 							KONFIRMASI
 						</button>
@@ -669,9 +710,12 @@
 						<select
 							id="kategori_obat"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={selectedCategory}
 						>
 							<option value="" disabled selected>Pilih Kategori Obat</option>
-							<option value="tablet">Tablet</option>
+							{#each categoryOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
 					<Input id="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
@@ -681,15 +725,12 @@
 						<select
 							id="satuan"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							bind:value={selectedSatuan}
 						>
 							<option value="" disabled selected>Pilih Satuan</option>
-							<option value="tablet">Tablet</option>
-							<option value="kapsul">Kapsul</option>
-							<option value="botol">Botol</option>
-							<option value="strip">Strip</option>
-							<option value="ampul">Ampul</option>
-							<option value="vial">Vial</option>
-							<option value="tube">Tube</option>
+							{#each satuanOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
 					<Input
@@ -818,7 +859,7 @@
 						>
 					</button>
 				</div>
-				<form class="flex flex-col gap-4 px-10 py-6 mb-4">
+				<form class="mb-4 flex flex-col gap-4 px-10 py-6">
 					<Detail label="Nama Obat" value="Paracetamol" />
 					<Detail label="Kategori Obat" value="Obat Panas" />
 					<Detail label="Harga Beli" value="10.000" />
@@ -827,6 +868,7 @@
 					<Detail label="Jumlah Barang" value="100" />
 					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
 					<Detail label="Keterangan" value="Digunakan untuk meredakan nyeri dan demam" />
+				</form>
 			</div>
 		</div>
 	{/if}
