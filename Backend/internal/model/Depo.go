@@ -9,12 +9,7 @@ import (
 )
 
 func GetDepo(ctx context.Context) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {

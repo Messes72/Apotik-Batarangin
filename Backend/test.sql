@@ -223,7 +223,7 @@ CREATE TABLE kartu_stok (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_depo VARCHAR(10) NOT NULL,
     id_obat VARCHAR(100) NOT NULL,
-    id_kartustok VARCHAR(100) UNIQUE NOT NULL,
+    id_kartustok VARCHAR(100) NOT NULL,
     stok_barang INT NOT NULL,
     created_at DATETIME NOT NULL,
     created_by VARCHAR(10) NOT NULL,

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"proyekApotik/internal/db"
 	routes "proyekApotik/routes"
 	"strings"
 	"time"
@@ -91,7 +92,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
+	_, err = db.DbConnection()
+	if err != nil {
+		log.Fatalf("Error loading db file")
 
+	}
 	// log.Println("JWT_SECRET_KEY:", os.Getenv("JWT_SECRET_KEY"))
 	// e.Use(middleware.Recover())
 	e.HideBanner = true
@@ -149,5 +154,5 @@ func main() {
 		port = "2688" // Default port if not set in .env
 	}
 	e.Logger.Fatal(e.Start(":" + port))
-
+	db.DbClose()
 }

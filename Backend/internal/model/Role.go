@@ -10,13 +10,7 @@ import (
 )
 
 func CreateRole(ctx context.Context, role class.Role) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v\n", err)
@@ -44,12 +38,7 @@ func CreateRole(ctx context.Context, role class.Role) (class.Response, error) {
 }
 
 func GetAllRole(ctx context.Context) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -106,12 +95,7 @@ func GetAllRole(ctx context.Context) (class.Response, error) {
 
 func GetRoleByID(ctx context.Context, idrole string) (class.Response, error) {
 	var role class.Role
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 
@@ -154,12 +138,7 @@ func GetRoleByID(ctx context.Context, idrole string) (class.Response, error) {
 }
 
 func UpdateRole(ctx context.Context, idupdate string, role class.Role) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -200,12 +179,7 @@ func UpdateRole(ctx context.Context, idupdate string, role class.Role) (class.Re
 }
 
 func DeleteRole(ctx context.Context, iddelete string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 

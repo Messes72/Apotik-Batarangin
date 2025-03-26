@@ -12,12 +12,7 @@ import (
 )
 
 func AddKustomer(ctx context.Context, kustomer class.Kustomer) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -82,12 +77,7 @@ func AddKustomer(ctx context.Context, kustomer class.Kustomer) (class.Response, 
 }
 
 func UpdateKustomer(ctx context.Context, idupdate string, kustomer class.Kustomer) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -128,12 +118,7 @@ func UpdateKustomer(ctx context.Context, idupdate string, kustomer class.Kustome
 }
 
 func DeleteKustomer(ctx context.Context, iddelete string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {

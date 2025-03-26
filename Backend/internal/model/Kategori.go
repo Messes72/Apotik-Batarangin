@@ -11,12 +11,7 @@ import (
 )
 
 func GetKategori(ctx context.Context) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -61,12 +56,7 @@ func GetKategori(ctx context.Context) (class.Response, error) {
 }
 
 func AddKategori(ctx context.Context, kategori class.Kategori, idkaryawan string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -124,12 +114,7 @@ func AddKategori(ctx context.Context, kategori class.Kategori, idkaryawan string
 }
 
 func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan string, idkategori string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -169,12 +154,7 @@ func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan str
 }
 
 func DeleteKategori(ctx context.Context, idkaryawan string, iddelete string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {

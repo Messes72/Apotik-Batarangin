@@ -18,12 +18,7 @@ import (
 )
 
 func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	// Start transaction
 	tx, err := con.Begin()
@@ -143,12 +138,7 @@ func LoginKaryawan(username, passwordinput, apiKey string) (class.Response, erro
 		return class.Response{Status: http.StatusUnauthorized, Message: "Invalid API Key", Data: nil}, nil
 	}
 
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: err.Error(), Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	// data karyawan
 	query := `
@@ -159,7 +149,7 @@ func LoginKaryawan(username, passwordinput, apiKey string) (class.Response, erro
 		LEFT JOIN StaffLogin login ON login.id_karyawan = karyawan.id_karyawan
 		WHERE login.username = ?`
 
-	err = con.QueryRow(query, username).
+	err := con.QueryRow(query, username).
 		Scan(&karyawan.IDKaryawan, &karyawan.Nama, &karyawan.Alamat, &karyawan.NoTelp, &karyawan.CreatedAt,
 			&karyawan.UpdatedAt, &karyawan.DeletedAt, &karyawan.Catatan, &Password)
 	if err != nil {
@@ -297,12 +287,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 		pageSize = 10
 	}
 
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: err.Error(), Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	if id != "" { // kalau ada dikasi id maka getbyid
 		var karyawan class.Karyawan
@@ -502,12 +487,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 }
 
 func UpdateKaryawan(ctx context.Context, idnow string, idupdate string, karyawan class.Karyawan) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 	log.Println("modal", idnow, idupdate)
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -639,12 +619,7 @@ func UpdateKaryawan(ctx context.Context, idnow string, idupdate string, karyawan
 }
 
 func DeleteKaryawan(ctx context.Context, idnow, iddelete string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {

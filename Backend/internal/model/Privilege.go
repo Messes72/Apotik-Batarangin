@@ -10,13 +10,7 @@ import (
 )
 
 func CreatePrivilege(ctx context.Context, privilege class.Privilege) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Failed to begin transaction: %v\n", err)
@@ -43,12 +37,7 @@ func CreatePrivilege(ctx context.Context, privilege class.Privilege) (class.Resp
 }
 
 func GetAllPrivilege(ctx context.Context) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -105,12 +94,7 @@ func GetAllPrivilege(ctx context.Context) (class.Response, error) {
 
 func GetPrivilegeByID(ctx context.Context, idprivilege string) (class.Response, error) {
 	var privilege class.Privilege
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 
@@ -153,12 +137,7 @@ func GetPrivilegeByID(ctx context.Context, idprivilege string) (class.Response, 
 }
 
 func UpdatePrivilege(ctx context.Context, idupdate string, privilege class.Privilege) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -199,12 +178,7 @@ func UpdatePrivilege(ctx context.Context, idupdate string, privilege class.Privi
 }
 
 func DeletePrivilege(ctx context.Context, iddelete string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection failed", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 

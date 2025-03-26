@@ -12,22 +12,16 @@ import (
 )
 
 func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKaryawan string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
 		log.Printf("Failed to start transaction: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
-	//ToDo...
-	//tanyakan apakh perlu ada pengecekan untuk memastikan bahwa depo yang dimasukan user adalah depo yang sesuai dengan jenis...
-	//ToDo...
+	// ToDo: check that the depo inserted by the user matches the proper type...
 
+	// Check if obat already exists
 	var exists string
 	checkQuery := `SELECT 1 FROM obat_jadi WHERE nama_obat = ? AND id_kategori = ? LIMIT 1`
 	err = tx.QueryRowContext(ctx, checkQuery, obat.NamaObat, idKategori).Scan(&exists)
@@ -35,7 +29,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		if err == sql.ErrNoRows {
 			// Obat not found, proceed with the transaction.
 		} else {
-			// An actual error occurred during the query.
 			tx.Rollback()
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error checking obat", Data: nil}, nil
 		}
@@ -45,6 +38,7 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		return class.Response{Status: http.StatusConflict, Message: "Obat sudah ada di depo ini", Data: nil}, nil
 	}
 
+	// Fetch the obat counter with a lock.
 	var counter int
 	queryCounter := `SELECT count FROM ObatCounter FOR UPDATE`
 	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
@@ -59,6 +53,7 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 	newIDObat := fmt.Sprintf("%s%d", prefix, newCounter)
 	log.Printf("New id obat: %s", newIDObat)
 
+	// Update the obat counter.
 	updateCounter := `UPDATE ObatCounter SET count = ?`
 	_, err = tx.ExecContext(ctx, updateCounter, newCounter)
 	if err != nil {
@@ -67,35 +62,56 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 	}
 
-	insertObat := `INSERT INTO obat_jadi (id_obat, id_satuan,  id_kategori, nama_obat, harga_jual, harga_beli, stok_minimum, uprate, created_at, created_by, link_gambar_obat ,keterangan) 
-	VALUES (?, ?, ?, ?, ?,?, ?, ?, NOW(),?, ?, ?)`
+	// Insert the new obat.
+	insertObat := `INSERT INTO obat_jadi (id_obat, id_satuan, id_kategori, nama_obat, harga_jual, harga_beli, stok_minimum, uprate, created_at, created_by, link_gambar_obat, keterangan) 
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`
 	_, err = tx.ExecContext(ctx, insertObat, newIDObat, obat.IDSatuan, idKategori, obat.NamaObat, obat.HargaJual, obat.HargaBeli, obat.StokMinimum, obat.Uprate, idKaryawan, obat.LinkGambarObat, obat.Keterangan)
 	if err != nil {
 		tx.Rollback()
 		log.Printf("Failed to insert obat: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to insert obat", Data: nil}, err
 	}
-	depoquery := `SELECT id_depo FROM Depo`
-	rows, err := tx.QueryContext(ctx, depoquery)
+
+	// Query all depo IDs.
+	depoQuery := `SELECT id_depo FROM Depo`
+	rows, err := tx.QueryContext(ctx, depoQuery)
 	if err != nil {
 		tx.Rollback()
-
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to retrieve depo list", Data: nil}, err
 	}
 	defer rows.Close()
-	insertKartuStok := `INSERT INTO kartu_stok (id_kartustok, id_depo, id_obat, stok_barang, created_at, created_by, keterangan) 
-							VALUES (?, ?, ?, ?, NOW(), ?, ?)`
+
+	// Read all depo IDs into a slice.
+	var depoIDs []string
 	for rows.Next() {
 		var idDepo string
 		if err := rows.Scan(&idDepo); err != nil {
 			tx.Rollback()
-			log.Println("error di scan rows addobat kartu stok", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Eror saat Pembuatan Kartu stok", Data: nil}, err
+			log.Println("Error scanning depo row:", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error scanning depo data", Data: nil}, err
 		}
-		// log.Println("scan", idDepo)
-		log.Println(con.PingContext(ctx))
-		_, err = tx.ExecContext(ctx, insertKartuStok, newIDObat, idDepo, newIDObat, 0, idKaryawan, obat.Keterangan)
-		log.Println(con.PingContext(ctx))
+		depoIDs = append(depoIDs, idDepo)
+	}
+	if err = rows.Err(); err != nil {
+		tx.Rollback()
+		log.Printf("Error during depo rows iteration: %v", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error processing depo rows", Data: nil}, err
+	}
+
+	// Prepare the statement for inserting kartu_stok.
+	insertKartuStok := `INSERT INTO kartu_stok (id_depo, id_obat, id_kartustok, stok_barang, created_at, created_by, keterangan) 
+                    VALUES (?, ?, ?, ?, NOW(), ?, ?)`
+	stmt, err := tx.PrepareContext(ctx, insertKartuStok)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to prepare kartu_stok statement: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to prepare kartu_stok statement", Data: nil}, err
+	}
+	defer stmt.Close()
+
+	// Loop over the slice to insert kartu_stok for each depo.
+	for _, idDepo := range depoIDs {
+		_, err = stmt.ExecContext(ctx, idDepo, newIDObat, newIDObat, 0, idKaryawan, obat.Keterangan)
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Failed to insert kartu_stok for depo %s: %v\n", idDepo, err)
@@ -103,6 +119,7 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		}
 	}
 
+	// Commit the transaction.
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("Failed to commit transaction: %v\n", err)
@@ -113,12 +130,7 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 }
 
 func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	log.Println("idget : ", idget)
 	if idget != "" { //get data sebuah obat
@@ -186,12 +198,7 @@ func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Respo
 }
 
 func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.ObatJadi, idkaryawan string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
@@ -301,12 +308,7 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.ObatJ
 }
 
 func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response, error) {
-	con, err := db.DbConnection()
-	if err != nil {
-		log.Printf("Failed to connect to the database: %v\n", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Database connection error", Data: nil}, err
-	}
-	defer db.DbClose(con)
+	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
 	if err != nil {
