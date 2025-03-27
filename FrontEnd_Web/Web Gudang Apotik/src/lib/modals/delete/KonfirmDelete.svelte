@@ -1,7 +1,11 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
+	
 	export let isOpen = false;
 	export let width = 'w-[606px]';
 	export let isSuccess = false;
+	
+	const dispatch = createEventDispatcher();
 </script>
 
 {#if isOpen}
@@ -42,11 +46,15 @@
 				<div class="flex flex-row items-center justify-center gap-6">
 					<button
 						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white shadow-md"
-						on:click={() => (isOpen = false)}>Tidak</button
+						on:click={() => {
+							isOpen = false;
+							dispatch('closed');
+						}}>Tidak</button
 					>
 					<button
 						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md border-2 border-[#FF3B30] bg-white text-center text-[16px] text-[#FF3B30] shadow-md"
 						on:click={() => {
+							dispatch('confirm');
 							isOpen = false;
 							isSuccess = true;
 						}}>Iya, hapus</button

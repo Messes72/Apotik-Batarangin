@@ -1,7 +1,11 @@
 <script lang="ts">
+	import { createEventDispatcher } from 'svelte';
+	
 	export let isOpen = false;
 	export let width = 'w-[606px]';
 	export let isSuccess = false;
+	
+	const dispatch = createEventDispatcher();
 </script>
 
 {#if isOpen}
@@ -9,7 +13,10 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-10"
-		on:click={() => (isOpen = false)}
+		on:click={() => {
+			isOpen = false;
+			dispatch('closed');
+		}}
 	>
 		<div class="{width} rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 			<div class="flex flex-col items-center justify-between gap-6 px-20 py-10">
@@ -42,11 +49,15 @@
 				<div class="flex flex-row items-center justify-center gap-6">
 					<button
 						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white shadow-md"
-						on:click={() => (isOpen = false)}>Tidak</button
+						on:click={() => {
+							isOpen = false;
+							dispatch('closed');
+						}}>Tidak</button
 					>
 					<button
-						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-white text-center text-[16px] text-[#FFB300] border-2 border-[#FFB300] shadow-md"
+						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md border-2 border-[#FFB300] bg-white text-center text-[16px] text-[#FFB300] shadow-md"
 						on:click={() => {
+							dispatch('confirm');
 							isOpen = false;
 							isSuccess = true;
 						}}>Iya, input</button
