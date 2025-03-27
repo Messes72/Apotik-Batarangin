@@ -116,24 +116,25 @@ type DetailKaryawan struct {
 }
 
 type ObatJadi struct {
-	ID             int        `db:"id" json:"id"`
-	IDObat         string     `db:"id_obat" json:"id_obat"`
-	IDSatuan       string     `db:"id_satuan" json:"id_satuan"`
-	IDKategori     string     `db:"id_kategori" json:"id_kategori"`
-	NamaObat       string     `db:"nama_obat" json:"nama_obat"`
-	HargaJual      float64    `db:"harga_jual" json:"harga_jual"`
-	HargaBeli      float64    `db:"harga_beli" json:"harga_beli"`
-	StokMinimum    uint       `db:"stok_minimun" json:"stok_minimun"`
-	Uprate         *float64   `db:"uprate" json:"uprate,omitempty"`
-	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
-	CreatedBy      string     `db:"created_by" json:"created_by"`
-	UpdatedAt      *time.Time `db:"updated_at" json:"updated_at,omitempty"`
-	UpdatedBy      *string    `db:"updated_by" json:"updated_by,omitempty"`
-	DeletedAt      *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
-	DeletedBy      *string    `db:"deleted_by" json:"deleted_by,omitempty"`
-	LinkGambarObat *string    `db:"link_gambar_obat" json:"link_gambar_obat,omitempty"`
-	Keterangan     *string    `db:"keterangan" json:"keterangan,omitempty"`
-	NamaSatuan     string     `json:"nama_satuan"`
+	ID              int        `db:"id" json:"id"`
+	IDObat          string     `db:"id_obat" json:"id_obat"`
+	IDSatuan        string     `db:"id_satuan" json:"id_satuan"`
+	IDKategori      string     `db:"id_kategori" json:"id_kategori"`
+	NamaObat        string     `db:"nama_obat" json:"nama_obat"`
+	HargaJual       float64    `db:"harga_jual" json:"harga_jual"`
+	HargaBeli       float64    `db:"harga_beli" json:"harga_beli"`
+	StokMinimum     uint       `db:"stok_minimun" json:"stok_minimun"`
+	Uprate          *float64   `db:"uprate" json:"uprate,omitempty"`
+	CreatedAt       time.Time  `db:"created_at" json:"created_at"`
+	CreatedBy       string     `db:"created_by" json:"created_by"`
+	UpdatedAt       *time.Time `db:"updated_at" json:"updated_at,omitempty"`
+	UpdatedBy       *string    `db:"updated_by" json:"updated_by,omitempty"`
+	DeletedAt       *time.Time `db:"deleted_at" json:"deleted_at,omitempty"`
+	DeletedBy       *string    `db:"deleted_by" json:"deleted_by,omitempty"`
+	LinkGambarObat  *string    `db:"link_gambar_obat" json:"link_gambar_obat,omitempty"`
+	Keterangan      *string    `db:"keterangan" json:"keterangan,omitempty"`
+	NamaSatuan      string     `json:"nama_satuan"`
+	KeteranganHapus *string    `db:"keterangan_hapus" json:"keterangan_hapus,omitempty"`
 }
 
 type Satuan struct {

@@ -295,7 +295,7 @@ func UpdateObat(ctx context.Context, idkategori, idobat string, obat class.ObatJ
 
 }
 
-func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response, error) {
+func DeleteObat(ctx context.Context, idobat, idkaryawan, keteranganhapus string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -326,8 +326,8 @@ func DeleteObat(ctx context.Context, idobat, idkaryawan string) (class.Response,
 		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal menghapus data obat"}, nil
 	}
 
-	querydelete := `UPDATE obat_jadi SET deleted_at = NOW(), deleted_by = ?  WHERE id_obat = ? AND deleted_at is NULL`
-	result, err := tx.ExecContext(ctx, querydelete, idkaryawan, idobat)
+	querydelete := `UPDATE obat_jadi SET deleted_at = NOW(), deleted_by = ?, keterangan_hapus =?  WHERE id_obat = ? AND deleted_at is NULL`
+	result, err := tx.ExecContext(ctx, querydelete, idkaryawan, keteranganhapus, idobat)
 
 	if err != nil {
 		log.Println("gagal menghapus data obat : ", idobat, "dengan error", err)

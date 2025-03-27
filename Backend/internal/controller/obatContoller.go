@@ -277,10 +277,12 @@ func DeleteObat(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, karyawan tidak dikenali"})
 	}
 
+	keteranganhapus := c.FormValue("keterangan_hapus")
+
 	//nanti perlu ditentukan apakah perlu idkategori untuk langkah penghapusan karena sebenernya tidak diperlukan
 	//sementara gini , buat menghindari dia error gara2 dibuat tp tidak dipakai, kalau gak perlu ya nanti hapus aja tp jangan lupa tambahkan idkategori di query di model nya juga
 
-	result, err := model.DeleteObat(c.Request().Context(), idobat, idkaryawan)
+	result, err := model.DeleteObat(c.Request().Context(), idobat, idkaryawan, keteranganhapus)
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}
