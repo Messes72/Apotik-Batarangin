@@ -19,26 +19,21 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		log.Printf("Failed to start transaction: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
-	// ToDo: check that the depo inserted by the user matches the proper type...
-
-	// Check if obat already exists
 	var exists string
 	checkQuery := `SELECT 1 FROM obat_jadi WHERE nama_obat = ? AND id_kategori = ? LIMIT 1`
 	err = tx.QueryRowContext(ctx, checkQuery, obat.NamaObat, idKategori).Scan(&exists)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Obat not found, proceed with the transaction.
+
 		} else {
 			tx.Rollback()
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error checking obat", Data: nil}, nil
 		}
 	} else {
-		// Obat found, rollback the transaction and return a conflict error.
 		tx.Rollback()
 		return class.Response{Status: http.StatusConflict, Message: "Obat sudah ada di depo ini", Data: nil}, nil
 	}
 
-	// Fetch the obat counter with a lock.
 	var counter int
 	queryCounter := `SELECT count FROM ObatCounter FOR UPDATE`
 	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
@@ -53,7 +48,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 	newIDObat := fmt.Sprintf("%s%d", prefix, newCounter)
 	log.Printf("New id obat: %s", newIDObat)
 
-	// Update the obat counter.
 	updateCounter := `UPDATE ObatCounter SET count = ?`
 	_, err = tx.ExecContext(ctx, updateCounter, newCounter)
 	if err != nil {
@@ -62,7 +56,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 	}
 
-	// Insert the new obat.
 	insertObat := `INSERT INTO obat_jadi (id_obat, id_satuan, id_kategori, nama_obat, harga_jual, harga_beli, stok_minimum, uprate, created_at, created_by, link_gambar_obat, keterangan) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)`
 	_, err = tx.ExecContext(ctx, insertObat, newIDObat, obat.IDSatuan, idKategori, obat.NamaObat, obat.HargaJual, obat.HargaBeli, obat.StokMinimum, obat.Uprate, idKaryawan, obat.LinkGambarObat, obat.Keterangan)
@@ -72,7 +65,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to insert obat", Data: nil}, err
 	}
 
-	// Query all depo IDs.
 	depoQuery := `SELECT id_depo FROM Depo`
 	rows, err := tx.QueryContext(ctx, depoQuery)
 	if err != nil {
@@ -81,7 +73,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 	}
 	defer rows.Close()
 
-	// Read all depo IDs into a slice.
 	var depoIDs []string
 	for rows.Next() {
 		var idDepo string
@@ -98,7 +89,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error processing depo rows", Data: nil}, err
 	}
 
-	// Prepare the statement for inserting kartu_stok.
 	insertKartuStok := `INSERT INTO kartu_stok (id_depo, id_obat, id_kartustok, stok_barang, created_at, created_by, keterangan) 
                     VALUES (?, ?, ?, ?, NOW(), ?, ?)`
 	stmt, err := tx.PrepareContext(ctx, insertKartuStok)
@@ -109,7 +99,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 	}
 	defer stmt.Close()
 
-	// Loop over the slice to insert kartu_stok for each depo.
 	for _, idDepo := range depoIDs {
 		_, err = stmt.ExecContext(ctx, idDepo, newIDObat, newIDObat, 0, idKaryawan, obat.Keterangan)
 		if err != nil {
@@ -119,7 +108,6 @@ func AddObat(ctx context.Context, obat class.ObatJadi, idKategori string, idKary
 		}
 	}
 
-	// Commit the transaction.
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("Failed to commit transaction: %v\n", err)
@@ -137,7 +125,7 @@ func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Respo
 		var obat class.ObatJadi
 
 		queryoneobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
-				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.id_obat = ? AND o.deleted_at IS NULL ORDER BY o.id_obat ASC`
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.id_obat = ? AND o.deleted_at IS NULL ORDER BY o.id_obat DESC`
 		err := con.QueryRowContext(ctx, queryoneobat, idget).Scan(&obat.IDObat, &obat.IDSatuan, &obat.IDKategori, &obat.NamaObat, &obat.HargaJual, &obat.HargaBeli, &obat.StokMinimum,
 			&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan)
 
@@ -153,7 +141,7 @@ func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Respo
 		var sliceobat []class.ObatJadi
 
 		querymanyobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
-				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL ORDER BY o.id_obat ASC LIMIT ? OFFSET ?`
+				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL ORDER BY o.id_obat DESC  LIMIT ? OFFSET ?`
 
 		rows, err := con.QueryContext(ctx, querymanyobat, pagesize, offset)
 		if err != nil {
