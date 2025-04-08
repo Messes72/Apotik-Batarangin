@@ -112,7 +112,7 @@
 		</button>
 	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalOpen = true)}
@@ -386,7 +386,7 @@
 					</div>
 					<div class="mt-6 flex justify-end">
 						<button
-							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
 							on:click={handleKonfirmasi}
 						>
 							KONFIRMASI

@@ -55,7 +55,7 @@
 						}}>Tidak</button
 					>
 					<button
-						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md border-2 border-[#FFB300] bg-white text-center text-[16px] text-[#FFB300] shadow-md"
+						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md border-2 border-[#FFB300] bg-white text-center text-[16px] text-[#FFB300] shadow-md hover:bg-[#FFB300] hover:text-white"
 						on:click={() => {
 							dispatch('confirm');
 							isOpen = false;
