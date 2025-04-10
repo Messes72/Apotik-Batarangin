@@ -35,7 +35,7 @@
 				</div>
 				<div class="mt-2 flex justify-end">
 					<button
-						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white shadow-xl"
+						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
 						on:click={() => {
 							isOpen = false;
 							isKonfirmTerimaPembelianOpen = true;

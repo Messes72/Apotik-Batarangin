@@ -3,6 +3,7 @@
 	export let label: string;
 	export let placeholder: string;
 	export let value: string = '';
+	export let name: string = '';
 </script>
 
 <div class="flex flex-col gap-2">
@@ -10,6 +11,7 @@
 	<textarea
 		{placeholder}
 		{id}
+		name={name || id}
 		bind:value
 		class="font-inter h-40 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
 	></textarea>

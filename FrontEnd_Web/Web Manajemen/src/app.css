@@ -30,6 +30,13 @@
 }
 
 @font-face {
+    font-family: 'InterBold';
+    src: url('/fonts/Inter_24pt-Bold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
     font-family: 'NotoSans';
     src: url('/fonts/NotoSans-Regular.ttf') format('truetype');
     font-weight: 400;
@@ -64,6 +71,10 @@
 
     .font-intersemi {
         font-family: 'InterSemi', sans-serif;
+    }
+
+    .font-interbold {
+        font-family: 'InterBold', sans-serif;
     }
 
     .font-notosans {

@@ -4,6 +4,7 @@
 	export let type: string = 'text';
 	export let placeholder: string;
 	export let value: string = '';
+	export let name: string = '';
 </script>
 
 <div class="flex flex-col gap-2">
@@ -11,6 +12,7 @@
 		<label for={id} class="font-intersemi text-[16px] text-[#1E1E1E]">{label}</label>
 		<input
 			{type}
+			name={name || id}
 			{placeholder}
 			{id}
 			bind:value
@@ -29,6 +31,7 @@
 		<label for={id} class="font-intersemi text-[16px] text-[#1E1E1E]">{label}</label>
 		<input
 			{type}
+			name={name || id}
 			{placeholder}
 			{id}
 			bind:value

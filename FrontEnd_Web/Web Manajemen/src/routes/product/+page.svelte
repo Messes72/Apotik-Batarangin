@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { gambar_logo } from '$lib';
 	import CardObat from '$lib/card/CardObat.svelte';
 	import Dropdown from '$lib/dropdown/Dropdown.svelte';
 	import Checkbox from '$lib/info/Checkbox.svelte';
@@ -15,8 +16,52 @@
 	import Pagination from '$lib/table/Pagination.svelte';
 	import Search from '$lib/table/Search.svelte';
 	import Search2 from '$lib/table/Search2.svelte';
+	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
 
-	const { data } = $props();
+	// Define product data interface
+	interface ProductData {
+		id_obat: string;
+		nama_obat: string;
+		id_kategori?: string;
+		id_satuan?: string;
+		harga_beli?: string | number;
+		harga_jual?: string | number;
+		stok_minimun?: number;
+		uprate?: number;
+		keterangan?: string;
+		image_url?: string;
+		[key: string]: any; // Allow for any other properties
+	}
+
+	const { data, form } = $props();
+	let isLoading = $state(true);
+	let showKapsul = $state(false);
+	let showButiran = $state(false);
+	let showTutup = $state(false);
+	let showSpin = $state(false);
+	let centerKapsul = $state(false);
+	let minTimeElapsed = $state(false);
+
+	function startLoadingAnimation() {
+		showKapsul = showButiran = showTutup = showSpin = centerKapsul = false;
+		setTimeout(() => {
+			showKapsul = showButiran = true;
+			setTimeout(() => {
+				showTutup = true;
+				setTimeout(() => {
+					centerKapsul = true;
+					setTimeout(() => (showSpin = true), 200);
+				}, 770);
+			}, 1400);
+		}, 70);
+
+		// Set durasi minimum 1 detik
+		minTimeElapsed = false;
+		setTimeout(() => {
+			minTimeElapsed = true;
+		}, 1000);
+	}
 
 	let isModalInputOpen = $state(false);
 	let isModalEditOpen = $state(false);
@@ -32,21 +77,40 @@
 
 	let selectedImage: string | null = $state(null);
 
-	let isFiltered = $state(false);
+	let filterState = $state('none');
 	let sortedData = $derived(getSortedData());
 
 	let selectedStatus = $state('');
 	let selectedSatuan = $state('');
+	let selectedCategory = $state('');
 	const statusOptions = [{ value: 'habis', label: 'Habis' }];
-	const satuanOptions = [
-		{ value: 'tablet', label: 'Tablet' },
-		{ value: 'kapsul', label: 'Kapsul' },
-		{ value: 'botol', label: 'Botol' },
-		{ value: 'strip', label: 'Strip' },
-		{ value: 'ampul', label: 'Ampul' },
-		{ value: 'vial', label: 'Vial' },
-		{ value: 'tube', label: 'Tube' }
-	];
+
+	// Define the type for dropdown options
+	interface DropdownOption {
+		value: string;
+		label: string;
+	}
+
+	// Initialize with empty arrays
+	let categoryOptions: DropdownOption[] = $state([]);
+	let satuanOptions: DropdownOption[] = $state([]);
+
+	// Update options when data changes
+	$effect(() => {
+		if (data?.categories) {
+			categoryOptions = data.categories.map((category: { id_kategori: string; nama: string }) => ({
+				value: category.id_kategori,
+				label: category.nama
+			}));
+		}
+
+		if (data?.satuans) {
+			satuanOptions = data.satuans.map((satuan: { id_satuan: string; nama_satuan: string }) => ({
+				value: satuan.id_satuan,
+				label: satuan.nama_satuan
+			}));
+		}
+	});
 
 	function handleFileUpload(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -68,6 +132,11 @@
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				selectedImage = e.target?.result as string;
+				// Clear editingImage when we upload a new image in edit mode
+				if (isModalEditOpen) {
+					editingImage = null;
+					originalImageRemoved = true;
+				}
 			};
 			reader.readAsDataURL(file);
 		}
@@ -91,27 +160,51 @@
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				selectedImage = e.target?.result as string;
+				// Clear editingImage when we upload a new image in edit mode
+				if (isModalEditOpen) {
+					editingImage = null;
+					originalImageRemoved = true;
+				}
 			};
 			reader.readAsDataURL(file);
 		}
 	}
 
 	function getSortedData() {
-		if (!data.data_table.data) return [];
+		if (!data || !data.data) return [];
 
-		if (!isFiltered) {
-			return [...data.data_table.data].sort((a, b) => {
-				return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+		const safeData = data.data.map((item: any) => ({
+			...item,
+			nama_obat: item.nama_obat || 'Unknown Product'
+		}));
+
+		if (filterState === 'none') {
+			return [...safeData];
+		} else if (filterState === 'asc') {
+			return [...safeData].sort((a, b) => {
+				try {
+					return a.nama_obat.localeCompare(b.nama_obat);
+				} catch (e) {
+					return 0;
+				}
+			});
+		} else {
+			return [...safeData].sort((a, b) => {
+				try {
+					return b.nama_obat.localeCompare(a.nama_obat);
+				} catch (e) {
+					return 0;
+				}
 			});
 		}
-
-		return [...data.data_table.data].sort((a, b) => {
-			return a.nama.localeCompare(b.nama);
-		});
 	}
 
 	function toggleSort() {
-		isFiltered = !isFiltered;
+		if (filterState === 'none' || filterState === 'desc') {
+			filterState = 'asc';
+		} else {
+			filterState = 'desc';
+		}
 	}
 
 	$effect(() => {
@@ -120,8 +213,133 @@
 		}
 	});
 
+	$effect(() => {
+		if (!isModalEditOpen) {
+			selectedImage = null;
+		}
+	});
+
+	// Helper for image URLs
+	function formatImageUrl(url: string | null): string | null {
+		if (!url || url === 'null' || url === 'undefined') return null;
+		
+		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://leap.crossnet.co.id:2688';
+		
+		if (url.startsWith('http')) {
+			return url;
+		} else if (url.startsWith('/')) {
+			return `${API_BASE_URL}${url}`;
+		} else {
+			return `${API_BASE_URL}/${url}`;
+		}
+	}
+	
+	function isValidImageUrl(url: string | null | undefined): boolean {
+		if (!url) return false;
+		if (url === 'null' || url === 'undefined' || url === '') return false;
+		return true;
+	}
+
+	// Data loading effect
+	$effect(() => {
+		if (data && minTimeElapsed) {
+			// Hanya sembunyikan loading setelah data tersedia DAN waktu minimum telah berlalu
+			isLoading = false;
+		}
+	});
+
+	// Start animation on mount
+	onMount(() => {
+		// Set loading ke true di awal untuk menampilkan loading animation saat navigasi
+		if (!data) {
+			isLoading = true;
+			startLoadingAnimation();
+		} else {
+			isLoading = true;
+			startLoadingAnimation();
+		}
+
+		return () => {};
+	});
+
 	$inspect(data);
+
+	// Add these state variables for editing
+	let currentProductData = $state<ProductData | null>(null);
+	let editingImage = $state<string | null>(null);
+	let originalImageRemoved = $state(false);
+	let productToDelete = $state<{id: string, name: string} | null>(null);
+	let deleteReason = $state('');
+	
+	// Clear all image states
+	function resetImageStates() {
+		selectedImage = null;
+		editingImage = null;
+		originalImageRemoved = false;
+	}
+
+	function openEditModal(product: any) {
+		// Convert numeric values to strings where needed for form inputs
+		currentProductData = {
+			...product,
+			harga_beli: product.harga_beli?.toString() || '',
+			harga_jual: product.harga_jual?.toString() || '',
+			stok_minimun: product.stok_minimun?.toString() || '',
+			uprate: product.uprate?.toString() || ''
+		};
+		selectedCategory = product.id_kategori || '';
+		selectedSatuan = product.id_satuan || '';
+		selectedImage = null;
+		
+		// Only set editingImage if product has a valid image
+		const imageUrl = product.link_gambar_obat || product.image_url || null;
+		console.log('Edit modal - Image URL check:', { 
+			raw: imageUrl,
+			isValid: isValidImageUrl(imageUrl),
+			formatted: formatImageUrl(imageUrl)
+		});
+		
+		if (isValidImageUrl(imageUrl)) {
+			editingImage = formatImageUrl(imageUrl);
+			originalImageRemoved = false;
+		} else {
+			editingImage = null;
+			originalImageRemoved = true;
+		}
+		
+		isModalEditOpen = true;
+	}
+	
+	function openDeleteModal(product: any) {
+		productToDelete = {
+			id: product.id || product.id_obat, // Use either id or id_obat
+			name: product.nama_obat || product.nama || 'Product'
+		};
+		isModalAlasanOpen = true;
+	}
+	
+	function handleDeleteConfirm() {
+		if (!productToDelete || !deleteReason.trim()) {
+			alert('Data tidak lengkap untuk menghapus produk');
+			return;
+		}
+		
+		// Set values in the form and submit
+		document.getElementById('deleteProductId')!.setAttribute('value', productToDelete.id);
+		document.getElementById('deleteReason')!.setAttribute('value', deleteReason);
+		
+		// Submit the form
+		const form = document.getElementById('mainDeleteForm') as HTMLFormElement;
+		if (form) {
+			form.requestSubmit();
+		}
+	}
 </script>
+
+<svelte:head>
+	<title>Gudang - Product</title>
+	<link href={gambar_logo} rel="icon" />
+</svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
@@ -129,7 +347,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalInputOpen = true)}
@@ -137,13 +355,15 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Stock Opname</span>
+				<span class="ml-1 text-[16px]">Input Produk</span>
 			</button>
 		</div>
 		<div class="ml-2 flex-1"><Search2 /></div>
 		<div class="relative flex items-center">
 			<button
-				class="flex h-10 items-center rounded-md border border-[#AFAFAF] p-2 hover:bg-gray-200"
+				class="flex h-10 items-center rounded-md {filterState !== 'none'
+					? 'border-2 border-blue-500'
+					: 'border border-[#AFAFAF]'} p-2 hover:bg-gray-200"
 				on:click={toggleSort}
 			>
 				<svg
@@ -152,7 +372,6 @@
 					height="20"
 					viewBox="0 0 20 20"
 					fill="none"
-					class={isFiltered ? '' : ''}
 				>
 					<g id="fluent:text-sort-ascending-16-regular">
 						<path
@@ -165,9 +384,35 @@
 				<span
 					class="ml-2 w-[130px] whitespace-nowrap rounded-md px-2 py-1 text-start text-sm text-black"
 				>
-					{isFiltered ? 'Sort by Descending' : 'Sort by Ascending'}
+					{filterState === 'asc' ? 'Sort by Descending' : 'Sort by Ascending'}
 				</span>
 			</button>
+
+			{#if filterState !== 'none'}
+				<button
+					class="absolute right-0 top-0 flex h-6 w-6 -translate-y-2 translate-x-2 items-center justify-center rounded-full bg-blue-500 text-white"
+					on:click={(e) => {
+						e.stopPropagation();
+						filterState = 'none';
+					}}
+					title="Clear filter"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</button>
+			{/if}
 		</div>
 		<Dropdown
 			options={statusOptions}
@@ -179,69 +424,80 @@
 	<!-- Card Obat -->
 	<div class="flex">
 		<div class="w-10/12 justify-start">
-			<CardObat card_data={sortedData}>
-				{#snippet children({ body })}
-					<div class="space-y-2">
-						<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
-							<span>{body.nama.split(' ')[1].slice(0, 10)}</span>
-							<span class="font-inter text-[12px] leading-normal text-black">
-								{body.id}
-							</span>
-							<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-								Stock : {body.id}
-								{body.id}
-							</span>
+			{#if !isLoading}
+				<CardObat card_data={sortedData}>
+					{#snippet children({ body })}
+						<div class="space-y-2">
+							<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
+								<span>
+									{#if body.nama_obat && body.nama_obat.split(' ').length > 1}
+										{body.nama_obat.split(' ')[0].slice(0, 10)}
+									{:else if body.nama_obat}
+										{body.nama_obat.slice(0, 10)}
+									{/if}
+								</span>
+								<span class="font-inter text-[12px] leading-normal text-black">
+									{body.id_obat}
+								</span>
+								<span class="font-inter mt-3 text-[12px] leading-normal text-black">
+									Stock : {body.stok_minimun}
+									{body.nama_satuan}
+								</span>
+							</div>
 						</div>
-					</div>
-				{/snippet}
-				{#snippet actions({ body })}
-					<div class="py-1">
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalDetailOpen = true;
-							}}
-							><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
-								><path
-									stroke="#000"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width=".857"
-									d="M14.464 8.571v4.822a1.071 1.071 0 0 1-1.071 1.071H1.607a1.071 1.071 0 0 1-1.071-1.071V1.607A1.071 1.071 0 0 1 1.607.536H6.43m4.285 0h3.75m0 0v3.75m0-3.75L7.5 7.5"
-								/></svg
+					{/snippet}
+					{#snippet actions({ body, closeDropdown })}
+						<div class="py-1">
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								on:click={() => {
+									isModalDetailOpen = true;
+									closeDropdown();
+								}}
+								><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
+									><path
+										stroke="#000"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width=".857"
+										d="M14.464 8.571v4.822a1.071 1.071 0 0 1-1.071 1.071H1.607a1.071 1.071 0 0 1-1.071-1.071V1.607A1.071 1.071 0 0 1 1.607.536H6.43m4.285 0h3.75m0 0v3.75m0-3.75L7.5 7.5"
+									/></svg
+								>
+								<span class="ml-2 text-black">Lihat Data Kategori</span>
+							</button>
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+								on:click={() => {
+									openEditModal(body);
+									closeDropdown();
+								}}
+								><svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
+									><path
+										fill="#000"
+										d="M2.167 13.333h1.05l8.531-8.53-1.05-1.051-8.531 8.53v1.051Zm-.497 1.25a.729.729 0 0 1-.537-.216.729.729 0 0 1-.216-.537v-1.444a1.501 1.501 0 0 1 .44-1.063L11.908.777c.126-.115.265-.203.417-.266a1.25 1.25 0 0 1 .48-.093c.166 0 .328.03.485.089.156.059.295.153.416.283l1.017 1.03c.13.12.222.26.277.417a1.416 1.416 0 0 1-.003.951 1.182 1.182 0 0 1-.274.417L4.176 14.144a1.502 1.502 0 0 1-1.062.44H1.67Zm9.544-10.296-.517-.535 1.051 1.05-.534-.515Z"
+									/></svg
+								>
+								<span class="ml-2 text-black">Edit Data Kategori</span>
+							</button>
+							<button
+								class="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
+								on:click={() => {
+									openDeleteModal(body);
+									closeDropdown();
+								}}
 							>
-							<span class="ml-2 text-black">Lihat Data Kategori</span>
-						</button>
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalEditOpen = true;
-							}}
-							><svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
-								><path
-									fill="#000"
-									d="M2.167 13.333h1.05l8.531-8.53-1.05-1.051-8.531 8.53v1.051Zm-.497 1.25a.729.729 0 0 1-.537-.216.729.729 0 0 1-.216-.537v-1.444a1.501 1.501 0 0 1 .44-1.063L11.908.777c.126-.115.265-.203.417-.266a1.25 1.25 0 0 1 .48-.093c.166 0 .328.03.485.089.156.059.295.153.416.283l1.017 1.03c.13.12.222.26.277.417a1.416 1.416 0 0 1-.003.951 1.182 1.182 0 0 1-.274.417L4.176 14.144a1.502 1.502 0 0 1-1.062.44H1.67Zm9.544-10.296-.517-.535 1.051 1.05-.534-.515Z"
-								/></svg
-							>
-							<span class="ml-2 text-black">Edit Data Kategori</span>
-						</button>
-						<button
-							class="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
-							on:click={() => {
-								isModalAlasanOpen = true;
-							}}
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
-								><path
-									fill="#000"
-									d="M3.09 14.583a1.45 1.45 0 0 1-1.064-.442 1.45 1.45 0 0 1-.443-1.064V2.5h-.208a.605.605 0 0 1-.445-.18.605.605 0 0 1-.18-.445c0-.177.06-.326.18-.446s.268-.179.445-.179H4.5a.71.71 0 0 1 .216-.522.71.71 0 0 1 .521-.215h3.526a.71.71 0 0 1 .521.215.71.71 0 0 1 .216.522h3.125c.177 0 .325.06.445.18s.18.268.18.445-.06.326-.18.445a.605.605 0 0 1-.445.18h-.208v10.577c0 .414-.148.769-.443 1.064a1.45 1.45 0 0 1-1.064.442H3.09ZM11.167 2.5H2.833v10.577a.25.25 0 0 0 .072.184.25.25 0 0 0 .185.072h7.82a.25.25 0 0 0 .184-.072.25.25 0 0 0 .073-.184V2.5Zm-5.705 9.167c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Zm3.077 0c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Z"
-								/></svg
-							>
-							<span class="ml-2 text-black">Hapus</span>
-						</button>
-					</div>
-				{/snippet}
-			</CardObat>
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
+									><path
+										fill="#000"
+										d="M3.09 14.583a1.45 1.45 0 0 1-1.064-.442 1.45 1.45 0 0 1-.443-1.064V2.5h-.208a.605.605 0 0 1-.445-.18.605.605 0 0 1-.18-.445c0-.177.06-.326.18-.446s.268-.179.445-.179H4.5a.71.71 0 0 1 .216-.522.71.71 0 0 1 .521-.215h3.526a.71.71 0 0 1 .521.215.71.71 0 0 1 .216.522h3.125c.177 0 .325.06.445.18s.18.268.18.445-.06.326-.18.445a.605.605 0 0 1-.445.18h-.208v10.577c0 .414-.148.769-.443 1.064a1.45 1.45 0 0 1-1.064.442H3.09ZM11.167 2.5H2.833v10.577a.25.25 0 0 0 .072.184.25.25 0 0 0 .185.072h7.82a.25.25 0 0 0 .184-.072.25.25 0 0 0 .073-.184V2.5Zm-5.705 9.167c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Zm3.077 0c.177 0 .325-.06.445-.18s.18-.268.18-.445v-6.25a.605.605 0 0 0-.18-.446.605.605 0 0 0-.446-.18.604.604 0 0 0-.445.18.605.605 0 0 0-.18.446v6.25c0 .177.06.325.18.445s.269.18.446.18Z"
+									/></svg
+								>
+								<span class="ml-2 text-black">Hapus</span>
+							</button>
+						</div>
+					{/snippet}
+				</CardObat>
+			{/if}
 		</div>
 		<div class="flex w-2/12 flex-col gap-2 px-8">
 			<div class="justify flex">
@@ -384,23 +640,19 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination total_content={data.data_table.total_content} />
+		<Pagination total_content={data?.total_content} />
 	</div>
-	<!-- <div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
-		<div class="mb-8 flex items-center justify-between px-2">
-			<Pagination total_content={data.data_table.total_content} />
-		</div>
-
-	</div> -->
 	{#if isModalInputOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalInputOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Input Data Obat
+						Input Data Produk
 					</div>
 					<button class="h-[35px] w-[35px]" on:click={() => (isModalInputOpen = false)}
 						><svg
@@ -421,130 +673,177 @@
 					>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
-					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
-					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
+				<form
+					class="flex flex-col gap-4 px-10 py-6"
+					method="POST"
+					action="?/createProduct"
+					enctype="multipart/form-data"
+					use:enhance={() => {
+						// Before form submission - immediately hide the modals
+						isModalInputOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return ({ result, update }) => {
+							// After form submission
+							if (result.type === 'success') {
+								// Show success notification
+								isModalSuccessInputOpen = true;
+								// Reload page after a short delay to allow the success modal to be seen
+								setTimeout(() => {
+									window.location.reload();
+								}, 1500);
+							} else if (result.type === 'failure') {
+								// Show error message - restore the input modal if there was an error
+								isModalInputOpen = true;
+								alert(result.data?.message || 'An error occurred while creating the product');
+							}
+							// Update the form
+							update();
+						};
+					}}
+					id="productForm"
+				>
+					<Input id="nama_obat" name="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
 					<div class="flex flex-col gap-2">
 						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Kategori Obat</label
 						>
 						<select
 							id="kategori_obat"
+							name="id_kategori"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={selectedCategory}
 						>
 							<option value="" disabled selected>Pilih Kategori Obat</option>
-							<option value="tablet">Tablet</option>
+							{#each categoryOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
-					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
-					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
+					<Input id="harga_beli" name="harga_beli" label="Harga Beli" placeholder="Harga Beli" />
+					<Input id="harga_jual" name="harga_jual" label="Harga Jual" placeholder="Harga Jual" />
 					<div class="flex flex-col gap-2">
 						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
 						<select
 							id="satuan"
+							name="id_satuan"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							bind:value={selectedSatuan}
 						>
 							<option value="" disabled selected>Pilih Satuan</option>
-							<option value="tablet">Tablet</option>
-							<option value="kapsul">Kapsul</option>
-							<option value="botol">Botol</option>
-							<option value="strip">Strip</option>
-							<option value="ampul">Ampul</option>
-							<option value="vial">Vial</option>
-							<option value="tube">Tube</option>
+							{#each satuanOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
 					<Input
-						id="jumlah_barang"
+						id="stok_minimum"
+						name="stok_minimum"
 						type="number"
-						label="Jumlah Barang"
-						placeholder="Jumlah Barang"
+						label="Stock Minimum"
+						placeholder="Stock Minimum"
 					/>
 					<label
 						for="upload_gambar"
 						class="font-intersemi text-[16px] leading-normal text-[#1E1E1E]"
 						>Upload Gambar Kategori Obat</label
 					>
-					<label class="w-full cursor-pointer">
-						<div
-							class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
-							on:dragover|preventDefault
-							on:drop|preventDefault={handleDrop}
-						>
-							{#if selectedImage}
-								<div class="relative h-full w-full">
-									<img src={selectedImage} alt="Preview" class="h-full w-full object-contain p-2" />
-									<!-- Tombol hapus -->
-									<button
-										class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-										on:click|preventDefault={() => (selectedImage = null)}
-									>
+					<div class="flex flex-col gap-[4px]">
+						<label class="w-full cursor-pointer">
+							<div
+								class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
+								on:dragover|preventDefault
+								on:drop|preventDefault={handleDrop}
+							>
+								{#if selectedImage}
+									<div class="relative h-full w-full">
+										<img
+											src={selectedImage}
+											alt="Preview"
+											class="h-full w-full object-contain p-2"
+										/>
+										<!-- Tombol hapus -->
+										<button
+											class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+											on:click|preventDefault={() => {
+												selectedImage = null;
+											}}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+										</button>
+									</div>
+								{:else}
+									<div class="flex flex-col items-center gap-2">
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
-											class="h-4 w-4"
+											width="50"
+											height="50"
+											viewBox="0 0 50 50"
 											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
 										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/>
+											<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
+												<path
+													id="Vector"
+													d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
+													fill="#515151"
+												/>
+											</g>
 										</svg>
-									</button>
-								</div>
-							{:else}
-								<div class="flex flex-col items-center gap-2">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="50"
-										height="50"
-										viewBox="0 0 50 50"
-										fill="none"
-									>
-										<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
-											<path
-												id="Vector"
-												d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
-												fill="#515151"
-											/>
-										</g>
-									</svg>
-									<div
-										class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
-									>
-										<p class="text-black">Drag and Drop atau</p>
-										<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span>
+										<div
+											class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
+										>
+											<p class="text-black">Drag and Drop atau</p>
+											<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span
+											>
+										</div>
 									</div>
-								</div>
-							{/if}
-						</div>
-						<input
-							type="file"
-							class="hidden"
-							accept=".jpg,.jpeg,.png"
-							on:change={handleFileUpload}
-						/>
-					</label>
-					<div class="flex flex-col gap-[4px]">
-						<TextArea id="cara_pemakaian" label="Cara Pemakaian" placeholder="Cara Pemakaian" />
+								{/if}
+							</div>
+							<input
+								type="file"
+								name="image"
+								class="hidden"
+								accept=".jpg,.jpeg,.png"
+								on:change={handleFileUpload}
+							/>
+						</label>
 						<div class="font-inter text-[12px] text-[#515151]">
-							Ketik (-) jika tidak ada catatan tambahan
+							Note: Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB
 						</div>
 					</div>
+					<TextArea id="keterangan" name="keterangan" label="Keterangan" placeholder="Keterangan" />
+					{#if form?.error}
+						<div class="rounded-md bg-red-100 p-2 text-red-700">
+							{form.message || 'An error occurred while creating the product'}
+						</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalInputOpen = false;
+								// Only open the confirmation modal without closing the input modal
 								isModalKonfirmInputOpen = true;
 							}}
 						>
 							KONFIRMASI
 						</button>
+
+						<!-- Hidden submit button that will be clicked programmatically -->
+						<button type="submit" id="hiddenSubmit" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -552,13 +851,15 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Edit Data Obat
+						Edit Data Produk
 					</div>
 					<button class="h-[35px] w-[35px]" on:click={() => (isModalEditOpen = false)}
 						><svg
@@ -579,130 +880,247 @@
 					>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nomor_kartu" label="Nomor Kartu" placeholder="Nomor Kartu" />
-					<Input id="nomor_batch" label="Nomor Batch" placeholder="Nomor Batch" />
-					<Input id="kode_obat" label="Kode Obat" placeholder="Kode Obat" />
+				<form
+					class="flex flex-col gap-4 px-10 py-6"
+					method="POST"
+					action="?/editProduct"
+					enctype="multipart/form-data"
+					use:enhance={() => {
+						// Before form submission - immediately hide the modals
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return ({ result, update }) => {
+							// After form submission
+							if (result.type === 'success') {
+								// Show success notification
+								isModalSuccessEditOpen = true;
+								// Reload page after a short delay
+								setTimeout(() => {
+									window.location.reload();
+								}, 1500);
+							} else if (result.type === 'failure') {
+								// Show error message
+								isModalKonfirmEditOpen = false;
+								alert(result.data?.message || 'An error occurred while updating the product');
+							}
+							// Update the form
+							update();
+						};
+					}}
+					id="editProductForm"
+				>
+					<!-- Hidden field for product ID -->
+					<input type="hidden" name="product_id" value={currentProductData?.id_obat || ''} />
+
+					<Input
+						id="nama_obat"
+						name="nama_obat"
+						label="Nama Obat"
+						placeholder="Nama Obat"
+						value={currentProductData?.nama_obat || ''}
+					/>
 					<div class="flex flex-col gap-2">
 						<label for="kategori_obat" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Kategori Obat</label
 						>
 						<select
 							id="kategori_obat"
+							name="id_kategori"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={selectedCategory}
 						>
-							<option value="" disabled selected>Pilih Kategori Obat</option>
-							<option value="tablet">Tablet</option>
+							<option value="" disabled>Pilih Kategori Obat</option>
+							{#each categoryOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
-					<Input id="nama_obat" label="Nama Obat" placeholder="Nama Obat" />
-					<Input id="kadaluarsa" type="date" label="Kadaluarsa" placeholder="Kadaluarsa" />
+					<Input
+						id="harga_beli"
+						name="harga_beli"
+						label="Harga Beli"
+						placeholder="Harga Beli"
+						value={String(currentProductData?.harga_beli || '')}
+					/>
+					<Input
+						id="harga_jual"
+						name="harga_jual"
+						label="Harga Jual"
+						placeholder="Harga Jual"
+						value={String(currentProductData?.harga_jual || '')}
+					/>
 					<div class="flex flex-col gap-2">
 						<label for="satuan" class="font-intersemi text-[16px] text-[#1E1E1E]">Satuan</label>
 						<select
 							id="satuan"
+							name="id_satuan"
 							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] text-[13px]"
+							bind:value={selectedSatuan}
 						>
-							<option value="" disabled selected>Pilih Satuan</option>
-							<option value="tablet">Tablet</option>
-							<option value="kapsul">Kapsul</option>
-							<option value="botol">Botol</option>
-							<option value="strip">Strip</option>
-							<option value="ampul">Ampul</option>
-							<option value="vial">Vial</option>
-							<option value="tube">Tube</option>
+							<option value="" disabled>Pilih Satuan</option>
+							{#each satuanOptions as option}
+								<option value={option.value}>{option.label}</option>
+							{/each}
 						</select>
 					</div>
 					<Input
-						id="jumlah_barang"
+						id="stok_minimum"
+						name="stok_minimum"
 						type="number"
-						label="Jumlah Barang"
-						placeholder="Jumlah Barang"
+						label="Stock Minimum"
+						placeholder="Stock Minimum"
+						value={String(currentProductData?.stok_minimun || '')}
+					/>
+					<!-- Optional field for uprate -->
+					<Input
+						id="uprate"
+						name="uprate"
+						label="Uprate (%)"
+						placeholder="Uprate"
+						value={String(currentProductData?.uprate || '')}
 					/>
 					<label
 						for="upload_gambar"
 						class="font-intersemi text-[16px] leading-normal text-[#1E1E1E]"
 						>Upload Gambar Kategori Obat</label
 					>
-					<label class="w-full cursor-pointer">
-						<div
-							class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
-							on:dragover|preventDefault
-							on:drop|preventDefault={handleDrop}
-						>
-							{#if selectedImage}
-								<div class="relative h-full w-full">
-									<img src={selectedImage} alt="Preview" class="h-full w-full object-contain p-2" />
-									<!-- Tombol hapus -->
-									<button
-										class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
-										on:click|preventDefault={() => (selectedImage = null)}
-									>
+					<div class="flex flex-col gap-[4px]">
+						<label class="w-full cursor-pointer">
+							<div
+								class="upload-area flex h-[200px] w-full flex-col items-center justify-center rounded-lg border-[2px] border-dashed border-black"
+								on:dragover|preventDefault
+								on:drop|preventDefault={handleDrop}
+							>
+								{#if selectedImage}
+									<div class="relative h-full w-full">
+										<img
+											src={selectedImage}
+											alt="Preview"
+											class="h-full w-full object-contain p-2"
+										/>
+										<!-- Tombol hapus -->
+										<button
+											class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+											on:click|preventDefault={() => {
+												selectedImage = null;
+											}}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+										</button>
+									</div>
+								{:else if editingImage && !originalImageRemoved && isValidImageUrl(editingImage)}
+									<div class="relative h-full w-full">
+										<img
+											src={editingImage}
+											alt="Current product image"
+											class="h-full w-full object-contain p-2"
+											on:error={() => {
+												// If image fails to load, set to null
+												editingImage = null;
+												originalImageRemoved = true;
+											}}
+										/>
+										<button
+											class="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+											on:click|preventDefault={() => {
+												editingImage = null;
+												originalImageRemoved = true;
+											}}
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+										</button>
+									</div>
+								{:else}
+									<div class="flex flex-col items-center gap-2">
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
-											class="h-4 w-4"
+											width="50"
+											height="50"
+											viewBox="0 0 50 50"
 											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
 										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												stroke-width="2"
-												d="M6 18L18 6M6 6l12 12"
-											/>
+											<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
+												<path
+													id="Vector"
+													d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
+													fill="#515151"
+												/>
+											</g>
 										</svg>
-									</button>
-								</div>
-							{:else}
-								<div class="flex flex-col items-center gap-2">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="50"
-										height="50"
-										viewBox="0 0 50 50"
-										fill="none"
-									>
-										<g id="ic--outline-cloud-upload 1" clip-path="url(#clip0_835_12128)">
-											<path
-												id="Vector"
-												d="M40.3125 20.9167C39.6127 17.3703 37.7033 14.1768 34.9106 11.8818C32.1178 9.58678 28.6148 8.33256 25 8.33337C18.9792 8.33337 13.75 11.75 11.1458 16.75C8.08382 17.0809 5.2521 18.5317 3.19477 20.8236C1.13744 23.1155 -0.000357712 26.0869 8.43599e-08 29.1667C8.43599e-08 36.0625 5.60417 41.6667 12.5 41.6667H39.5833C45.3333 41.6667 50 37 50 31.25C50 25.75 45.7292 21.2917 40.3125 20.9167ZM39.5833 37.5H12.5C7.89583 37.5 4.16667 33.7709 4.16667 29.1667C4.16667 24.8959 7.35417 21.3334 11.5833 20.8959L13.8125 20.6667L14.8542 18.6875C15.8124 16.8226 17.2666 15.2583 19.0567 14.1666C20.8468 13.0749 22.9033 12.4982 25 12.5C30.4583 12.5 35.1667 16.375 36.2292 21.7292L36.8542 24.8542L40.0417 25.0834C41.6078 25.1887 43.0759 25.8834 44.1505 27.0275C45.225 28.1717 45.8263 29.6804 45.8333 31.25C45.8333 34.6875 43.0208 37.5 39.5833 37.5ZM16.6667 27.0834H21.9792V33.3334H28.0208V27.0834H33.3333L25 18.75L16.6667 27.0834Z"
-												fill="#515151"
-											/>
-										</g>
-									</svg>
-									<div
-										class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
-									>
-										<p class="text-black">Drag and Drop atau</p>
-										<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span>
+										<div
+											class="font-intersemi flex items-center justify-center text-[16px] leading-normal"
+										>
+											<p class="text-black">Drag and Drop atau</p>
+											<span class="pl-[4px] text-blue-500 hover:text-blue-600">Click to Upload</span
+											>
+										</div>
 									</div>
-								</div>
-							{/if}
-						</div>
-						<input
-							type="file"
-							class="hidden"
-							accept=".jpg,.jpeg,.png"
-							on:change={handleFileUpload}
-						/>
-					</label>
-					<div class="flex flex-col gap-[4px]">
-						<TextArea id="cara_pemakaian" label="Cara Pemakaian" placeholder="Cara Pemakaian" />
+								{/if}
+							</div>
+							<input
+								type="file"
+								name="image"
+								class="hidden"
+								accept=".jpg,.jpeg,.png"
+								on:change={handleFileUpload}
+							/>
+						</label>
 						<div class="font-inter text-[12px] text-[#515151]">
-							Ketik (-) jika tidak ada catatan tambahan
+							Note: Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB
 						</div>
 					</div>
+					<TextArea
+						id="keterangan"
+						name="keterangan"
+						label="Keterangan"
+						placeholder="Keterangan"
+						value={currentProductData?.keterangan || ''}
+					/>
+					{#if form?.error}
+						<div class="rounded-md bg-red-100 p-2 text-red-700">
+							{form.message || 'An error occurred while updating the product'}
+						</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalEditOpen = false;
 								isModalKonfirmEditOpen = true;
 							}}
 						>
-							SAVE
+							SIMPAN
 						</button>
+
+						<!-- Hidden submit button that will be clicked programmatically -->
+						<button type="submit" id="hiddenEditSubmit" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -728,33 +1146,310 @@
 						>
 					</button>
 				</div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Detail label="Nomor Kartu" value="APT-0001" />
-					<Detail label="Nomor Batch" value="BT001" />
-					<Detail label="Kode Obat" value="OB001" />
-					<Detail label="Kategori Obat" value="Obat Panas" />
+				<form class="mb-4 flex flex-col gap-4 px-10 py-6">
 					<Detail label="Nama Obat" value="Paracetamol" />
+					<Detail label="Kategori Obat" value="Obat Panas" />
 					<Detail label="Harga Beli" value="10.000" />
-					<Detail label="Kadaluarsa" value="12/05/2026" />
-					<Detail label="Jumlah Barang" value="100" />
+					<Detail label="Harga Jual" value="12.000" />
 					<Detail label="Satuan" value="Tablet" />
+					<Detail label="Jumlah Barang" value="100" />
 					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
-					<Detail label="Cara Pemakaian" value="1 kapsul sehari 2 kali" />
-					
+					<Detail label="Keterangan" value="Digunakan untuk meredakan nyeri dan demam" />
 				</form>
 			</div>
 		</div>
 	{/if}
-	<Alasan bind:isOpen={isModalAlasanOpen} bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen} />
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
-	<Inputt bind:isOpen={isModalSuccessInputOpen} />
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
-	<Edit bind:isOpen={isModalSuccessEditOpen} />
-	<KonfirmDelete bind:isOpen={isModalKonfirmDeleteOpen} bind:isSuccess={isModalSuccessDeleteOpen} />
-	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
+	<!-- Hidden delete form -->
+	<form id="mainDeleteForm" method="POST" action="?/deleteProduct" class="hidden" use:enhance={() => {
+		// Before form submission
+		isModalAlasanOpen = false;
+		isModalKonfirmDeleteOpen = false;
+		
+		return ({ result }) => {
+			if (result.type === 'success') {
+				isModalSuccessDeleteOpen = true;
+				// Reload page after a short delay
+				setTimeout(() => {
+					window.location.reload();
+				}, 1500);
+			} else if (result.type === 'failure' && result.data) {
+				alert(result.data.message || 'Gagal menghapus produk');
+			} else {
+				alert('Gagal menghapus produk');
+			}
+		};
+	}}>
+		<input type="hidden" name="product_id" id="deleteProductId" />
+		<input type="hidden" name="keterangan_hapus" id="deleteReason" />
+	</form>
+	
+	<Alasan 
+		bind:isOpen={isModalAlasanOpen} 
+		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen} 
+		productId={productToDelete?.id || ''}
+		productName={productToDelete?.name || ''}
+		bind:alasanValue={deleteReason}
+		on:reason={(e) => {
+			deleteReason = e.detail;
+		}}
+	/>
+	<KonfirmDelete 
+		bind:isOpen={isModalKonfirmDeleteOpen} 
+		bind:isSuccess={isModalSuccessDeleteOpen} 
+		on:confirm={handleDeleteConfirm}
+		on:closed={() => {
+			// Show alasan modal again if user cancels
+			isModalKonfirmDeleteOpen = false;
+			isModalAlasanOpen = true;
+		}}
+	/>
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={() => {
+			// Click the hidden submit button to trigger the form submission with enhance
+			document.getElementById('hiddenSubmit')?.click();
+		}}
+		on:closed={() => {
+			// Show input modal again if user cancels
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
+	<Inputt bind:isOpen={isModalSuccessInputOpen} on:closed={() => {
+		resetImageStates();
+		window.location.reload();
+	}} />
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
+		on:confirm={() => {
+			// Click the hidden submit button to trigger the form submission
+			document.getElementById('hiddenEditSubmit')?.click();
+		}}
+		on:closed={() => {
+			// Show edit modal again if user cancels
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
+	<Edit bind:isOpen={isModalSuccessEditOpen} on:closed={() => {
+		resetImageStates();
+		window.location.reload();
+	}} />
+	<Hapus 
+		bind:isOpen={isModalSuccessDeleteOpen} 
+		on:closed={() => {
+			resetImageStates();
+			productToDelete = null;
+			window.location.reload();
+		}} 
+	/>
 </div>
 
+{#if isLoading}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/10">
+		<div class="container">
+			<div class="butiran-container">
+				{#if showButiran}
+					<div class="butiran butiran-1"></div>
+					<div class="butiran butiran-2"></div>
+					<div class="butiran butiran-3"></div>
+				{/if}
+			</div>
+			<div class="kapsul-wrapper" class:spin={showSpin} class:centered={centerKapsul}>
+				{#if showKapsul}
+					<div class="kapsul"></div>
+				{/if}
+				{#if showTutup}
+					<div class="kapsul-tutup"></div>
+				{/if}
+			</div>
+		</div>
+	</div>
+{/if}
+
 <style>
+	.container {
+		position: relative;
+		width: 192px;
+		height: 224px;
+		image-rendering: pixelated;
+	}
+
+	.butiran-container {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	.kapsul-wrapper {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		transition: transform 0.3s steps(5);
+	}
+
+	.kapsul-wrapper.centered {
+		transform: translateY(-17%);
+	}
+
+	.kapsul-wrapper.spin {
+		animation: spin 1.4s steps(8) infinite;
+		transform-origin: center 67%;
+	}
+
+	.kapsul-wrapper.centered.spin {
+		animation: spin-centered 1.4s steps(8) infinite;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes spin-centered {
+		0% {
+			transform: translateY(-17%) rotate(0deg);
+		}
+		100% {
+			transform: translateY(-17%) rotate(360deg);
+		}
+	}
+
+	.kapsul {
+		width: 58px;
+		height: 77px;
+		border: 3px solid #000;
+		border-radius: 13px 13px 38px 38px;
+		background: #f00;
+		position: absolute;
+		left: 50%;
+		top: 100%;
+		transform: translateX(-50%) translateY(-100%);
+		box-shadow: inset -13px 0 0 0 #c00;
+	}
+
+	.butiran {
+		position: absolute;
+		margin-top: 65%;
+		left: 53%;
+		transform: translateX(-53%);
+		width: 6px;
+		height: 6px;
+		background: #fff;
+		border: 2px solid #000;
+		border-radius: 2px;
+	}
+
+	.butiran-1 {
+		animation: jatuhLuar-1 1.4s steps(10);
+		animation-fill-mode: forwards;
+	}
+
+	.butiran-2 {
+		animation: jatuhLuar-2 1.4s steps(10);
+		margin-top: 57%;
+		left: 44%;
+		transform: rotateX(-44%);
+		animation-delay: 0.42s;
+		animation-fill-mode: forwards;
+	}
+
+	.butiran-3 {
+		animation: jatuhLuar-3 1.4s steps(10);
+		margin-top: 53%;
+		left: 56%;
+		transform: translateX(-56%);
+		animation-delay: 0.84s;
+		animation-fill-mode: forwards;
+	}
+
+	@keyframes jatuhLuar-1 {
+		0% {
+			transform: translate(-54%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-75%, 30px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 30px);
+			opacity: 0;
+		}
+	}
+
+	@keyframes jatuhLuar-2 {
+		0% {
+			transform: translate(-50%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-76%, 52px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 52px);
+			opacity: 0;
+		}
+	}
+
+	@keyframes jatuhLuar-3 {
+		0% {
+			transform: translate(-56%, 0);
+			opacity: 1;
+		}
+		50% {
+			transform: translate(-75%, 70px);
+			opacity: 1;
+		}
+		51% {
+			opacity: 0;
+		}
+		100% {
+			transform: translate(-20%, 70px);
+			opacity: 0;
+		}
+	}
+
+	.kapsul-tutup {
+		width: 58px;
+		height: 77px;
+		border: 3px solid #000;
+		border-radius: 38px 38px 13px 13px;
+		background: #fff;
+		position: absolute;
+		top: 0;
+		left: 100%;
+		transform: translateX(-100%) rotate(35deg);
+		animation: kapsul-tutup 0.77s steps(6) forwards;
+		animation-fill-mode: forwards;
+		box-shadow: inset -13px 0 0 0 #eee;
+	}
+
+	@keyframes kapsul-tutup {
+		0% {
+			top: 0;
+			left: 100%;
+			transform: translateX(-100%) rotate(35deg);
+		}
+		100% {
+			top: 34%;
+			left: 50%;
+			transform: translateX(-50%) rotate(0deg);
+		}
+	}
+
 	select option {
 		color: #000000;
 	}

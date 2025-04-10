@@ -13,8 +13,9 @@
 	import Inputt from '$lib/modals/success/Inputt.svelte';
 	import Pagination20 from '$lib/table/Pagination20.svelte';
 	import Search2 from '$lib/table/Search2.svelte';
+	import { enhance } from '$app/forms';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalInputOpen = $state(false);
@@ -35,25 +36,76 @@
 	let isModalDetailOpen = $state(false);
 
 	let active_button = $state('karyawan');
-	let isFiltered = $state(false);
+	let filterState = $state('none');
 	let sortedData = $derived(getSortedData());
 
-	function getSortedData() {
-		if (!data.data_table.data) return [];
+	// Form state for input modal
+	let inputForm = $state({
+		nama_karyawan: form?.values?.nama_karyawan as string || '',
+		alamat_karyawan: form?.values?.alamat_karyawan as string || '',
+		no_telepon_karyawan: form?.values?.no_telepon_karyawan as string || '',
+		catatan_karyawan: form?.values?.catatan_karyawan as string || '',
+		role_karyawan: form?.values?.role_karyawan as string || '',
+		privilege_karyawan: form?.values?.privilege_karyawan as string || ''
+	});
 
-		if (!isFiltered) {
-			return [...data.data_table.data].sort((a, b) => {
-				return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+	// Update form state if form prop changes (e.g., after failed submission)
+	$effect(() => {
+		if (form?.values) {
+			// Helper to safely convert FormDataEntryValue to string
+			const getStringValue = (key: string): string => {
+				const value = form.values[key];
+				// Ensure the value is a string; return empty string otherwise.
+				return typeof value === 'string' ? value : ''; 
+			};
+	
+			inputForm.nama_karyawan = getStringValue('nama_karyawan');
+			inputForm.alamat_karyawan = getStringValue('alamat_karyawan');
+			inputForm.no_telepon_karyawan = getStringValue('no_telepon_karyawan');
+			inputForm.catatan_karyawan = getStringValue('catatan_karyawan');
+			inputForm.role_karyawan = getStringValue('role_karyawan');
+			inputForm.privilege_karyawan = getStringValue('privilege_karyawan');
+		}
+		if(form?.error) {
+			isModalInputOpen = true; // Re-open modal on error
+		}
+	});
+
+	function getSortedData() {
+		if (!data || !data.data) return [];
+
+		const safeData = data.data.map((item: any) => ({
+			...item,
+			nama: item.nama || 'Unknown Employee'
+		}));
+
+		if (filterState === 'none') {
+			return [...safeData];
+		} else if (filterState === 'asc') {
+			return [...safeData].sort((a, b) => {
+				try {
+					return a.nama.localeCompare(b.nama);
+				} catch (e) {
+					return 0;
+				}
+			});
+		} else {
+			return [...safeData].sort((a, b) => {
+				try {
+					return b.nama.localeCompare(a.nama);
+				} catch (e) {
+					return 0;
+				}
 			});
 		}
-
-		return [...data.data_table.data].sort((a, b) => {
-			return a.nama.localeCompare(b.nama);
-		});
 	}
 
 	function toggleSort() {
-		isFiltered = !isFiltered;
+		if (filterState === 'none' || filterState === 'desc') {
+			filterState = 'asc';
+		} else {
+			filterState = 'desc';
+		}
 	}
 
 	$inspect(data);
@@ -103,7 +155,9 @@
 		<div class="ml-2 flex-1"><Search2 /></div>
 		<div class="relative flex items-center">
 			<button
-				class="flex h-10 items-center rounded-md border border-[#AFAFAF] p-2 hover:bg-gray-200"
+				class="flex h-10 items-center rounded-md {filterState !== 'none'
+					? 'border-2 border-blue-500'
+					: 'border border-[#AFAFAF]'} p-2 hover:bg-gray-200"
 				on:click={toggleSort}
 			>
 				<svg
@@ -112,7 +166,6 @@
 					height="20"
 					viewBox="0 0 20 20"
 					fill="none"
-					class={isFiltered ? '' : ''}
 				>
 					<g id="fluent:text-sort-ascending-16-regular">
 						<path
@@ -125,9 +178,35 @@
 				<span
 					class="ml-2 w-[130px] whitespace-nowrap rounded-md px-2 py-1 text-start text-sm text-black"
 				>
-					{isFiltered ? 'Sort by Descending' : 'Sort by Ascending'}
+					{filterState === 'asc' ? 'Sort by Descending' : 'Sort by Ascending'}
 				</span>
 			</button>
+
+			{#if filterState !== 'none'}
+				<button
+					class="absolute right-0 top-0 flex h-6 w-6 -translate-y-2 translate-x-2 items-center justify-center rounded-full bg-blue-500 text-white"
+					on:click={(e) => {
+						e.stopPropagation();
+						filterState = 'none';
+					}}
+					title="Clear filter"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</button>
+			{/if}
 		</div>
 	</div>
 
@@ -138,9 +217,11 @@
 				{#snippet children({ body })}
 					<div class="space-y-2">
 						<div class="font-intersemi flex flex-col text-[20px] leading-normal text-black">
-							<span>{body.nama.split(' ')[1].slice(0, 10)}</span>
+							<span>{body.nama}</span>
 							<span class="font-inter text-[12px] leading-normal text-black">
-								{body.id}
+								{#each body.roles as role, index}
+									{role.nama_role}{index < body.roles.length - 1 ? ', ' : ''}
+								{/each}
 							</span>
 						</div>
 					</div>
@@ -196,7 +277,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination20 total_content={data.data_table.total_content} />
+		<Pagination20 total_content={data?.total_content} />
 	</div>
 	<!-- <div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
 		<div class="mb-8 flex items-center justify-between px-2">
@@ -206,16 +287,16 @@
 	</div> -->
 	{#if isModalInputOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen ? 'pointer-events-none opacity-0' : ''}"
 			on:click={() => (isModalInputOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Input Data Obat
+						Input Data Karyawan
 					</div>
-					<button class="h-[35px] w-[35px]" on:click={() => (isModalInputOpen = false)}
-						><svg
+					<button class="h-[35px] w-[35px]" on:click={() => (isModalInputOpen = false)}>
+						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							width="35"
 							height="35"
@@ -229,53 +310,94 @@
 									fill="#515151"
 								/>
 							</g>
-						</svg></button
-					>
+						</svg>
+					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nama_karyawan" label="Nama Karyawan" placeholder="Nama Karyawan" />
-					<Input id="alamat_karyawan" label="Alamat Karyawan" placeholder="Alamat Karyawan" />
-					<Input id="no_telepon_karyawan" label="No Telepon Karyawan" placeholder="No Telepon Karyawan" />
-					<TextArea id="catatan_karyawan" label="Catatan Karyawan" placeholder="Catatan Karyawan" />
+				<form 
+					method="POST" 
+					action="?/createKaryawan" 
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalInputOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								// Optionally reset form state here if needed before reload
+								inputForm = { nama_karyawan: '', alamat_karyawan: '', no_telepon_karyawan: '', catatan_karyawan: '', role_karyawan: '', privilege_karyawan: '' };
+								// No need to call update() explicitly, SvelteKit handles it.
+								// Reload after success modal shown
+								setTimeout(() => {
+									window.location.reload();
+								}, 1500); // Adjust delay as needed
+							} else if (result.type === 'failure') {
+								// Error handling is now managed by the $effect for form prop
+								// We just need to ensure the form state is updated via SvelteKit's default behavior
+								await update();
+								// Optionally, show an alert, though the form prop effect already re-opens the modal
+								// alert(result.data?.message || 'An error occurred'); 
+							} else {
+								// Handle other result types if necessary
+								await update();
+							}
+						};
+					}}
+					id="karyawanForm"
+				>
+					<Input id="nama_karyawan" name="nama_karyawan" label="Nama Karyawan" placeholder="Nama Karyawan" bind:value={inputForm.nama_karyawan} />
+					<Input id="alamat_karyawan" name="alamat_karyawan" label="Alamat Karyawan" placeholder="Alamat Karyawan" bind:value={inputForm.alamat_karyawan} />
+					<Input id="no_telepon_karyawan" name="no_telepon_karyawan" label="No Telepon Karyawan" placeholder="No Telepon Karyawan" bind:value={inputForm.no_telepon_karyawan} />
+					<TextArea id="catatan_karyawan" name="catatan_karyawan" label="Catatan Karyawan" placeholder="Catatan Karyawan" bind:value={inputForm.catatan_karyawan} />
 					<div class="flex flex-col gap-2">
-						<label for="role_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
-							>Role Karyawan</label
-						>
+						<label for="role_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]">Role Karyawan</label>
 						<select
 							id="role_karyawan"
-							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							name="role_karyawan"
+							class="font-inter h-10 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={inputForm.role_karyawan}
 						>
-							<option value="" disabled selected>Pilih Role Karyawan</option>
-							<option value="admin">Admin</option>
-							<option value="kasir">Kasir</option>
-							<option value="gudang">Gudang</option>
-							<option value="apotek">Apotek</option>
+							<option value="" disabled>Pilih Role Karyawan</option>
+							{#if data?.roles}
+								{#each data.roles as role (role.id_role)}
+									<option value={role.id_role}>{role.nama_role}</option>
+								{/each}
+							{/if}
 						</select>
 					</div>
 					<div class="flex flex-col gap-2">
-						<label for="privilege_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
-							>Privilege Karyawan</label
-						>
+						<label for="privilege_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]">Privilege Karyawan</label>
 						<select
 							id="privilege_karyawan"
-							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							name="privilege_karyawan"
+							class="font-inter h-10 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+							bind:value={inputForm.privilege_karyawan}
 						>
-							<option value="" disabled selected>Pilih Privilege Karyawan</option>
-							<option value="bisa_edit_gambar">Bisa Edit Gambar</option>
-							<option value="bisa_edit_data">Bisa Edit Data</option>
+							<option value="" disabled>Pilih Privilege Karyawan</option>
+							{#if data?.privileges}
+								{#each data.privileges as privilege (privilege.id_privilege)}
+									<option value={privilege.id_privilege}>{privilege.nama_privilege}</option>
+								{/each}
+							{/if}
 						</select>
 					</div>
+					{#if form?.error}
+						<div class="rounded-md bg-red-100 p-2 text-sm text-red-700">
+							{form.message}
+						</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalInputOpen = false;
 								isModalKonfirmInputOpen = true;
 							}}
 						>
 							KONFIRMASI
 						</button>
+						<button type="submit" id="hiddenSubmitKaryawan" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -391,7 +513,16 @@
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput 
+		bind:isOpen={isModalKonfirmInputOpen} 
+		bind:isSuccess={isModalSuccessInputOpen} 
+		on:confirm={() => {
+			document.getElementById('hiddenSubmitKaryawan')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->

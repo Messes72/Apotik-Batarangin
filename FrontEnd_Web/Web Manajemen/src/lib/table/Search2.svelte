@@ -1,12 +1,22 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { debounce, mutateQueryParams } from '$lib';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	let keyword = $state('');
 
+	onMount(() => {
+		if (page.url.searchParams.has('keyword')) {
+			const params = new URLSearchParams(page.url.searchParams);
+			params.delete('keyword');
+			goto(`?${params.toString()}`, { replaceState: true });
+		}
+	});
+
 	const update = debounce(() => {
 		mutateQueryParams('keyword', () => keyword);
-	}, 1000);
+	}, 500); // Reduced debounce time for better responsiveness
 
 	$effect(() => update(keyword));
 </script>
@@ -26,7 +36,7 @@
 	<input
 		class="bg-[#F6F6F7] rounded-md font-notosans text-[14px]"
 		type="text"
-		placeholder="Search"
+		placeholder="Search nama produk..."
 		bind:value={keyword}
 		onkeyup={(e) => {
 			if (e.key === 'Enter') mutateQueryParams('keyword', () => keyword);
