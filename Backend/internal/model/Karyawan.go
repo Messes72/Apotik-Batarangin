@@ -370,6 +370,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
               JOIN Depo d ON dk.id_depo = d.id_depo
               WHERE dk.id_karyawan = ?`
 		queryDepoRow, err := con.Query(queryDepo, id)
+		log.Println("id : ", id)
 		if err != nil {
 			log.Printf("Failed to fetch depos for karyawan %s: %v\n", id, err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to retrieve depos", Data: nil}, err
@@ -380,9 +381,11 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 		for queryDepoRow.Next() {
 			var depo class.Depo
 			if err := queryDepoRow.Scan(&depo.IDDepo, &depo.Nama, &depo.Alamat, &depo.NoTelp, &depo.Catatan); err != nil {
+
 				log.Printf("Failed to scan depo for karyawan %s: %v\n", id, err)
 				continue
 			}
+			log.Println("depo : ", depo)
 			depos = append(depos, depo)
 		}
 		karyawan.Depo = depos
@@ -457,7 +460,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
               FROM detail_karyawan dk
               JOIN Depo d ON dk.id_depo = d.id_depo
               WHERE dk.id_karyawan = ?`
-			queryDepoRow, err := con.Query(queryDepo, id)
+			queryDepoRow, err := con.Query(queryDepo, karyawan.IDKaryawan)
 			if err != nil {
 				log.Printf("Failed to fetch depos for karyawan %s: %v\n", id, err)
 				return class.Response{Status: http.StatusInternalServerError, Message: "Failed to retrieve depos", Data: nil}, err
@@ -467,10 +470,13 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 			var depos []class.Depo
 			for queryDepoRow.Next() {
 				var depo class.Depo
-				if err := queryDepoRow.Scan(&depo.IDDepo, &depo.Nama, &depo.Alamat, &depo.NoTelp, &depo.Catatan); err != nil {
+				err := queryDepoRow.Scan(&depo.IDDepo, &depo.Nama, &depo.Alamat, &depo.NoTelp, &depo.Catatan)
+				if err != nil {
 					log.Printf("Failed to scan depo for karyawan %s: %v\n", id, err)
 					continue
 				}
+
+				log.Println("depo : ", depo)
 				depos = append(depos, depo)
 			}
 			karyawan.Depo = depos

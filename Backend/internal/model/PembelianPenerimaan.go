@@ -116,6 +116,26 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 
 // 	for _, obat := range listobat {
 
+// 		obat.IDDepo = "10"
+
+// 		if obat.JumlahDipesan < obat.JumlahDiterima {
+// 			tx.Rollback()
+// 			log.Println("user input jumlah diterima lebih besar dari dipesan")
+// 			return class.Response{Status: http.StatusBadRequest, Message: "Jumlah obat diterima tidak boleh lebih besar daripada yang dipesan", Data: nil}, err
+// 		}
+// 		idstatus := "0"
+// 		if obat.JumlahDiterima > 0 {
+// 			if obat.JumlahDiterima == obat.JumlahDipesan {
+// 				idstatus = "1"
+// 			} else {
+// 				idstatus = "2"
+// 			}
+// 		}
+
+// 		obat.IDStatus = idstatus
+
+// 		querydetailobat := `INSERT INTO detail_pembelian_penerimaan(id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_nomor_batch, id_kartustok, id_depo, id_status, nama_obat, jumlah_dipesan, jumlah_diterima,created_at )`
+
 // 		if obat.NomorBatch == "" {
 // 			var counter int
 // 			queryCounter := `SELECT count FROM nomor_batchcounter FOR UPDATE`
@@ -150,25 +170,7 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 
 // 		}
 
-// 		obat.IDDepo = "10"
-
-// 		if obat.JumlahDipesan < obat.JumlahDiterima {
-// 			tx.Rollback()
-// 			log.Println("user input jumlah diterima lebih besar dari dipesan")
-// 			return class.Response{Status: http.StatusBadRequest, Message: "Jumlah obat diterima tidak boleh lebih besar daripada yang dipesan", Data: nil}, err
-// 		}
-// 		idstatus := "0"
-// 		if obat.JumlahDiterima > 0 {
-// 			if obat.JumlahDiterima == obat.JumlahDipesan {
-// 				idstatus = "1"
-// 			} else {
-// 				idstatus = "2"
-// 			}
-// 		}
-
-// 		obat.IDStatus = idstatus
-
-// 		querydetailobat := `INSERT INTO detail_pembelian_penerimaan(id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_nomor_batch, id_kartustok, id_depo, id_status, nama_obat, jumlah_dipesan, jumlah_diterima, )`
+// 		_, err := tx.ExecContext(ctx, querydetailobat, penerimaan.IDPembelianPenerimaanObat)
 
 // 	}
 
