@@ -13,6 +13,7 @@ import (
 )
 
 func AddKaryawan(c echo.Context) error {
+	log.Println()
 	var requestBody struct {
 		Karyawan class.Karyawan `json:"karyawan"`
 		Username string         `json:"username"`
@@ -31,9 +32,6 @@ func AddKaryawan(c echo.Context) error {
 
 	}
 
-	log.Printf("Received data: %+v", requestBody)
-	log.Println(requestBody.Username)
-	log.Println(requestBody.Password)
 	log.Println(requestBody.Karyawan.Privileges)
 	log.Println(requestBody.Karyawan.Roles)
 	// Validate required fields
