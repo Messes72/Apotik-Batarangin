@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -41,11 +42,33 @@ func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator s
 		return class.Response{Status: http.StatusConflict, Message: "Username exist", Data: nil}, nil
 	}
 
+	var counter int
+	queryCounter := `SELECT count FROM karyawancounter FOR UPDATE`
+	err = tx.QueryRow(queryCounter).Scan(&counter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to fetch counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to fetch obat counter", Data: nil}, err
+	}
+
+	newCounter := counter + 1
+	prefix := "KAR"
+	newidkaryawan := fmt.Sprintf("%s%d", prefix, newCounter)
+	log.Printf("New id obat: %s", newidkaryawan)
+
+	updateCounter := `UPDATE karyawancounter SET count = ?`
+	_, err = tx.Exec(updateCounter, newCounter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to update obat counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
+	}
+
 	// Insert into Karyawan
 	insertKaryawan := `
 			INSERT INTO Karyawan (id_karyawan, nama, alamat, no_telp, created_at, updated_at,catatan) 
 			VALUES (?, ?, ?, ?, NOW(), NOW(),?)`
-	_, err = tx.Exec(insertKaryawan, karyawan.IDKaryawan, karyawan.Nama, karyawan.Alamat, karyawan.NoTelp, karyawan.Catatan)
+	_, err = tx.Exec(insertKaryawan, newidkaryawan, karyawan.Nama, karyawan.Alamat, karyawan.NoTelp, karyawan.Catatan)
 	if err != nil {
 		tx.Rollback()
 		log.Printf("Failed to insert Karyawan: %v\n", err)
@@ -72,7 +95,7 @@ func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator s
 	insertLogin := `
 			INSERT INTO StaffLogin (id_karyawan, username, password_hash, last_login) 
 			VALUES (?, ?, ?, NULL)`
-	_, err = tx.Exec(insertLogin, karyawan.IDKaryawan, username, hashedPassword)
+	_, err = tx.Exec(insertLogin, newidkaryawan, username, hashedPassword)
 	if err != nil {
 		log.Printf("Failed to insert StaffLogin: %v\n", err)
 		tx.Rollback()
@@ -83,7 +106,7 @@ func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator s
 			INSERT INTO detail_role_karyawan (id_role, id_karyawan) 
 			VALUES (?, ?)`
 	for _, roleID := range karyawan.Roles {
-		_, err = tx.Exec(insertRole, roleID.IDRole, karyawan.IDKaryawan)
+		_, err = tx.Exec(insertRole, roleID.IDRole, newidkaryawan)
 		if err != nil {
 			log.Printf("Failed to assign role %s: %v\n", roleID, err)
 			tx.Rollback()
@@ -95,7 +118,7 @@ func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator s
 			INSERT INTO detail_privilege_karyawan (id_privilege, id_karyawan) 
 			VALUES (?, ?)`
 	for _, privilegeID := range karyawan.Privileges {
-		_, err = tx.Exec(insertPrivilege, privilegeID.IDPrivilege, karyawan.IDKaryawan)
+		_, err = tx.Exec(insertPrivilege, privilegeID.IDPrivilege, newidkaryawan)
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Failed to assign privilege %s: %v\n", privilegeID, err)
@@ -105,14 +128,14 @@ func AddKaryawan(karyawan class.Karyawan, username, password string, idcreator s
 
 	insertDepo := `INSERT INTO detail_karyawan (id_depo, id_karyawan, created_at, created_by, catatan) VALUES (?,?,NOW(),?,?)`
 	for _, depo := range karyawan.Depo {
-		_, err = tx.Exec(insertDepo, depo.IDDepo, karyawan.IDKaryawan, idcreator, depo.Catatan)
+		_, err = tx.Exec(insertDepo, depo.IDDepo, newidkaryawan, idcreator, depo.Catatan)
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Failed to assign depo %s: %v\n", depo.IDDepo, err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to assign depo", Data: nil}, err
 		}
 	}
-	// _, err = tx.Exec(insertDepo, karyawan.Depo.IDDepo, karyawan.IDKaryawan, idcreator, karyawan.Depo.Catatan)
+	// _, err = tx.Exec(insertDepo, karyawan.Depo.IDDepo, newidkaryawan, idcreator, karyawan.Depo.Catatan)
 	// if err != nil {
 	// 	tx.Rollback()
 	// 	log.Printf("Failed to insert depo karyawan: %v\n", err)

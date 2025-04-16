@@ -112,6 +112,27 @@ CREATE TABLE KategoriCounter (
 );
 INSERT INTO KategoriCounter (COUNT) VALUES (1)
 
+
+CREATE TABLE pembelian_penerimaancounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO pembelian_penerimaancounter (COUNT) VALUES (1)
+
+CREATE TABLE detail_pembelian_penerimaancounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO detail_pembelian_penerimaancounter (COUNT) VALUES (1)
+
+CREATE TABLE nomor_batchcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO nomor_batchcounter (COUNT) VALUES (1)
+
+CREATE TABLE karyawancounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO karyawancounter (COUNT) VALUES (1)
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -212,7 +233,7 @@ CREATE TABLE keterangan_pakai (
 
 CREATE TABLE nomor_batch (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    id_nomor_batch VARCHAR(100) NOT NULL,
+    id_nomor_batch VARCHAR(100) NOT NULL UNIQUE,
     no_batch VARCHAR(200) NOT NULL,
     kadaluarsa DATE NOT NULL,
     created_at DATETIME NOT NULL,
@@ -298,20 +319,60 @@ CREATE TABLE pembelian_penerimaan(
     id_supplier VARCHAR(50) NOT NULL,
     total_harga FLOAT UNSIGNED NOT NULL,
     keterangan VARCHAR(255) NULL,
+    tanggal_pemesanan DATE NOT NULL,
+    tanggal_penerimaan DATE NULL,
+    tanggal_pembayaran DATE NULL,
+    pemesan VARCHAR(10) NULL,
+    penerima VARCHAR(10) NULL,
     created_at DATETIME NOT NULL,
     created_by VARCHAR(10) NOT NULL,
     updated_at DATETIME NULL,
     updated_by VARCHAR(10) NULL,
     deleted_at DATETIME NULL,
-    deleted_by VARCHAR(10) NULL
+    deleted_by VARCHAR(10) NULL,
+    constraint fk_supplier FOREIGN KEY (id_supplier) REFERENCES supplier(id_supplier),
+    constraint fk_pemesan FOREIGN KEY (pemesan) REFERENCES Karyawan(id_karyawan),
+    constraint fk_penerima FOREIGN KEY (penerima) REFERENCES Karyawan(id_karyawan)
+
 )
 
 CREATE TABLE detail_pembelian_penerimaan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL, 
-    id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL,
-    id_karyawan VARCHAR(10) 
+    id_detail_pembelian_penerimaan_obat VARCHAR(50) NOT NULL,
+    id_nomor_batch VARCHAR(100) NULL,
+    id_kartustok VARCHAR(100) NOT NULL,
+    id_depo VARCHAR(10) NOT NULL,
+    id_status VARCHAR(50) NOT NULL,
+    nama_obat VARCHAR(255) NOT NULL,
+    jumlah_dipesan INT UNSIGNED NOT NULL,
+    jumlah_diterima INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL,
+    constraint fk_pembelian_penerimaan_obat FOREIGN KEY (id_pembelian_penerimaan_obat) REFERENCES pembelian_penerimaan(id_pembelian_penerimaan_obat),
+    constraint fk_nomor_batch FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch),
+    constraint fk_kartu_stok FOREIGN KEY (id_kartustok, id_depo) REFERENCES kartu_stok(id_kartustok, id_depo),
+    constraint fk_status FOREIGN KEY (id_status) REFERENCES status(id_status)
+
 )
+
+CREATE TABLE status(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_status VARCHAR(50) NOT NULL UNIQUE,
+    nama_status VARCHAR(255) NOT NULL,
+    keterangan VARCHAR(255) NULL
+)
+
+CREATE TABLE supplier (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_supplier VARCHAR(15) NOT NULL UNIQUE,
+    nama VARCHAR(100) NOT NULL,
+    alamat VARCHAR(255) NOT NULL,
+    no_telp VARCHAR(20) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
+    deleted_at DATETIME,
+    keterangan VARCHAR(255)
+);
 
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

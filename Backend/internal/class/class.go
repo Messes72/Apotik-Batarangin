@@ -144,3 +144,59 @@ type Satuan struct {
 	Catatan    *string   `json:"catatan,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }
+
+type DetailKartuStok struct {
+	ID                        uint       `json:"id"`
+	IDDetailKartuStok         string     `json:"id_detail_kartu_stok"`
+	IDKartuStok               string     `json:"id_kartustok"`
+	IDPembelianPenerimaanObat string     `json:"id_pembelian_penerimaan_obat,omitempty"`
+	IDDistribusi              string     `json:"id_distribusi,omitempty"`
+	IDNomorBatch              string     `json:"id_nomor_batch,omitempty"`
+	Masuk                     int        `json:"masuk"`
+	Keluar                    int        `json:"keluar"`
+	Sisa                      int        `json:"sisa"`
+	CreatedAt                 time.Time  `json:"created_at"`
+	UpdatedAt                 time.Time  `json:"updated_at"`
+	DeletedAt                 *time.Time `json:"deleted_at,omitempty"`
+}
+
+type PembelianPenerimaan struct {
+	ID                        uint                        `json:"id"`
+	IDPembelianPenerimaanObat string                      `json:"id_pembelian_penerimaan_obat"`
+	IDSupplier                string                      `json:"id_supplier"`
+	TanggalPembelian          time.Time                   `json:"-"`
+	TanggalPenerimaan         *time.Time                  `json:"-"`
+	TanggalPembayaran         *time.Time                  `json:"-"`
+	TanggalPembelianInput     string                      `json:"tanggal_pembelian"`
+	TanggalPembayaranInput    string                      `json:"tanggal_pembayaran,omitempty"`
+	TanggalPenerimaanInput    string                      `json:"tanggal_penerimaan"`
+	Pemesan                   string                      `json:"pemesan,omitempty"`
+	Penerima                  string                      `json:"penerima,omitempty"`
+	TotalHarga                float64                     `json:"total_harga"`
+	Keterangan                *string                     `json:"keterangan,omitempty"`
+	CreatedAt                 time.Time                   `json:"created_at"`
+	CreatedBy                 string                      `json:"created_by"`
+	UpdatedAt                 *time.Time                  `json:"updated_at,omitempty"`
+	UpdatedBy                 *string                     `json:"updated_by,omitempty"`
+	DeletedAt                 *time.Time                  `json:"deleted_at,omitempty"`
+	DeletedBy                 *string                     `json:"deleted_by,omitempty"`
+	ObatList                  []DetailPembelianPenerimaan `json:"obat_list"`
+}
+
+type DetailPembelianPenerimaan struct {
+	ID                          uint       `json:"id"`
+	IDPembelianPenerimaanObat   string     `json:"id_pembelian_penerimaan_obat"`
+	IDDetailPembelianPenerimaan string     `json:"id_detail_pembelian_penerimaan_obat"`
+	NomorBatch                  string     `json:"nomor_batch"`
+	IDKartuStok                 string     `json:"id_kartustok"`
+	IDDepo                      string     `json:"id_depo"` //hardcode nanti ke gudang
+	IDStatus                    string     `json:"id_status"`
+	NamaObat                    string     `json:"nama_obat"`
+	JumlahDipesan               int        `json:"jumlah_dipesan"`
+	JumlahDiterima              int        `json:"jumlah_diterima"`
+	Kadaluarsa                  time.Time  `json:"-"`
+	KadaluarsaInput             string     `json:"kadaluarsa"`
+	CreatedAt                   time.Time  `json:"created_at"`
+	UpdatedAt                   time.Time  `json:"updated_at"`
+	DeletedAt                   *time.Time `json:"deleted_at,omitempty"`
+}
