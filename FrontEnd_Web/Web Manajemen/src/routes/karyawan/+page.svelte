@@ -35,38 +35,115 @@
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
+	// Current data for edit and delete
+	interface Karyawan {
+		id: string;
+		id_karyawan: string;
+		nama: string;
+		alamat: string;
+		no_telp: string;
+		catatan: string;
+		roles: Array<{id_role: string, nama_role: string}>;
+		privileges: Array<{id_privilege: string, nama_privilege: string}>;
+		depo: Array<{id_depo: string, catatan: string}>;
+	}
+
+	let currentKaryawan = $state<Karyawan | null>(null);
+	let selectedRoles = $state<string[]>([]);
+	let selectedPrivileges = $state<string[]>([]);
+	let selectedDepos = $state<string[]>([]);
+	let currentDetailKaryawan = $state<Karyawan | null>(null);
+
 	let active_button = $state('karyawan');
 	let filterState = $state('none');
 	let sortedData = $derived(getSortedData());
 
 	// Form state for input modal
 	let inputForm = $state({
-		nama_karyawan: form?.values?.nama_karyawan as string || '',
-		alamat_karyawan: form?.values?.alamat_karyawan as string || '',
-		no_telepon_karyawan: form?.values?.no_telepon_karyawan as string || '',
-		catatan_karyawan: form?.values?.catatan_karyawan as string || '',
-		role_karyawan: form?.values?.role_karyawan as string || '',
-		privilege_karyawan: form?.values?.privilege_karyawan as string || ''
+		nama_karyawan: '',
+		alamat_karyawan: '',
+		no_telepon_karyawan: '',
+		username_karyawan: '',
+		password_karyawan: '',
+		catatan_karyawan: '',
+		role_karyawan: [] as string[],
+		privilege_karyawan: [] as string[],
+		depo: [] as string[]
 	});
+
+	/**
+	 * Set current karyawan data for editing
+	 */
+	function setKaryawanForEdit(karyawan: any) {
+		// console.log('[setKaryawanForEdit] Received karyawan object:', karyawan);
+		currentKaryawan = karyawan;
+		
+		// Set selected roles
+		selectedRoles = karyawan.roles?.map((role: {id_role: string}) => role.id_role) || [];
+		
+		// Set selected privileges
+		selectedPrivileges = karyawan.privileges?.map((privilege: {id_privilege: string}) => privilege.id_privilege) || [];
+		
+		// Set selected depos
+		selectedDepos = karyawan.depo?.map((depo: {id_depo: string}) => depo.id_depo) || [];
+		
+		// Open edit modal
+		isModalEditOpen = true;
+	}
 
 	// Update form state if form prop changes (e.g., after failed submission)
 	$effect(() => {
 		if (form?.values) {
 			// Helper to safely convert FormDataEntryValue to string
 			const getStringValue = (key: string): string => {
-				const value = form.values[key];
-				// Ensure the value is a string; return empty string otherwise.
-				return typeof value === 'string' ? value : ''; 
+				try {
+					// Type assertion untuk mengakses form.values dengan aman
+					const formDataObject = form.values as Record<string, FormDataEntryValue>;
+					const value = formDataObject[key];
+					return typeof value === 'string' ? value : '';
+				} catch {
+					return '';
+				}
 			};
-	
-			inputForm.nama_karyawan = getStringValue('nama_karyawan');
-			inputForm.alamat_karyawan = getStringValue('alamat_karyawan');
-			inputForm.no_telepon_karyawan = getStringValue('no_telepon_karyawan');
-			inputForm.catatan_karyawan = getStringValue('catatan_karyawan');
-			inputForm.role_karyawan = getStringValue('role_karyawan');
-			inputForm.privilege_karyawan = getStringValue('privilege_karyawan');
+
+			// Helper to convert FormDataEntryValue to string array
+			const getArrayValue = (key: string): string[] => {
+				try {
+					// Type assertion untuk mengakses form.values dengan aman
+					const formDataObject = form.values as Record<string, FormDataEntryValue>;
+					const value = formDataObject[key];
+					
+					if (Array.isArray(value)) return value;
+					if (typeof value === 'string') {
+						try {
+							return JSON.parse(value) || [];
+						} catch {
+							return value ? [value] : [];
+						}
+					}
+					return [];
+				} catch {
+					return [];
+				}
+			};
+
+			// Update form values safely
+			try {
+				inputForm.nama_karyawan = getStringValue('nama_karyawan');
+				inputForm.alamat_karyawan = getStringValue('alamat_karyawan');
+				inputForm.no_telepon_karyawan = getStringValue('no_telepon_karyawan');
+				inputForm.username_karyawan = getStringValue('username_karyawan');
+				inputForm.password_karyawan = getStringValue('password_karyawan');
+				inputForm.catatan_karyawan = getStringValue('catatan_karyawan');
+				inputForm.role_karyawan = getArrayValue('role_karyawan');
+				inputForm.privilege_karyawan = getArrayValue('privilege_karyawan');
+				inputForm.depo = getArrayValue('depo');
+			} catch (e) {
+				// Ignore errors when updating form values
+			}
 		}
-		if(form?.error) {
+		
+		if (form?.error) {
 			isModalInputOpen = true; // Re-open modal on error
 		}
 	});
@@ -109,6 +186,49 @@
 	}
 
 	$inspect(data);
+
+	// Close dropdowns when clicking outside
+	function handleClickOutside(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+
+		// Check and close role dropdown
+		if (!target.closest('#role_dropdown') && !target.closest('#role_button')) {
+			document.getElementById('role_dropdown')?.classList.add('hidden');
+		}
+
+		// Check and close privilege dropdown
+		if (!target.closest('#privilege_dropdown') && !target.closest('#privilege_button')) {
+			document.getElementById('privilege_dropdown')?.classList.add('hidden');
+		}
+
+		// Check and close depo dropdown
+		if (!target.closest('#depo_dropdown') && !target.closest('#depo_button')) {
+			document.getElementById('depo_dropdown')?.classList.add('hidden');
+		}
+		
+		// Check and close edit dropdowns
+		if (!target.closest('#role_dropdown_edit') && !target.closest('#role_button_edit')) {
+			document.getElementById('role_dropdown_edit')?.classList.add('hidden');
+		}
+		
+		if (!target.closest('#privilege_dropdown_edit') && !target.closest('#privilege_button_edit')) {
+			document.getElementById('privilege_dropdown_edit')?.classList.add('hidden');
+		}
+		
+		if (!target.closest('#depo_dropdown_edit') && !target.closest('#depo_button_edit')) {
+			document.getElementById('depo_dropdown_edit')?.classList.add('hidden');
+		}
+	}
+
+	// Add click event listener when component mounts
+	$effect(() => {
+		document.addEventListener('click', handleClickOutside);
+
+		// Cleanup when component unmounts
+		return () => {
+			document.removeEventListener('click', handleClickOutside);
+		};
+	});
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -231,6 +351,7 @@
 						<button
 							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 							on:click={() => {
+								currentDetailKaryawan = body;
 								isModalDetailOpen = true;
 							}}
 							><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
@@ -247,7 +368,7 @@
 						<button
 							class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 							on:click={() => {
-								isModalEditOpen = true;
+								setKaryawanForEdit(body);
 							}}
 							><svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" fill="none"
 								><path
@@ -287,7 +408,9 @@
 	</div> -->
 	{#if isModalInputOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen ? 'pointer-events-none opacity-0' : ''}"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalInputOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
@@ -314,9 +437,9 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form 
-					method="POST" 
-					action="?/createKaryawan" 
+				<form
+					method="POST"
+					action="?/createKaryawan"
 					class="flex flex-col gap-4 px-10 py-6"
 					use:enhance={() => {
 						isModalInputOpen = false;
@@ -326,7 +449,17 @@
 							if (result.type === 'success') {
 								isModalSuccessInputOpen = true;
 								// Optionally reset form state here if needed before reload
-								inputForm = { nama_karyawan: '', alamat_karyawan: '', no_telepon_karyawan: '', catatan_karyawan: '', role_karyawan: '', privilege_karyawan: '' };
+								inputForm = {
+									nama_karyawan: '',
+									alamat_karyawan: '',
+									no_telepon_karyawan: '',
+									username_karyawan: '',
+									password_karyawan: '',
+									catatan_karyawan: '',
+									role_karyawan: [],
+									privilege_karyawan: [],
+									depo: []
+								};
 								// No need to call update() explicitly, SvelteKit handles it.
 								// Reload after success modal shown
 								setTimeout(() => {
@@ -337,7 +470,7 @@
 								// We just need to ensure the form state is updated via SvelteKit's default behavior
 								await update();
 								// Optionally, show an alert, though the form prop effect already re-opens the modal
-								// alert(result.data?.message || 'An error occurred'); 
+								// alert(result.data?.message || 'An error occurred');
 							} else {
 								// Handle other result types if necessary
 								await update();
@@ -346,41 +479,286 @@
 					}}
 					id="karyawanForm"
 				>
-					<Input id="nama_karyawan" name="nama_karyawan" label="Nama Karyawan" placeholder="Nama Karyawan" bind:value={inputForm.nama_karyawan} />
-					<Input id="alamat_karyawan" name="alamat_karyawan" label="Alamat Karyawan" placeholder="Alamat Karyawan" bind:value={inputForm.alamat_karyawan} />
-					<Input id="no_telepon_karyawan" name="no_telepon_karyawan" label="No Telepon Karyawan" placeholder="No Telepon Karyawan" bind:value={inputForm.no_telepon_karyawan} />
-					<TextArea id="catatan_karyawan" name="catatan_karyawan" label="Catatan Karyawan" placeholder="Catatan Karyawan" bind:value={inputForm.catatan_karyawan} />
+					<Input
+						id="nama_karyawan"
+						name="nama_karyawan"
+						label="Nama Karyawan"
+						placeholder="Nama Karyawan"
+						bind:value={inputForm.nama_karyawan}
+					/>
+					<Input
+						id="alamat_karyawan"
+						name="alamat_karyawan"
+						label="Alamat Karyawan"
+						placeholder="Alamat Karyawan"
+						bind:value={inputForm.alamat_karyawan}
+					/>
+					<Input
+						id="no_telepon_karyawan"
+						name="no_telepon_karyawan"
+						label="No Telepon Karyawan"
+						placeholder="No Telepon Karyawan"
+						bind:value={inputForm.no_telepon_karyawan}
+					/>
+					<Input
+						id="username_karyawan"
+						name="username_karyawan"
+						label="Username Karyawan"
+						placeholder="Username Karyawan"
+						bind:value={inputForm.username_karyawan}
+					/>
+					<Input
+						id="password_karyawan"
+						name="password_karyawan"
+						label="Password Karyawan"
+						placeholder="Password Karyawan"
+						bind:value={inputForm.password_karyawan}
+						type="password"
+					/>
+					<TextArea
+						id="catatan_karyawan"
+						name="catatan_karyawan"
+						label="Catatan Karyawan"
+						placeholder="Catatan Karyawan"
+						bind:value={inputForm.catatan_karyawan}
+					/>
 					<div class="flex flex-col gap-2">
-						<label for="role_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]">Role Karyawan</label>
-						<select
-							id="role_karyawan"
-							name="role_karyawan"
-							class="font-inter h-10 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-							bind:value={inputForm.role_karyawan}
+						<label for="role_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
+							>Role Karyawan</label
 						>
-							<option value="" disabled>Pilih Role Karyawan</option>
-							{#if data?.roles}
-								{#each data.roles as role (role.id_role)}
-									<option value={role.id_role}>{role.nama_role}</option>
-								{/each}
-							{/if}
-						</select>
+						<div class="relative">
+							<button
+								type="button"
+								id="role_button"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('role_dropdown')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{inputForm.role_karyawan.length > 0
+										? inputForm.role_karyawan
+												.map((id) => {
+													const role = data?.roles?.find((r) => r.id_role === id);
+													return role?.nama_role || id;
+												})
+												.join(', ')
+										: 'Pilih Role Karyawan'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="role_dropdown"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.roles}
+									{#each data.roles as role (role.id_role)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`role_${role.id_role}`}
+												value={role.id_role}
+												checked={inputForm.role_karyawan.includes(role.id_role)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														inputForm.role_karyawan = [...inputForm.role_karyawan, role.id_role];
+													} else {
+														inputForm.role_karyawan = inputForm.role_karyawan.filter(
+															(id) => id !== role.id_role
+														);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`role_${role.id_role}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{role.nama_role}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input
+								type="hidden"
+								name="role_karyawan"
+								value={JSON.stringify(inputForm.role_karyawan)}
+							/>
+						</div>
 					</div>
 					<div class="flex flex-col gap-2">
-						<label for="privilege_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]">Privilege Karyawan</label>
-						<select
-							id="privilege_karyawan"
-							name="privilege_karyawan"
-							class="font-inter h-10 w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-							bind:value={inputForm.privilege_karyawan}
+						<label for="privilege_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
+							>Privilege Karyawan</label
 						>
-							<option value="" disabled>Pilih Privilege Karyawan</option>
-							{#if data?.privileges}
-								{#each data.privileges as privilege (privilege.id_privilege)}
-									<option value={privilege.id_privilege}>{privilege.nama_privilege}</option>
-								{/each}
-							{/if}
-						</select>
+						<div class="relative">
+							<button
+								type="button"
+								id="privilege_button"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('privilege_dropdown')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{inputForm.privilege_karyawan.length > 0
+										? inputForm.privilege_karyawan
+												.map((id) => {
+													const privilege = data?.privileges?.find((p) => p.id_privilege === id);
+													return privilege?.nama_privilege || id;
+												})
+												.join(', ')
+										: 'Pilih Privilege Karyawan'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="privilege_dropdown"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.privileges}
+									{#each data.privileges as privilege (privilege.id_privilege)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`privilege_${privilege.id_privilege}`}
+												value={privilege.id_privilege}
+												checked={inputForm.privilege_karyawan.includes(privilege.id_privilege)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														inputForm.privilege_karyawan = [
+															...inputForm.privilege_karyawan,
+															privilege.id_privilege
+														];
+													} else {
+														inputForm.privilege_karyawan = inputForm.privilege_karyawan.filter(
+															(id) => id !== privilege.id_privilege
+														);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`privilege_${privilege.id_privilege}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{privilege.nama_privilege}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input
+								type="hidden"
+								name="privilege_karyawan"
+								value={JSON.stringify(inputForm.privilege_karyawan)}
+							/>
+						</div>
+					</div>
+					<div class="flex flex-col gap-2">
+						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
+						<div class="relative">
+							<button
+								type="button"
+								id="depo_button"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('depo_dropdown')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{inputForm.depo.length > 0
+										? inputForm.depo
+												.map((id) => {
+													const depo = data?.depos?.find((d) => d.id_depo === id);
+													return depo?.nama || id;
+												})
+												.join(', ')
+										: 'Pilih Depo'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="depo_dropdown"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.depos}
+									{#each data.depos as depo (depo.id_depo)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`depo_${depo.id_depo}`}
+												value={depo.id_depo}
+												checked={inputForm.depo.includes(depo.id_depo)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														inputForm.depo = [...inputForm.depo, depo.id_depo];
+													} else {
+														inputForm.depo = inputForm.depo.filter((id) => id !== depo.id_depo);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`depo_${depo.id_depo}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{depo.nama}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input type="hidden" name="depo" value={JSON.stringify(inputForm.depo)} />
+						</div>
 					</div>
 					{#if form?.error}
 						<div class="rounded-md bg-red-100 p-2 text-sm text-red-700">
@@ -405,13 +783,13 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen ? 'pointer-events-none opacity-0' : ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[24px] leading-normal text-[#515151]">
-						Edit Data Obat
+						Edit Data Karyawan
 					</div>
 					<button class="h-[35px] w-[35px]" on:click={() => (isModalEditOpen = false)}
 						><svg
@@ -432,49 +810,317 @@
 					>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="nama_karyawan" label="Nama Karyawan" placeholder="Nama Karyawan" />
-					<Input id="alamat_karyawan" label="Alamat Karyawan" placeholder="Alamat Karyawan" />
-					<Input id="no_telepon_karyawan" label="No Telepon Karyawan" placeholder="No Telepon Karyawan" />
-					<TextArea id="catatan_karyawan" label="Catatan Karyawan" placeholder="Catatan Karyawan" />
+				<form 
+					class="flex flex-col gap-4 px-10 py-6"
+					method="POST"
+					action="?/editKaryawan"
+					use:enhance={() => {
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								isModalSuccessEditOpen = true;
+								// Reload after success modal shown
+								setTimeout(() => {
+									window.location.reload();
+								}, 1500);
+							} else if (result.type === 'failure') {
+								// Re-open modal on error
+								await update();
+								isModalEditOpen = true;
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="editKaryawanForm"
+				>
+					<!-- ID Fields -->
+					<input type="hidden" name="karyawan_id" value={currentKaryawan?.id_karyawan || ''} />
+
+					<Input 
+						id="nama_karyawan" 
+						name="nama_karyawan" 
+						label="Nama Karyawan" 
+						placeholder="Nama Karyawan"
+						value={currentKaryawan?.nama || ''} 
+					/>
+					<Input 
+						id="alamat_karyawan" 
+						name="alamat_karyawan" 
+						label="Alamat Karyawan" 
+						placeholder="Alamat Karyawan"
+						value={currentKaryawan?.alamat || ''} 
+					/>
+					<Input
+						id="no_telepon_karyawan"
+						name="no_telepon_karyawan"
+						label="No Telepon Karyawan"
+						placeholder="No Telepon Karyawan"
+						value={currentKaryawan?.no_telp || ''}
+					/>
+					<TextArea 
+						id="catatan_karyawan" 
+						name="catatan_karyawan" 
+						label="Catatan Karyawan" 
+						placeholder="Catatan Karyawan"
+						value={currentKaryawan?.catatan || ''}
+					/>
 					<div class="flex flex-col gap-2">
 						<label for="role_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Role Karyawan</label
 						>
-						<select
-							id="role_karyawan"
-							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-						>
-							<option value="" disabled selected>Pilih Role Karyawan</option>
-							<option value="admin">Admin</option>
-							<option value="kasir">Kasir</option>
-							<option value="gudang">Gudang</option>
-							<option value="apotek">Apotek</option>
-						</select>
+						<div class="relative">
+							<button
+								type="button"
+								id="role_button_edit"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('role_dropdown_edit')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{selectedRoles.length > 0
+										? selectedRoles
+												.map((id) => {
+													const role = data?.roles?.find((r) => r.id_role === id);
+													return role?.nama_role || id;
+												})
+												.join(', ')
+										: 'Pilih Role Karyawan'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="role_dropdown_edit"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.roles}
+									{#each data.roles as role (role.id_role)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`role_edit_${role.id_role}`}
+												value={role.id_role}
+												checked={selectedRoles.includes(role.id_role)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														selectedRoles = [...selectedRoles, role.id_role];
+													} else {
+														selectedRoles = selectedRoles.filter(
+															(id) => id !== role.id_role
+														);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`role_edit_${role.id_role}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{role.nama_role}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input
+								type="hidden"
+								name="role_karyawan"
+								value={JSON.stringify(selectedRoles)}
+							/>
+						</div>
 					</div>
 					<div class="flex flex-col gap-2">
 						<label for="privilege_karyawan" class="font-intersemi text-[16px] text-[#1E1E1E]"
 							>Privilege Karyawan</label
 						>
-						<select
-							id="privilege_karyawan"
-							class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-						>
-							<option value="" disabled selected>Pilih Privilege Karyawan</option>
-							<option value="bisa_edit_gambar">Bisa Edit Gambar</option>
-							<option value="bisa_edit_data">Bisa Edit Data</option>
-						</select>
+						<div class="relative">
+							<button
+								type="button"
+								id="privilege_button_edit"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('privilege_dropdown_edit')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{selectedPrivileges.length > 0
+										? selectedPrivileges
+												.map((id) => {
+													const privilege = data?.privileges?.find((p) => p.id_privilege === id);
+													return privilege?.nama_privilege || id;
+												})
+												.join(', ')
+										: 'Pilih Privilege Karyawan'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="privilege_dropdown_edit"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.privileges}
+									{#each data.privileges as privilege (privilege.id_privilege)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`privilege_edit_${privilege.id_privilege}`}
+												value={privilege.id_privilege}
+												checked={selectedPrivileges.includes(privilege.id_privilege)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														selectedPrivileges = [
+															...selectedPrivileges,
+															privilege.id_privilege
+														];
+													} else {
+														selectedPrivileges = selectedPrivileges.filter(
+															(id) => id !== privilege.id_privilege
+														);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`privilege_edit_${privilege.id_privilege}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{privilege.nama_privilege}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input
+								type="hidden"
+								name="privilege_karyawan"
+								value={JSON.stringify(selectedPrivileges)}
+							/>
+						</div>
 					</div>
+					<div class="flex flex-col gap-2">
+						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
+						<div class="relative">
+							<button
+								type="button"
+								id="depo_button_edit"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('depo_dropdown_edit')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{selectedDepos.length > 0
+										? selectedDepos
+												.map((id) => {
+													const depo = data?.depos?.find((d) => d.id_depo === id);
+													return depo?.nama || id;
+												})
+												.join(', ')
+										: 'Pilih Depo'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="depo_dropdown_edit"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.depos}
+									{#each data.depos as depo (depo.id_depo)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`depo_edit_${depo.id_depo}`}
+												value={depo.id_depo}
+												checked={selectedDepos.includes(depo.id_depo)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														selectedDepos = [...selectedDepos, depo.id_depo];
+													} else {
+														selectedDepos = selectedDepos.filter((id) => id !== depo.id_depo);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`depo_edit_${depo.id_depo}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{depo.nama}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input type="hidden" name="depo" value={JSON.stringify(selectedDepos)} />
+						</div>
+					</div>
+					{#if form?.error}
+						<div class="rounded-md bg-red-100 p-2 text-sm text-red-700">
+							{form.message}
+						</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi mt-6 h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalEditOpen = false;
 								isModalKonfirmEditOpen = true;
 							}}
 						>
-							SAVE
+							SIMPAN
 						</button>
+						<button type="submit" id="hiddenSubmitEditKaryawan" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -487,7 +1133,7 @@
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-					<div class="font-montserrat text-[26px] text-white">Informasi Data Produk</div>
+					<div class="font-montserrat text-[26px] text-white">Informasi Data Karyawan</div>
 					<button
 						class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
 						on:click={() => (isModalDetailOpen = false)}
@@ -501,21 +1147,38 @@
 					</button>
 				</div>
 				<form class="flex flex-col gap-4 px-10 py-6">
-					<Detail label="Nama Karyawan" value="Budi Santoso" />
-					<Detail label="Alamat Karyawan" value="Jl. Raya No. 123, Jakarta" />
-					<Detail label="No Telepon Karyawan" value="081234567890" />
-					<Detail label="Catatan Karyawan" value="Karyawan yang baik" />
-					<Detail label="Role Karyawan" value="Admin" />
-					<Detail label="Privilege Karyawan" value="Bisa Edit Gambar" />
+					{#if currentDetailKaryawan}
+						<Detail label="Nama Karyawan" value={currentDetailKaryawan.nama || '-'} />
+						<Detail label="Alamat Karyawan" value={currentDetailKaryawan.alamat || '-'} />
+						<Detail label="No Telepon Karyawan" value={currentDetailKaryawan.no_telp || '-'} />
+						<Detail label="Catatan Karyawan" value={currentDetailKaryawan.catatan || '-'} />
+						<Detail 
+							label="Role Karyawan" 
+							value={currentDetailKaryawan.roles?.map(r => r.nama_role).join(', ') || '-'} 
+						/>
+						<Detail 
+							label="Privilege Karyawan" 
+							value={currentDetailKaryawan.privileges?.map(p => p.nama_privilege).join(', ') || '-'} 
+						/>
+						<Detail 
+							label="Depo Karyawan" 
+							value={currentDetailKaryawan.depo?.map(d => {
+								const depoInfo = data?.depos?.find(depo => depo.id_depo === d.id_depo);
+								return depoInfo?.nama || d.id_depo;
+							}).join(', ') || '-'} 
+						/>
+					{:else}
+						<p>Memuat data...</p>
+					{/if}
 				</form>
 			</div>
 		</div>
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput 
-		bind:isOpen={isModalKonfirmInputOpen} 
-		bind:isSuccess={isModalSuccessInputOpen} 
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
 		on:confirm={() => {
 			document.getElementById('hiddenSubmitKaryawan')?.click();
 		}}
@@ -526,12 +1189,27 @@
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
+	<KonfirmEdit 
+		bind:isOpen={isModalKonfirmEditOpen} 
+		bind:isSuccess={isModalSuccessEditOpen} 
+		on:confirm={() => {
+			document.getElementById('hiddenSubmitEditKaryawan')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->
-	<AlasanDeleteKaryawan bind:isOpen={isModalAlasanOpen} bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen} />
-	<KonfirmDeleteKaryawan bind:isOpen={isModalKonfirmDeleteOpen} bind:isSuccess={isModalSuccessDeleteOpen} />
+	<AlasanDeleteKaryawan
+		bind:isOpen={isModalAlasanOpen}
+		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+	/>
+	<KonfirmDeleteKaryawan
+		bind:isOpen={isModalKonfirmDeleteOpen}
+		bind:isSuccess={isModalSuccessDeleteOpen}
+	/>
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>
 
