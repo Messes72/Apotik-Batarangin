@@ -554,7 +554,7 @@ func UpdateKaryawan(ctx context.Context, idnow string, idupdate string, karyawan
 
 	for _, roleID := range karyawan.Roles {
 		var roleCount int
-		roleCheckQuery := `SELECT COUNT(*) FROM role WHERE id_role = ?`
+		roleCheckQuery := `SELECT COUNT(*) FROM Role WHERE id_role = ?`
 		err = tx.QueryRowContext(ctx, roleCheckQuery, roleID.IDRole).Scan(&roleCount)
 		if err != nil || roleCount == 0 {
 			tx.Rollback()
