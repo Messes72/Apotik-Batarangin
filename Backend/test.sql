@@ -133,6 +133,11 @@ CREATE TABLE karyawancounter (
 );
 INSERT INTO karyawancounter (COUNT) VALUES (1)
 
+CREATE TABLE batch_penerimaancounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO batch_penerimaancounter (COUNT) VALUES (1)
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -339,7 +344,7 @@ CREATE TABLE pembelian_penerimaan(
 CREATE TABLE detail_pembelian_penerimaan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL, 
-    id_detail_pembelian_penerimaan_obat VARCHAR(50) NOT NULL,
+    id_detail_pembelian_penerimaan_obat VARCHAR(50) NOT NULL UNIQUE,
     id_nomor_batch VARCHAR(100) NULL,
     id_kartustok VARCHAR(100) NOT NULL,
     id_depo VARCHAR(10) NOT NULL,
@@ -372,6 +377,21 @@ CREATE TABLE supplier (
     updated_at DATETIME NULL,
     deleted_at DATETIME,
     keterangan VARCHAR(255)
+);
+
+CREATE TABLE batch_penerimaan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_batch_penerimaan VARCHAR(100) NOT NULL UNIQUE,  -- New business ID field
+    id_detail_pembelian_penerimaan VARCHAR(50) NOT NULL,
+    id_nomor_batch VARCHAR(100) NOT NULL,
+    jumlah_diterima INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_batch_detail 
+        FOREIGN KEY (id_detail_pembelian_penerimaan)
+        REFERENCES detail_pembelian_penerimaan(id_detail_pembelian_penerimaan_obat),
+    CONSTRAINT fk_nomor_batch 
+        FOREIGN KEY (id_nomor_batch)
+        REFERENCES nomor_batch(id_nomor_batch)
 );
 
 

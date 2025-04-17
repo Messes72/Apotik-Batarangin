@@ -647,7 +647,7 @@ func UpdateKaryawan(ctx context.Context, idnow string, idupdate string, karyawan
 	return class.Response{Status: http.StatusOK, Message: "Data karyawan berhasil diupdate", Data: nil}, nil
 }
 
-func DeleteKaryawan(ctx context.Context, idnow, iddelete string) (class.Response, error) {
+func DeleteKaryawan(ctx context.Context, idnow, iddelete, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -671,8 +671,8 @@ func DeleteKaryawan(ctx context.Context, idnow, iddelete string) (class.Response
 		return class.Response{Status: http.StatusNotFound, Message: "Karyawan not found or already deleted chechking", Data: exists}, nil
 	}
 
-	statementdeletekaryawan := `UPDATE Karyawan SET deleted_at = NOW(), updated_at= NOW() WHERE id_karyawan = ? `
-	result, err := tx.ExecContext(ctx, statementdeletekaryawan, iddelete)
+	statementdeletekaryawan := `UPDATE Karyawan SET deleted_at = NOW(), updated_at= NOW(), catatan = ? WHERE id_karyawan = ? `
+	result, err := tx.ExecContext(ctx, statementdeletekaryawan, alasan, iddelete)
 
 	if err != nil {
 		log.Printf("Failed to soft delete data karyawan: %v\n", err)

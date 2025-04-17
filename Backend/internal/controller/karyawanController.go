@@ -143,12 +143,16 @@ func DeleteKaryawan(c echo.Context) error {
 	idnow := c.Get("id_karyawan")
 	iddelete := c.Param("id_karyawandelete")
 	iddeletor, ok := idnow.(string) //ambil data priv dari interface
+	alasandelete := c.FormValue("alasandelete")
+	if alasandelete == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Alasan penghapusan harus diisi"})
+	}
 	if !ok {
 		fmt.Println("karyawan type assertion gagal")
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "gagal extract interface id karyawan dari jwt"})
 	}
 
-	result, err := model.DeleteKaryawan(c.Request().Context(), iddeletor, iddelete)
+	result, err := model.DeleteKaryawan(c.Request().Context(), iddeletor, iddelete, alasandelete)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
