@@ -102,41 +102,36 @@ func GetKaryawan(c echo.Context) error {
 }
 
 func UpdateKaryawan(c echo.Context) error {
-	idkaryawannow := c.Get("id_karyawan")
-	idupdatetor, ok := idkaryawannow.(string) //ambil data priv dari interface
+	updaterID, ok := c.Get("id_karyawan").(string)
 	if !ok {
-		fmt.Println("karyawan type assertion gagal")
-		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "gagal extract interface id karyawan dari jwt"})
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "invalid JWT payload"})
 	}
-	idkaryawanupdate := c.Param("id_karyawanupdate")
-	var requestBody struct {
-		Requestkaryawan class.Karyawan `json:"karyawan"`
+	targetID := c.Param("id_karyawanupdate")
+
+	// 1) bind directly into a Karyawan
+	var k class.Karyawan
+	if err := c.Bind(&k); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid JSON body"})
 	}
-	log.Println("cntorler", requestBody)
-	log.Println(idkaryawannow)
-	log.Println(idkaryawanupdate)
-	log.Println("roles from req", len(requestBody.Requestkaryawan.Roles))
 
-	if err := c.Bind(&requestBody); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
-
+	// log what actually arrived:
+	log.Printf("→ update %s: %+v\n", targetID, k)
+	for i, r := range k.Roles {
+		log.Printf("  role[%d]=%#v\n", i, r)
 	}
-	// karyawan := class.Karyawan{
-	// 	Nama:       requestBody.Nama,
-	// 	Alamat:     requestBody.Alamat,
-	// 	NoTelp:     requestBody.NoTelp,
-	// 	Catatan:    requestBody.Catatan,
-	// 	Roles:      requestBody.RoleID,
-	// 	Privileges: requestBody.Privileges,
-	//
+	for i, p := range k.Privileges {
+		log.Printf("  priv[%d]=%#v\n", i, p)
+	}
+	for i, d := range k.Depo {
+		log.Printf("  depo[%d]=%#v\n", i, d)
+	}
 
-	result, err := model.UpdateKaryawan(c.Request().Context(), idupdatetor, idkaryawanupdate, requestBody.Requestkaryawan)
-
+	// 2) call your model
+	resp, err := model.UpdateKaryawan(c.Request().Context(), updaterID, targetID, k)
 	if err != nil {
-		return c.JSON(result.Status, map[string]string{"message": result.Message})
+		return c.JSON(resp.Status, map[string]string{"message": resp.Message})
 	}
-
-	return c.JSON(result.Status, result)
+	return c.JSON(resp.Status, resp)
 }
 
 func DeleteKaryawan(c echo.Context) error {
