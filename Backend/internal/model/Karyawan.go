@@ -327,7 +327,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 			return class.Response{Status: http.StatusInternalServerError, Message: "gagal mengambil data karyawan", Data: nil}, err
 		}
 
-		queryRole := `SELECT r.id_role, r.nama_role FROM detail_role_karyawan dr JOIN Role r ON dr.id_role = r.id_role WHERE dr.id_karyawan = ?`
+		queryRole := `SELECT r.id_role, r.nama_role FROM detail_role_karyawan dr JOIN Role r ON dr.id_role = r.id_role WHERE dr.id_karyawan = ? AND dr.deleted_at IS NULL`
 		queryRoleRow, err := con.Query(queryRole, id)
 		if err != nil {
 			log.Printf("Failed to fetch roles for karyawan %s: %v\n", id, err)
@@ -346,7 +346,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 		}
 		karyawan.Roles = roles
 
-		queryPrivilege := `SELECT p.id_privilege, p.nama_privilege FROM detail_privilege_karyawan dp JOIN Privilege p ON dp.id_privilege = p.id_privilege WHERE dp.id_karyawan = ?`
+		queryPrivilege := `SELECT p.id_privilege, p.nama_privilege FROM detail_privilege_karyawan dp JOIN Privilege p ON dp.id_privilege = p.id_privilege WHERE dp.id_karyawan = ? AND dp.deleted_at IS NULL`
 		queryPrivilegeRow, err := con.Query(queryPrivilege, id)
 		if err != nil {
 			log.Printf("Failed to fetch privileges karyawan %s: %v\n", id, err)
@@ -368,7 +368,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 		queryDepo := `SELECT d.id_depo, d.nama, d.alamat, d.no_telp, d.catatan 
               FROM detail_karyawan dk
               JOIN Depo d ON dk.id_depo = d.id_depo
-              WHERE dk.id_karyawan = ?`
+              WHERE dk.id_karyawan = ?  AND dk.deleted_at IS NULL`
 		queryDepoRow, err := con.Query(queryDepo, id)
 		log.Println("id : ", id)
 		if err != nil {
@@ -415,7 +415,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 			}
 
 			// role karyawan
-			roleQuery := `SELECT r.id_role, r.nama_role FROM detail_role_karyawan dr JOIN Role r ON dr.id_role = r.id_role WHERE dr.id_karyawan = ?`
+			roleQuery := `SELECT r.id_role, r.nama_role FROM detail_role_karyawan dr JOIN Role r ON dr.id_role = r.id_role WHERE dr.id_karyawan = ? AND dr.deleted_at IS NULL`
 			roleRows, err := con.Query(roleQuery, karyawan.IDKaryawan)
 			if err != nil {
 				log.Printf("Failed to fetch roles for karyawan %v: %v\n", karyawan.IDKaryawan, err)
@@ -436,7 +436,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 			karyawan.Roles = roles
 
 			// priv karyawan
-			privQuery := `SELECT p.id_privilege, p.nama_privilege FROM detail_privilege_karyawan dp JOIN Privilege p ON dp.id_privilege = p.id_privilege WHERE dp.id_karyawan = ?`
+			privQuery := `SELECT p.id_privilege, p.nama_privilege FROM detail_privilege_karyawan dp JOIN Privilege p ON dp.id_privilege = p.id_privilege WHERE dp.id_karyawan = ? AND dp.deleted_at IS NULL`
 			privRows, err := con.Query(privQuery, karyawan.IDKaryawan)
 			if err != nil {
 				log.Printf("Failed to fetch privileges for karyawan %v: %v\n", karyawan.IDKaryawan, err)
@@ -459,7 +459,7 @@ func GetKaryawan(id string, page, pageSize int) (class.Response, error) {
 			queryDepo := `SELECT d.id_depo, d.nama, d.alamat, d.no_telp, d.catatan 
               FROM detail_karyawan dk
               JOIN Depo d ON dk.id_depo = d.id_depo
-              WHERE dk.id_karyawan = ?`
+              WHERE dk.id_karyawan = ? AND dk.deleted_at IS NULL`
 			queryDepoRow, err := con.Query(queryDepo, karyawan.IDKaryawan)
 			if err != nil {
 				log.Printf("Failed to fetch depos for karyawan %s: %v\n", id, err)
