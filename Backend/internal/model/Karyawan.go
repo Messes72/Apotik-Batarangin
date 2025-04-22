@@ -170,7 +170,7 @@ func LoginKaryawan(username, passwordinput, apiKey string) (class.Response, erro
 			login.password_hash
 		FROM Karyawan karyawan
 		LEFT JOIN StaffLogin login ON login.id_karyawan = karyawan.id_karyawan
-		WHERE login.username = ?`
+		WHERE login.username = ? AND login.deleted_at IS NULL`
 
 	err := con.QueryRow(query, username).
 		Scan(&karyawan.IDKaryawan, &karyawan.Nama, &karyawan.Alamat, &karyawan.NoTelp, &karyawan.CreatedAt,
@@ -715,6 +715,15 @@ func DeleteKaryawan(ctx context.Context, idnow, iddelete, alasan string) (class.
 		tx.Rollback()
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to delete karyawan depo ", Data: nil}, err
 	}
+
+	deletestafflogin := `UPDATE StaffLogin SET deleted_at = NOW() WHERE id_karyawan = ? AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, deletestafflogin, iddelete)
+	if err != nil {
+		log.Printf("Failed to soft delete karyawan login info : %v\n", err)
+		tx.Rollback()
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to delete karyawan login info ", Data: nil}, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("Failed to commit delete transaction: %v\n", err)

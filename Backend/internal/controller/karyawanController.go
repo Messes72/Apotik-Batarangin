@@ -67,7 +67,7 @@ func LoginKaryawan(c echo.Context) error {
 		return c.JSON(response.Status, map[string]string{"message": response.Message})
 	}
 
-	return c.JSON(response.Status, response.Data)
+	return c.JSON(response.Status, response)
 }
 
 func GetKaryawan(c echo.Context) error {

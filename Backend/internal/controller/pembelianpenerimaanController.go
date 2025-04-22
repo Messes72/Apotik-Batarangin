@@ -53,3 +53,50 @@ func CreatePembelian(c echo.Context) error {
 	}
 	return c.JSON(result.Status, result)
 }
+
+func CreatePenerimaan(c echo.Context) error {
+	var requestBody class.PembelianPenerimaan
+
+	if err := c.Bind(&requestBody); err != nil {
+		log.Println("Binding Error:", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Request"})
+	}
+
+	idKaryawan := c.Get("id_karyawan")
+	if idKaryawan == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
+
+	requestBody.Penerima = idKaryawan.(string)
+
+	const layoutdate = "2006-01-02"
+	tanggalpenerimaan, err := time.Parse(layoutdate, requestBody.TanggalPenerimaanInput)
+	if err != nil {
+		log.Println("Error parsing TanggalPenerimaanInput:", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Error parsing Tanggal Penerimaan"})
+	}
+
+	requestBody.TanggalPenerimaan = &tanggalpenerimaan
+
+	var listobat []class.DetailPembelianPenerimaan
+
+	for _, obat := range requestBody.ObatList {
+		tanggalkadaluarsa, err := time.Parse(layoutdate, obat.KadaluarsaInput)
+		if err != nil {
+			log.Println("Error parsing KadaluarsaInput:", err)
+			return c.JSON(http.StatusBadRequest, map[string]string{"message": "Error parsing Kadaluarsa obat"})
+		}
+		obat.Kadaluarsa = tanggalkadaluarsa
+		listobat = append(listobat, obat)
+
+	}
+
+	result, err := model.CreatePenerimaan(c.Request().Context(), requestBody, listobat)
+	if err != nil {
+		log.Println("Error in CreatePenerimaan:", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Gagal memproses data penerimaan"})
+
+	}
+
+	return c.JSON(result.Status, result)
+}

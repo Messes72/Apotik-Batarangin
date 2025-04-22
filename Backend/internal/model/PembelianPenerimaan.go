@@ -106,7 +106,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 
 	}
 	query := `UPDATE pembelian_penerimaan SET tanggal_penerimaan = ?, penerima = ? WHERE id_pembelian_penerimaan_obat = ?`
-	_, err = tx.ExecContext(ctx, query, penerimaan.TanggalPenerimaan, penerimaan.Pemesan, penerimaan.IDPembelianPenerimaanObat)
+	_, err = tx.ExecContext(ctx, query, penerimaan.TanggalPenerimaan, penerimaan.Penerima, penerimaan.IDPembelianPenerimaanObat)
 	if err != nil {
 		tx.Rollback()
 		log.Println("Error di update pembelian penerimaan obat", err)
@@ -128,7 +128,6 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 		newCounter := counter + 1
 		prefix := "BP"
 		newidbatchpenerimaan := fmt.Sprintf("%s%d", prefix, newCounter)
-		log.Printf("New id obat: %s", newidbatchpenerimaan)
 
 		updateCounter := `UPDATE batch_penerimaancounter SET count = ?`
 		_, err = tx.ExecContext(ctx, updateCounter, newCounter)
@@ -140,7 +139,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 
 		var counter1 int
 		queryCounter1 := `SELECT count FROM nomor_batchcounter FOR UPDATE`
-		err = tx.QueryRowContext(ctx, queryCounter1).Scan(&counter)
+		err = tx.QueryRowContext(ctx, queryCounter1).Scan(&counter1)
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Failed to fetch counter: %v\n", err)
@@ -150,7 +149,6 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 		newCounter1 := counter1 + 1
 		prefix1 := "NB"
 		newidbatch := fmt.Sprintf("%s%d", prefix1, newCounter1)
-		log.Printf("New id obat: %s", newidbatch)
 
 		updateCounter1 := `UPDATE nomor_batchcounter SET count = ?`
 		_, err = tx.ExecContext(ctx, updateCounter1, newCounter1)
@@ -178,32 +176,43 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data penerimaan obat", Data: nil}, err
 		}
 
-		var totalReceived int
+		var totalterima int
 		query := `SELECT IFNULL(SUM(jumlah_diterima), 0) FROM batch_penerimaan WHERE id_detail_pembelian_penerimaan = ?`
-		err = tx.QueryRowContext(ctx, query, obat.IDDetailPembelianPenerimaan).Scan(&totalReceived)
+		err = tx.QueryRowContext(ctx, query, obat.IDDetailPembelianPenerimaan).Scan(&totalterima)
 		if err != nil {
+			tx.Rollback()
 			log.Println("error saat menghitung total obat yang diterima", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung total barang yang diterima", Data: nil}, err
 		}
 
-		var newStatus string
-		if totalReceived == 0 {
-			newStatus = "0"
-		} else if totalReceived < obat.JumlahDipesan {
-			newStatus = "2"
-		} else if totalReceived >= obat.JumlahDipesan {
-			newStatus = "1"
+		var totalpesan int
+		querytotalpesan := `SELECT jumlah_dipesan FROM detail_pembelian_penerimaan WHERE id_detail_pembelian_penerimaan_obat = ?`
+		err = tx.QueryRowContext(ctx, querytotalpesan, obat.IDDetailPembelianPenerimaan).Scan(&totalpesan)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat mengambil data jumlah dipesan dari db", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data status penerimaan obat", Data: nil}, err
 		}
 
-		querydetailpembelianpenerimaan := `UPDATE detail_pembelian_penerimaan SET id_status = ? WHERE id_detail_pembelian_penerimaan_obat = ?`
-		_, err = tx.ExecContext(ctx, querydetailpembelianpenerimaan, newStatus, obat.IDDetailPembelianPenerimaan)
+		var newStatus string
+		if totalterima == 0 {
+			newStatus = "0" //tidak ada obat diterima
+		} else if totalterima < totalpesan {
+			newStatus = "2" //incomplete
+		} else if totalterima >= totalpesan {
+			newStatus = "1" //done
+		}
+
+		querydetailpembelianpenerimaan := `UPDATE detail_pembelian_penerimaan SET id_status = ?, jumlah_diterima = ? WHERE id_detail_pembelian_penerimaan_obat = ?`
+		_, err = tx.ExecContext(ctx, querydetailpembelianpenerimaan, newStatus, totalterima, obat.IDDetailPembelianPenerimaan)
 		if err != nil {
 			tx.Rollback()
 			log.Println("error saat mengupdate status dari obat yang diterima", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data status penerimaan", Data: nil}, err
 		}
 
-		tx.Commit()
 	}
+
+	tx.Commit()
 	return class.Response{Status: http.StatusOK, Message: "Berhasil Menyimpan Data Penerimaan Barang.", Data: nil}, err
 }

@@ -44,6 +44,7 @@ CREATE TABLE StaffLogin (
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     last_login DATETIME,
+    deleted_at DATETIME,
     CONSTRAINT fk_stafflogin_karyawan FOREIGN KEY (id_karyawan) REFERENCES Karyawan(id_karyawan)
 );
 
