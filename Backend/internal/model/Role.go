@@ -196,10 +196,10 @@ func UpdateRole(ctx context.Context, idupdate string, role class.Role) (class.Re
 
 	}
 
-	updatestatement := `UPDATE Role SET id_role=? ,nama_role =?, catatan=?, updated_at =NOW() WHERE id_role=?`
+	updatestatement := `UPDATE Role SET nama_role =?, catatan=?, updated_at =NOW() WHERE id_role=?`
 	log.Println("dari obj ", role.IDRole)
 	log.Println("dari param ", idupdate)
-	_, err = tx.ExecContext(ctx, updatestatement, role.IDRole, role.NamaRole, role.Catatan, idupdate)
+	_, err = tx.ExecContext(ctx, updatestatement, role.NamaRole, role.Catatan, idupdate)
 	if err != nil {
 		tx.Rollback()
 		log.Println("error update ", err)

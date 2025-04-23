@@ -211,6 +211,56 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data status penerimaan", Data: nil}, err
 		}
 
+		var counter2 int
+		queryCounter2 := `SELECT count FROM detail_kartustokcounter FOR UPDATE`
+		err = tx.QueryRowContext(ctx, queryCounter2).Scan(&counter2)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Failed to fetch counter: %v\n", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to fetch obat counter", Data: nil}, err
+		}
+
+		newCounter2 := counter2 + 1
+		prefix2 := "DKS"
+		newiddetailkartustok := fmt.Sprintf("%s%d", prefix2, newCounter2)
+
+		updateCounter2 := `UPDATE detail_kartustokcounter SET count = ?`
+		_, err = tx.ExecContext(ctx, updateCounter2, newCounter2)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Failed to update obat counter: %v\n", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
+		}
+
+		querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_batch_penerimaan , id_nomor_batch, masuk, keluar, sisa, created_at)
+		VALUES (?,?,?,?,?,0,?,NOW())`
+
+		var stoklama int
+		querystoklama := `SELECT stok_barang FROM kartu_stok WHERE id_kartustok= ?`
+		err = tx.QueryRowContext(ctx, querystoklama, obat.IDKartuStok).Scan(&stoklama)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Failed to get stok lama from stok barang", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung stok barang", Data: nil}, err
+		}
+
+		stokbaru := stoklama + obat.JumlahDiterima
+		iddepo := "10"
+
+		queryupdatekartustok := `UPDATE kartu_stok SET stok_barang = ? WHERE id_kartustok = ? AND id_depo = ?`
+		_, err = tx.ExecContext(ctx, queryupdatekartustok, stokbaru, obat.IDKartuStok, iddepo)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat update kartu stok mengenai stok barang baru", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat update data kartu stok", Data: nil}, err
+		}
+
+		_, err = tx.ExecContext(ctx, querydetailkartustok, newiddetailkartustok, obat.IDKartuStok, newidbatchpenerimaan, newidbatch, obat.JumlahDiterima, stokbaru)
+		if err != nil {
+			tx.Rollback()
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data ke kartu stok", Data: nil}, err
+		}
+
 	}
 
 	tx.Commit()

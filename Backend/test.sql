@@ -151,6 +151,12 @@ CREATE TABLE privilegecounter (
 INSERT INTO privilegecounter (COUNT) VALUES (1)
 
 
+CREATE TABLE detail_kartustokcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO detail_kartustokcounter (COUNT) VALUES (1)
+
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -281,7 +287,7 @@ CREATE TABLE detail_kartustok (
     id_kartustok VARCHAR(100) NOT NULL,
     id_transaksi VARCHAR(100) NULL,
     id_distribusi VARCHAR(100) NULL,
-    id_pembelian_penerimaan_obat VARCHAR(100) NULL,
+    id_batch_penerimaan VARCHAR(100) NULL,
     id_nomor_batch VARCHAR(100),
     masuk INT NOT NULL DEFAULT 0,    
     keluar INT NOT NULL DEFAULT 0,    
@@ -293,7 +299,7 @@ CREATE TABLE detail_kartustok (
         FOREIGN KEY (id_kartustok)
         REFERENCES kartu_stok (id_kartustok)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT, 
+        ON DELETE RESTRICT 
 );
 
 CREATE TABLE obat_jadi (

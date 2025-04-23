@@ -196,10 +196,10 @@ func UpdatePrivilege(ctx context.Context, idupdate string, privilege class.Privi
 
 	}
 
-	updatestatement := `UPDATE Privilege SET id_privilege=? ,nama_privilege =?, catatan=?, updated_at =NOW() WHERE id_privilege=?`
+	updatestatement := `UPDATE Privilege SET nama_privilege =?, catatan=?, updated_at =NOW() WHERE id_privilege=?`
 	log.Println("dari obj ", privilege.IDPrivilege)
 	log.Println("dari param ", idupdate)
-	_, err = tx.ExecContext(ctx, updatestatement, privilege.IDPrivilege, privilege.NamaPrivilege, privilege.Catatan, idupdate)
+	_, err = tx.ExecContext(ctx, updatestatement, privilege.NamaPrivilege, privilege.Catatan, idupdate)
 	if err != nil {
 		tx.Rollback()
 		log.Println("error update ", err)
