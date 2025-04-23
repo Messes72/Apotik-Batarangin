@@ -215,7 +215,7 @@ func UpdatePrivilege(ctx context.Context, idupdate string, privilege class.Privi
 
 }
 
-func DeletePrivilege(ctx context.Context, iddelete string) (class.Response, error) {
+func DeletePrivilege(ctx context.Context, iddelete, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -238,8 +238,8 @@ func DeletePrivilege(ctx context.Context, iddelete string) (class.Response, erro
 
 	}
 
-	querydelete := `UPDATE Privilege SET updated_at = NOW(), deleted_at=NOw() WHERE id_privilege = ? `
-	_, err = tx.ExecContext(ctx, querydelete, iddelete)
+	querydelete := `UPDATE Privilege SET updated_at = NOW(), deleted_at=NOw(), alasandelete = ? WHERE id_privilege = ? `
+	_, err = tx.ExecContext(ctx, querydelete, alasan, iddelete)
 	if err != nil {
 		log.Println("Failed to soft delete Privilege: ", err)
 		tx.Rollback()

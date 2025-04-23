@@ -215,7 +215,7 @@ func UpdateRole(ctx context.Context, idupdate string, role class.Role) (class.Re
 
 }
 
-func DeleteRole(ctx context.Context, iddelete string) (class.Response, error) {
+func DeleteRole(ctx context.Context, iddelete, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -238,8 +238,8 @@ func DeleteRole(ctx context.Context, iddelete string) (class.Response, error) {
 
 	}
 
-	querydelete := `UPDATE Role SET updated_at = NOW(), deleted_at=NOw() WHERE id_role = ? `
-	_, err = tx.ExecContext(ctx, querydelete, iddelete)
+	querydelete := `UPDATE Role SET updated_at = NOW(), deleted_at=NOw(), alasandelete = ? WHERE id_role = ? `
+	_, err = tx.ExecContext(ctx, querydelete, alasan, iddelete)
 	if err != nil {
 		log.Println("Failed to soft delete role: ", err)
 		tx.Rollback()

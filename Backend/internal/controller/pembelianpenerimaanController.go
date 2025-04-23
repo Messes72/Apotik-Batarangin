@@ -100,3 +100,12 @@ func CreatePenerimaan(c echo.Context) error {
 
 	return c.JSON(result.Status, result)
 }
+
+// func UpdatePenerimaan(c echo.Context) error {
+
+// 	idKaryawan := c.Get("id_karyawan")
+// 	if idKaryawan == nil {
+// 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+// 	}
+
+// }

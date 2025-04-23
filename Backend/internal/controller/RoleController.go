@@ -85,8 +85,8 @@ func UpdateRole(c echo.Context) error {
 
 func DeleteRole(c echo.Context) error {
 	idparam := c.Param("id_role")
-
-	result, err := model.DeleteRole(c.Request().Context(), idparam)
+	alasan := c.FormValue("alasandelete")
+	result, err := model.DeleteRole(c.Request().Context(), idparam, alasan)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})

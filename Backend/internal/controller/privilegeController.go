@@ -78,8 +78,8 @@ func UpdatePrivilege(c echo.Context) error {
 
 func DeletePrivilege(c echo.Context) error {
 	idparam := c.Param("id_privilege")
-
-	result, err := model.DeletePrivilege(c.Request().Context(), idparam)
+	alasan := c.FormValue("alasandelete")
+	result, err := model.DeletePrivilege(c.Request().Context(), idparam, alasan)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
