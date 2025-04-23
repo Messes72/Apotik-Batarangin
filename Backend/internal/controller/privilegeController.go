@@ -20,8 +20,8 @@ func CreatePrivilege(c echo.Context) error {
 
 	log.Printf("Received data: %+v", requestBody)
 
-	if requestBody.IDPrivilege == "" || requestBody.NamaPrivilege == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "id role and nama privilege tidak boleh kosong"})
+	if requestBody.NamaPrivilege == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "nama privilege tidak boleh kosong"})
 	}
 
 	result, err := model.CreatePrivilege(c.Request().Context(), requestBody)

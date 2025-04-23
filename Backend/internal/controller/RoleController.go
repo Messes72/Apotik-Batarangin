@@ -21,8 +21,8 @@ func CreateRole(c echo.Context) error {
 
 	log.Printf("Received data: %+v", requestBody)
 
-	if requestBody.IDRole == "" || requestBody.NamaRole == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "id role and nama role tidak boleh kosong"})
+	if requestBody.NamaRole == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "nama role tidak boleh kosong"})
 	}
 
 	result, err := model.CreateRole(c.Request().Context(), requestBody)

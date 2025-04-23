@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	class "proyekApotik/internal/class"
@@ -16,10 +17,46 @@ func CreateRole(ctx context.Context, role class.Role) (class.Response, error) {
 		log.Printf("Failed to begin transaction: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start failed", Data: nil}, err
 	}
+	var duplicate bool
+
+	querycekduplicate := `SELECT EXISTS(SELECT 1 FROM Role WHERE nama_role = ? AND deleted_at IS NULL)`
+	err = tx.QueryRowContext(ctx, querycekduplicate, role.NamaRole).Scan(&duplicate)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat validasi duplikat konten role", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal validasi duplicate privilege"}, nil
+
+	}
+	if duplicate {
+		tx.Rollback()
+		log.Println("Nama role sudah ada")
+		return class.Response{Status: http.StatusConflict, Message: "Role ini sudah ada"}, nil
+
+	}
+	var counter int
+	queryCounter := `SELECT count FROM rolecounter FOR UPDATE`
+	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to fetch counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to fetch obat counter", Data: nil}, err
+	}
+
+	newCounter := counter + 1
+	prefix := "ROL"
+	newidrole := fmt.Sprintf("%s%d", prefix, newCounter)
+
+	updateCounter := `UPDATE rolecounter SET count = ?`
+	_, err = tx.ExecContext(ctx, updateCounter, newCounter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to update obat counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
+	}
 
 	// Insert query
 	query := `INSERT INTO Role (id_role, nama_role, created_at, updated_at, catatan) VALUES (?, ?, NOW(), NOW(), ?)`
-	_, err = tx.ExecContext(ctx, query, role.IDRole, role.NamaRole, role.Catatan)
+	_, err = tx.ExecContext(ctx, query, newidrole, role.NamaRole, role.Catatan)
 
 	if err != nil {
 		log.Printf("Failed to insert role: %v\n", err)

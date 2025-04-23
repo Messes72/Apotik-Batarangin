@@ -139,6 +139,18 @@ CREATE TABLE batch_penerimaancounter (
 );
 INSERT INTO batch_penerimaancounter (COUNT) VALUES (1)
 
+
+CREATE TABLE rolecounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO rolecounter (COUNT) VALUES (1)
+
+CREATE TABLE privilegecounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO privilegecounter (COUNT) VALUES (1)
+
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -267,9 +279,9 @@ CREATE TABLE detail_kartustok (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_detail_kartu_stok VARCHAR(100) UNIQUE NOT NULL, 
     id_kartustok VARCHAR(100) NOT NULL,
-    id_transaksi VARCHAR(100),
-    id_distribusi VARCHAR(100),
-    id_pembelian_penerimaan_obat VARCHAR(100),
+    id_transaksi VARCHAR(100) NULL,
+    id_distribusi VARCHAR(100) NULL,
+    id_pembelian_penerimaan_obat VARCHAR(100) NULL,
     id_nomor_batch VARCHAR(100),
     masuk INT NOT NULL DEFAULT 0,    
     keluar INT NOT NULL DEFAULT 0,    
@@ -281,7 +293,7 @@ CREATE TABLE detail_kartustok (
         FOREIGN KEY (id_kartustok)
         REFERENCES kartu_stok (id_kartustok)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT
+        ON DELETE RESTRICT, 
 );
 
 CREATE TABLE obat_jadi (
@@ -346,7 +358,6 @@ CREATE TABLE detail_pembelian_penerimaan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL, 
     id_detail_pembelian_penerimaan_obat VARCHAR(50) NOT NULL UNIQUE,
-    id_nomor_batch VARCHAR(100) NULL,
     id_kartustok VARCHAR(100) NOT NULL,
     id_depo VARCHAR(10) NOT NULL,
     id_status VARCHAR(50) NOT NULL,
@@ -355,7 +366,6 @@ CREATE TABLE detail_pembelian_penerimaan(
     jumlah_diterima INT UNSIGNED NOT NULL,
     created_at DATETIME NOT NULL,
     constraint fk_pembelian_penerimaan_obat FOREIGN KEY (id_pembelian_penerimaan_obat) REFERENCES pembelian_penerimaan(id_pembelian_penerimaan_obat),
-    constraint fk_nomor_batch FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch),
     constraint fk_kartu_stok FOREIGN KEY (id_kartustok, id_depo) REFERENCES kartu_stok(id_kartustok, id_depo),
     constraint fk_status FOREIGN KEY (id_status) REFERENCES status(id_status)
 

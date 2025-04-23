@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	class "proyekApotik/internal/class"
@@ -17,9 +18,46 @@ func CreatePrivilege(ctx context.Context, privilege class.Privilege) (class.Resp
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start failed", Data: nil}, err
 	}
 
+	var duplicate bool
+
+	querycekduplicate := `SELECT EXISTS(SELECT 1 FROM Privilege WHERE nama_privilege = ? AND deleted_at IS NULL)`
+	err = tx.QueryRowContext(ctx, querycekduplicate, privilege.NamaPrivilege).Scan(&duplicate)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat validasi duplikat konten privilege", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal validasi duplikat privilege"}, nil
+
+	}
+	if duplicate {
+		tx.Rollback()
+		log.Println("Nama role sudah ada")
+		return class.Response{Status: http.StatusConflict, Message: "Privilege ini sudah ada"}, nil
+
+	}
+	var counter int
+	queryCounter := `SELECT count FROM privilegecounter FOR UPDATE`
+	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to fetch counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to fetch obat counter", Data: nil}, err
+	}
+
+	newCounter := counter + 1
+	prefix := "PRV"
+	newidpriv := fmt.Sprintf("%s%d", prefix, newCounter)
+
+	updateCounter := `UPDATE privilegecounter SET count = ?`
+	_, err = tx.ExecContext(ctx, updateCounter, newCounter)
+	if err != nil {
+		tx.Rollback()
+		log.Printf("Failed to update obat counter: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
+	}
+
 	// Insert query
 	query := `INSERT INTO Privilege (id_privilege, nama_privilege, created_at, updated_at, catatan) VALUES (?, ?, NOW(), NOW(), ?)`
-	_, err = tx.ExecContext(ctx, query, privilege.IDPrivilege, privilege.NamaPrivilege, privilege.Catatan)
+	_, err = tx.ExecContext(ctx, query, newidpriv, privilege.NamaPrivilege, privilege.Catatan)
 
 	if err != nil {
 		log.Printf("Failed to insert privilege: %v\n", err)

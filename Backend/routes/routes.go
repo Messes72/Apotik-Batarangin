@@ -33,7 +33,6 @@ func Init() *echo.Echo {
 	routeRole := e.Group("/role")
 	routeRole.Use(middleware.CheckAPIKey)
 	routeRole.Use(middleware.JWTMiddleware)
-
 	routeRole.POST("/create", controller.CreateRole)
 	routeRole.GET("/role", controller.GetAllRole)
 	routeRole.GET("/:id_role/info", controller.GetRoleByID)
