@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/main.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:apotek/global.dart' as globals;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login2 extends StatelessWidget {
   const Login2({super.key});
@@ -27,6 +33,54 @@ class Login extends StatefulWidget {
 }
 
 class LoginPage extends State<Login> {
+  final _formKey = GlobalKey<FormState>();
+  bool _validasiTerisi = false;
+
+  var _email = TextEditingController();
+  var _password = TextEditingController();
+  Future<void> login(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) {
+      return; // Hentikan jika form tidak valid
+    }
+
+    final username = _email.text.trim();
+    final password = _password.text.trim();
+
+    final response = await http.post(
+      Uri.parse('http://leap.crossnet.co.id:2688/login'),
+      headers: {'x-api-key': '${globals.xApiKey}'},
+      body: {"username": username, "password": password},
+    );
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print(data['data']['jwttoken']);
+      setState(() {
+        globals.token = data['data']['jwttoken'];
+        globals.nama = data['data']['nama'];
+      });
+      print(globals.token);
+      print(globals.nama);
+
+      // Simpan token di lokal
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', globals.token);
+      await prefs.setString('nama', globals.nama);
+
+      // Navigasi ke halaman utama
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => MyApp()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Login gagal, periksa kembali kredensial!")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,109 +125,115 @@ class LoginPage extends State<Login> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(30),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Row(
-                        // crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset("images/logo_apotik.png", height: 100),
-                          const SizedBox(width: 16),
-
-                          Flexible(
-                            child: Column(
-                              children: [
-                                const Text(
-                                  "Apotik Bantarangin",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Text(
-                                  "General Hospital",
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Text("Apotik Bantarangin\nGeneral Hospital",
-                          //     textAlign: TextAlign.center,
-                          //     style: GoogleFonts.montserrat(
-                          //         textStyle: TextStyle(
-                          //             color: Colors.black, fontSize: 24)
-                          //         //   fontWeight: FontWeight.bold,),
-                          //         )),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
-
-                      // 🔹 Text Selamat Datang
-                      const Text(
-                        "Selamat Datang!",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-
-                      SizedBox(
-                        width: 400,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          // crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // 🔹 Label Email
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Row(
+                            Image.asset("images/logo_apotik.png", height: 100),
+                            const SizedBox(width: 16),
+
+                            Flexible(
+                              child: Column(
                                 children: [
                                   Text(
-                                    "Email",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                    "Apotik Bantarangin",
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                  Padding(padding: EdgeInsets.only(right: 4)),
                                   Text(
-                                    "*",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: ColorStyle.button_red),
+                                    "General Hospital",
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(
-                                height: 8), // Jarak antara label dan input
-                            Container(
-                              height: 44,
-                              // width: 400,
-                              width: double.infinity,
-                              // decoration: BoxDecoration(
-                              //   border: Border.all(
-                              //       color: ColorStyle.fill_stroke, width: 1),
-                              //   color: ColorStyle.fill_form,
-                              //   borderRadius: BorderRadius.circular(10),
-                              // ),
-                              child: TextField(
+
+                            // Text("Apotik Bantarangin\nGeneral Hospital",
+                            //     textAlign: TextAlign.center,
+                            //     style: GoogleFonts.montserrat(
+                            //         textStyle: TextStyle(
+                            //             color: Colors.black, fontSize: 24)
+                            //         //   fontWeight: FontWeight.bold,),
+                            //         )),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+
+                        // 🔹 Text Selamat Datang
+                        Text(
+                          "Selamat Datang!",
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+
+                        SizedBox(
+                          width: 400,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 🔹 Label Email
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "Username",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 4)),
+                                    Text(
+                                      "*",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: ColorStyle.button_red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                  height: 8), // Jarak antara label dan input
+                              TextFormField(
+                                cursorColor: Colors.black,
+                                controller: _email,
+                                onChanged: (value) {
+                                  if (_validasiTerisi == true) {
+                                    _formKey.currentState?.validate();
+                                  }
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Username harus diisi";
+                                  }
+                                  return null;
+                                },
                                 decoration: InputDecoration(
                                   // contentPadding: EdgeInsets.symmetric(
                                   //     horizontal: 12, vertical: 5),
-                                  contentPadding:
-                                      EdgeInsets.only(left: 8, bottom: 8),
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 12),
+                                  isDense: true,
+                                  hintText: "Enter Username",
 
-                                  hintText: "Enter Email",
                                   filled: true,
                                   fillColor: ColorStyle.fill_form,
                                   hintStyle: TextStyle(
@@ -194,7 +254,12 @@ class LoginPage extends State<Login> {
                                         width: 1), // Warna biru saat fokus
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.button_red,
+                                        width: 1), // Warna biru saat fokus
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
                                   // Border saat error
                                   errorBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
@@ -204,51 +269,54 @@ class LoginPage extends State<Login> {
                                   ),
                                 ),
                               ),
-                            ),
 
-                            const SizedBox(
-                                height: 16), // Spasi antara Email & Password
+                              const SizedBox(
+                                  height: 16), // Spasi antara Email & Password
 
-                            // 🔹 Label Password
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Row(
-                                children: [
-                                  Text(
-                                    "Password",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                  ),
-                                  Padding(padding: EdgeInsets.only(right: 4)),
-                                  Text(
-                                    "*",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: ColorStyle.button_red),
-                                  ),
-                                ],
+                              // 🔹 Label Password
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      "Password",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 4)),
+                                    Text(
+                                      "*",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: ColorStyle.button_red),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              height: 44,
-                              width: double.infinity,
-                              // width: 400,
-                              // decoration: BoxDecoration(
-                              //   border: Border.all(
-                              //       color: ColorStyle.fill_stroke, width: 1),
-                              //   color: ColorStyle.fill_form,
-                              //   borderRadius: BorderRadius.circular(10),
-                              // ),
-                              child: TextField(
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                cursorColor: Colors.black,
+                                controller: _password,
                                 obscureText: true,
+                                onChanged: (value) {
+                                  if (_validasiTerisi == true) {
+                                    _formKey.currentState?.validate();
+                                  }
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Password harus diisi";
+                                  }
+                                  return null;
+                                },
                                 decoration: InputDecoration(
                                   // contentPadding: EdgeInsets.symmetric(
                                   //     horizontal: 12, vertical: 5),
-                                  contentPadding:
-                                      EdgeInsets.only(left: 8, bottom: 8),
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 12),
                                   hintText: "Password",
                                   filled: true,
                                   fillColor: ColorStyle.fill_form,
@@ -270,7 +338,12 @@ class LoginPage extends State<Login> {
                                         width: 1), // Warna biru saat fokus
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.button_red,
+                                        width: 1), // Warna biru saat fokus
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
                                   // Border saat error
                                   errorBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
@@ -280,35 +353,42 @@ class LoginPage extends State<Login> {
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Padding(padding: EdgeInsets.only(bottom: 70)),
-
-                      SizedBox(
-                        width: 400,
-                        // width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => MyApp()),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            backgroundColor: ColorStyle.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            ],
                           ),
-                          child: const Text("MASUK",
-                              style: TextStyle(color: Colors.white)),
                         ),
-                      ),
-                    ],
+
+                        Padding(padding: EdgeInsets.only(bottom: 70)),
+
+                        SizedBox(
+                          width: 400,
+                          // width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _validasiTerisi = true;
+                              if (_formKey.currentState!.validate()) {
+                                login(context);
+                              }
+                              // login(context);
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(builder: (context) => MyApp()),
+                              // );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              backgroundColor: ColorStyle.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: Text("MASUK",
+                                style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

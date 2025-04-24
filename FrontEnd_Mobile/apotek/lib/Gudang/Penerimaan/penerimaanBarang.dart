@@ -3,6 +3,7 @@ import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/retry.dart';
 import 'package:intl/intl.dart';
 
@@ -41,7 +42,6 @@ class pagePenerimaan extends State<PenerimaanBarang>
   // Tab
   final List<String> _titles = [
     "PENERIMAAN BARANG",
-    "LAPORAN PENERIMANAAN BARANG",
     "RIWAYAT PENERIMAAN BARANG"
   ];
   int _selectedTabIndex = 0;
@@ -59,11 +59,11 @@ class pagePenerimaan extends State<PenerimaanBarang>
     DataPenerimaanBarang(
         namaBarang: "namaBarang",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "934838",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "11",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "PT Primax Pharna XXXXXXXXXXXXXXX",
@@ -77,7 +77,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "12",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "namaSupplier",
@@ -87,11 +87,11 @@ class pagePenerimaan extends State<PenerimaanBarang>
     DataPenerimaanBarang(
         namaBarang: "namaBarang",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "92383947",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "11",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "namaSupplier",
@@ -101,11 +101,11 @@ class pagePenerimaan extends State<PenerimaanBarang>
     DataPenerimaanBarang(
         namaBarang: "namaBarang",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "0998239",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "90",
         satuan: "satuan",
         noBatch: "noBatch",
         namaSupplier: "namaSupplier",
@@ -115,7 +115,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
     DataPenerimaanBarang(
         namaBarang: "namaBarang",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "0348945",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
@@ -1276,7 +1276,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
     // TODO: implement initState
     super.initState();
     filterData = List.from(_data);
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
@@ -1351,12 +1351,11 @@ class pagePenerimaan extends State<PenerimaanBarang>
               labelColor: Colors.blue, // Warna teks aktif
               unselectedLabelColor: Colors.black, // Warna teks tidak aktif
               indicatorColor: Colors.blue, // Warna indikator bawah
-              labelStyle: TextStyle(fontWeight: FontWeight.bold),
+              labelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w600, fontSize: 16),
               dividerColor: Colors.transparent,
               labelPadding: const EdgeInsets.only(left: 0, right: 16),
               tabs: [
                 Tab(text: "Penerimaan"),
-                Tab(text: "Statistik"),
                 Tab(text: "Riwayat"),
               ],
             ),
@@ -2011,10 +2010,6 @@ class pagePenerimaan extends State<PenerimaanBarang>
                   ],
                 ),
               ),
-              Container(
-                  child: Center(
-                child: Text("data"),
-              )),
               Container(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

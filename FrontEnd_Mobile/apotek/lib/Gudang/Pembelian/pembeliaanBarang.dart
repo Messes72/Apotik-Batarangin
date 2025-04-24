@@ -4,6 +4,7 @@ import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class Pembeliaanbarang extends StatefulWidget {
@@ -63,12 +64,14 @@ class pagePembelian extends State<Pembeliaanbarang>
       isi2.add(jumlahBarang);
       int index = isi.length - 1; // Dapatkan indeks terbaru
       inputBarang.add(InputForm(
-          "Nama Obat",
-          "Nama Obat",
-          "Jumlah Barang yang Dipesan",
-          "Jumlah Barang yang Dipesan",
-          isi[inputBarang.length],
-          isi2[inputBarang.length], () => hapusInputForm(index),));
+        "Nama Obat",
+        "Nama Obat",
+        "Jumlah Barang yang Dipesan",
+        "Jumlah Barang yang Dipesan",
+        isi[inputBarang.length],
+        isi2[inputBarang.length],
+        () => hapusInputForm(index),
+      ));
     });
   }
 
@@ -82,14 +85,14 @@ class pagePembelian extends State<Pembeliaanbarang>
   }
 
   void hapusInputForm(int index) {
-  setState(() {
-    if (index < inputBarang.length) {
-      inputBarang.removeAt(index);
-      isi.removeAt(index);
-      isi2.removeAt(index);
-    }
-  });
-}
+    setState(() {
+      if (index < inputBarang.length) {
+        inputBarang.removeAt(index);
+        isi.removeAt(index);
+        isi2.removeAt(index);
+      }
+    });
+  }
 
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
@@ -149,9 +152,9 @@ class pagePembelian extends State<Pembeliaanbarang>
                         children: [
                           Text(
                             "Informasi Penerimaan Barang",
-                            style: TextStyle(
+                            style: GoogleFonts.montserrat(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
@@ -1177,11 +1180,7 @@ class pagePembelian extends State<Pembeliaanbarang>
 
   // Tab
   late TabController _tabController;
-  final List<String> _titles = [
-    "PEMBELIAN BARANG",
-    "LAPORAN PEMBELIAN BARANG",
-    "RIWAYAT PEMBELIAN BARANG"
-  ];
+  final List<String> _titles = ["PEMBELIAN BARANG", "RIWAYAT PEMBELIAN BARANG"];
   int _selectedTabIndex = 0;
 
   int _rowsPerPage = 10; // Default jumlah baris per halaman
@@ -1236,7 +1235,7 @@ class pagePembelian extends State<Pembeliaanbarang>
     //       textController2));
     // });
     filterData = List.from(_data);
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
@@ -1316,13 +1315,12 @@ class pagePembelian extends State<Pembeliaanbarang>
                     Colors.black, // Warna teks saat tidak aktif
                 indicatorColor:
                     ColorStyle.primary, // Warna garis bawah tab aktif
-                labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                labelStyle: GoogleFonts.montserrat(fontWeight: FontWeight.w600, fontSize: 16),
                 isScrollable: true,
                 labelPadding: const EdgeInsets.only(left: 0, right: 16),
                 dividerColor: Colors.transparent,
                 tabs: [
                   Tab(text: "Pembelian"),
-                  Tab(text: "Statistik"),
                   Tab(text: "Riwayat"),
                 ],
               ),
@@ -1929,13 +1927,6 @@ class pagePembelian extends State<Pembeliaanbarang>
                   ),
                   Container(
                     child: Column(
-                      children: [
-                        _buildStatCards(),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
@@ -2503,8 +2494,14 @@ class pagePembelian extends State<Pembeliaanbarang>
     );
   }
 
-  Widget InputForm(String label1, String hint1, String label2, String hint2,
-      TextEditingController edit, TextEditingController edit2,VoidCallback onDelete ) {
+  Widget InputForm(
+      String label1,
+      String hint1,
+      String label2,
+      String hint2,
+      TextEditingController edit,
+      TextEditingController edit2,
+      VoidCallback onDelete) {
     return Padding(
       padding: EdgeInsets.only(bottom: 15),
       child: Padding(
@@ -2687,7 +2684,7 @@ class pagePembelian extends State<Pembeliaanbarang>
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
           ),
           SizedBox(height: 4),
           Container(
@@ -2702,7 +2699,7 @@ class pagePembelian extends State<Pembeliaanbarang>
               padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
               child: Text(
                 value,
-                style: TextStyle(fontSize: 12),
+                style: GoogleFonts.inter(fontSize: 12),
               ),
             ),
           )

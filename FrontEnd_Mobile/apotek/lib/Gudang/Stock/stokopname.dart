@@ -4,6 +4,7 @@ import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class stokopname extends StatefulWidget {
@@ -121,9 +122,9 @@ class stokPage extends State<stokopname> {
                         children: [
                           Text(
                             "Informasi Stock Opname",
-                            style: TextStyle(
+                            style: GoogleFonts.montserrat(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
@@ -642,9 +643,9 @@ class stokPage extends State<stokopname> {
                           children: [
                             Text(
                               "Alasan Kosongkan Obat",
-                              style: TextStyle(
+                              style: GoogleFonts.montserrat(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
@@ -659,7 +660,7 @@ class stokPage extends State<stokopname> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 47),
 
                     Expanded(
                       child: SingleChildScrollView(
@@ -669,7 +670,7 @@ class stokPage extends State<stokopname> {
                           children: [
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Text(
                                   "Alasan \"${item.nama}\" Kosongkan Obat",
                                   style:
@@ -678,9 +679,9 @@ class stokPage extends State<stokopname> {
                             const SizedBox(height: 8),
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Container(
-                                height: 225,
+                                height: 150,
                                 // decoration: BoxDecoration(
                                 //   color: ColorStyle.fill_form,
                                 //   border:
@@ -690,7 +691,7 @@ class stokPage extends State<stokopname> {
                                 // padding:
                                 //     const EdgeInsets.symmetric(horizontal: 12),
                                 alignment: Alignment.topLeft,
-                                child: TextField(
+                                child: TextFormField(
                                   controller: text2,
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
@@ -762,11 +763,11 @@ class stokPage extends State<stokopname> {
                                               width: 1),
                                         ),
                                       ),
-                                      child: const Text("KONFIRMASI",
-                                          style: TextStyle(
+                                      child:  Text("KONFIRMASI",
+                                          style: GoogleFonts.inter(
                                               color: ColorStyle.primary,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.w600)),
                                     ),
                                   ),
                                 ],
@@ -1127,8 +1128,8 @@ class stokPage extends State<stokopname> {
                       },
                       icon:
                           const Icon(Icons.add, color: Colors.white, size: 22),
-                      label: const Text("Stock Opname",
-                          style: TextStyle(color: Colors.white, fontSize: 16)),
+                      label:  Text("Input Stock Opname",
+                          style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorStyle.hover.withOpacity(0.7),
                         shape: RoundedRectangleBorder(
@@ -1151,7 +1152,7 @@ class stokPage extends State<stokopname> {
                       //   borderRadius: BorderRadius.circular(4),
                       // ),
 
-                      child: TextField(
+                      child: TextFormField(
                         controller: text,
                         onChanged: filtering,
                         decoration: InputDecoration(
@@ -1235,24 +1236,24 @@ class stokPage extends State<stokopname> {
                                         60, // Menambah tinggi minimum baris
                                     dataRowMaxHeight:
                                         60, // Menambah tinggi maksimum baris
-                                    columns: const [
+                                    columns:  [
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('No Kartu',
+                                          child: Text('Nomor',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold)),
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Nama Obat',
+                                            'Nomer Opname',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       )),
@@ -1260,20 +1261,29 @@ class stokPage extends State<stokopname> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Kategori',
+                                            'Tanggal Opname',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       )),
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Stock Opname',
+                                          child: Text('Jumlah Barang',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold)),
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
+                                        ),
+                                      )),
+                                       DataColumn(
+                                          label: Expanded(
+                                        child: Center(
+                                          child: Text('Jumlah Update Stock',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                       DataColumn(
@@ -1282,8 +1292,8 @@ class stokPage extends State<stokopname> {
                                           child: Text(
                                             textAlign: TextAlign.center,
                                             'Actions',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       )),
@@ -1296,8 +1306,8 @@ class stokPage extends State<stokopname> {
                                           DataCell(Center(
                                             child: Text(item.noKartu,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
+                                                style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w700,
                                                   color:
                                                       ColorStyle.text_secondary,
                                                   fontSize: 14,
@@ -1307,10 +1317,10 @@ class stokPage extends State<stokopname> {
                                             child: Text(
                                               item.nama,
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
+                                              style: GoogleFonts.inter(
                                                 color:
                                                     ColorStyle.text_secondary,
-                                                fontSize: 14,
+                                                fontSize: 14,fontWeight: FontWeight.w500
                                               ),
                                             ),
                                           )),
@@ -1318,10 +1328,10 @@ class stokPage extends State<stokopname> {
                                             child: Text(
                                               item.kategori,
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
+                                              style: GoogleFonts.inter(
                                                 color:
                                                     ColorStyle.text_secondary,
-                                                fontSize: 14,
+                                                fontSize: 14,fontWeight: FontWeight.w400
                                               ),
                                             ),
                                           )),
@@ -1329,10 +1339,21 @@ class stokPage extends State<stokopname> {
                                             child: Text(
                                               item.stok.toString(),
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
+                                              style: GoogleFonts.inter(
                                                 color:
                                                     ColorStyle.text_secondary,
-                                                fontSize: 14,
+                                                fontSize: 14,fontWeight: FontWeight.w400
+                                              ),
+                                            ),
+                                          )),
+                                          DataCell(Center(
+                                            child: Text(
+                                              item.stok.toString(),
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                color:
+                                                    ColorStyle.text_secondary,
+                                                fontSize: 14,fontWeight: FontWeight.w400
                                               ),
                                             ),
                                           )),
@@ -1520,7 +1541,7 @@ class stokPage extends State<stokopname> {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
           ),
           SizedBox(height: 4),
           Container(
@@ -1535,7 +1556,7 @@ class stokPage extends State<stokopname> {
               padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
               child: Text(
                 value,
-                style: TextStyle(fontSize: 12),
+                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400),
               ),
             ),
           )

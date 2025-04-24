@@ -40,9 +40,11 @@ dependencies:
   http: ^1.3.0
   dropdown_button2: ^2.3.9
   image_picker: ^1.1.2
- # google_fonts: ^6.2.1
   dotted_border: ^2.1.0
   fl_chart: ^0.70.2
+  shared_preferences: ^2.2.2
+  google_fonts: ^6.2.1
+
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,17 @@ flutter:
      - images/done.png
      - images/input.png
      - images/upload_pict.png
+     - images/kustomer.png
+     - images/transaksi.png
+     - images/laporan.png
+     - images/back.png
+     - images/print.png
+     - images/gambarObat.png
+     - images/dashboard.png
+
+
+
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

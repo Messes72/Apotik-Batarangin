@@ -1,9 +1,8 @@
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:flutter/material.dart';
-import 'package:apotek/global.dart' as globals;
 import 'package:google_fonts/google_fonts.dart';
 
-class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
+class NavbarTopApotek extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback onMenuPressed;
   final bool isExpanded;
@@ -11,7 +10,7 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback animationTrigger;
   final bool animation;
 
-  const NavbarTop(
+  const NavbarTopApotek(
       {super.key,
       required this.title,
       required this.onMenuPressed,
@@ -36,7 +35,7 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
       child: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        title: Text(title, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
+        title: Text(title, style: GoogleFonts.montserrat(fontWeight: FontWeight.bold)),
         automaticallyImplyLeading: false,
         leading: IconButton(
           onPressed: () {
@@ -71,9 +70,8 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
                 "https://cdn.shopify.com/s/files/1/0416/8083/0620/files/01132022_soc_pinterestboardcoverupdate_CN_1200x1200_88c02180-90a1-4745-921e-341c191ec84a_480x480.png?v=1646098139") as ImageProvider,
           ),
           Padding(padding: EdgeInsets.only(right: 16)),
-          Text(globals.nama, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600)),
+          Text("NAMA"),
           Padding(padding: EdgeInsets.only(right: 16))
-          // TextStyle(fontSize: 18, fontWeight: FontWeight.bold , fontFamily: GoogleFonts.montserrat()),
         ],
       ),
     );

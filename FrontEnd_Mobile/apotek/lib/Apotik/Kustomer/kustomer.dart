@@ -13,10 +13,10 @@ class KustomerApotek extends StatefulWidget {
       {super.key, required this.isExpanded, required this.toggleSidebar});
 
   @override
-  State<KustomerApotek> createState() => kustomerApotek();
+  State<KustomerApotek> createState() => _kustomerApotek();
 }
 
-class kustomerApotek extends State<KustomerApotek>
+class _kustomerApotek extends State<KustomerApotek>
     with SingleTickerProviderStateMixin {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
   final List<int> rowItems = [10, 25, 50, 100];
@@ -40,9 +40,8 @@ class kustomerApotek extends State<KustomerApotek>
 
   // Tab
   final List<String> _titles = [
-    "PENERIMAAN BARANG",
-    "LAPORAN PENERIMANAAN BARANG",
-    "RIWAYAT PENERIMAAN BARANG"
+    "KUSTOMER",
+    "RIWAYAT KUSTOMER",
   ];
   int _selectedTabIndex = 0;
 
@@ -57,72 +56,72 @@ class kustomerApotek extends State<KustomerApotek>
   List<DataPenerimaanBarang> filterData = [];
   final List<DataPenerimaanBarang> _data = [
     DataPenerimaanBarang(
-        namaBarang: "namaBarang",
+        namaBarang: "Joy",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "1",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "084937483",
         satuan: "satuan",
         noBatch: "noBatch",
-        namaSupplier: "PT Primax Pharna XXXXXXXXXXXXXXX",
+        namaSupplier: "Jln Mentari no 9",
         namaPenerimaBarang: "namaPenerimaBarang",
         tanggalPenerimaan: DateTime(2025, 3, 12),
         catatan: "Tolong diperiksa kembali"),
     DataPenerimaanBarang(
-        namaBarang: "namaBarang",
+        namaBarang: "Joy",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "2",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "0384239743",
         satuan: "satuan",
         noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
+        namaSupplier: "Jln Mentari no 9",
         namaPenerimaBarang: "namaPenerimaBarang",
         tanggalPenerimaan: DateTime(2025, 3, 12),
         catatan: "Tolong diperiksa kembali"),
     DataPenerimaanBarang(
-        namaBarang: "namaBarang",
+        namaBarang: "Joy",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "3",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "03483294739",
         satuan: "satuan",
         noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
+        namaSupplier: "Jln Mentari no 9",
         namaPenerimaBarang: "namaPenerimaBarang",
         tanggalPenerimaan: DateTime(2025, 3, 12),
         catatan: "Tolong diperiksa kembali"),
     DataPenerimaanBarang(
-        namaBarang: "namaBarang",
+        namaBarang: "Joy",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "4",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
+        stok: "02382938293",
         satuan: "satuan",
         noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
+        namaSupplier: "Jalan Mentari no 9",
         namaPenerimaBarang: "namaPenerimaBarang",
         tanggalPenerimaan: DateTime(2025, 3, 12),
         catatan: "Tolong diperiksa kembali"),
     DataPenerimaanBarang(
-        namaBarang: "namaBarang",
+        namaBarang: "Joy",
         kategoriBarang: "kategoriBarang",
-        kode: "kode",
+        kode: "5",
         hargaJual: "hargaJual",
         hargaBeli: "hargaBeli",
         kadaluarsa: DateTime(2030, 2, 12),
         stok: "3",
         satuan: "satuan",
         noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
+        namaSupplier: "Jln Mentari no 9",
         namaPenerimaBarang: "namaPenerimaBarang",
         tanggalPenerimaan: DateTime(2025, 3, 12),
         catatan: "Tolong diperiksa kembali"),
@@ -329,7 +328,7 @@ class kustomerApotek extends State<KustomerApotek>
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
+                    0.6, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -353,7 +352,7 @@ class kustomerApotek extends State<KustomerApotek>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Data Penerimaan Obat",
+                            "Informasi Data Kustomer",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -381,26 +380,12 @@ class kustomerApotek extends State<KustomerApotek>
                           children: [
                             Column(
                               children: [
-                                detailField("Nomor Batch", item.noBatch),
-                                detailField("Kode Obat", item.kode),
+                                detailField("Nama Kustomer", item.namaBarang),
+                                detailField("Alamat Kustomer", item.namaSupplier),
+                                detailField("Nomor Telepon Kustomer",
+                                    item.stok),
                                 detailField(
-                                    "Kategori Obat", item.kategoriBarang),
-                                detailField("Nama Obat", item.namaBarang),
-                                detailField(
-                                    "Jumlah Obat yang Diterima", item.stok),
-                                detailField(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa)),
-                                detailField("Satuan", item.satuan),
-                                detailField("Harga Beli", item.hargaBeli),
-                                detailField("Nama Supplier", item.namaSupplier),
-                                detailField("Nama Penerima Barang",
-                                    item.namaPenerimaBarang),
-                                detailField(
-                                    "Tanggal Penerimaan Barang",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.tanggalPenerimaan))
+                                    "Catatan Kustomer", item.catatan),
                               ],
                             ),
                           ],
@@ -446,29 +431,26 @@ class kustomerApotek extends State<KustomerApotek>
     _alertDone("diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
   }
 
-  var nomorKartu_text = TextEditingController();
-  var nomorBatch_text = TextEditingController();
-  var kodeObat_text = TextEditingController();
+  var namaKustomer_text = TextEditingController();
+  var alamatKustomer_text = TextEditingController();
+  var nomorTeleponKustomer_text = TextEditingController();
   var kategori_text = TextEditingController();
-  var namaObat_text = TextEditingController();
-  var jumlahBarang_text = TextEditingController();
-  var caraPemakaian_text = TextEditingController();
-  var stokBarang_text = TextEditingController();
-  var satuan_text = TextEditingController();
+  var catatanKustomer_text = TextEditingController();
+
   void _editProduk(DataPenerimaanBarang item) {
-    TextEditingController nomorBatchController =
+    TextEditingController namaKustomerController =
         TextEditingController(text: item.noBatch);
-    TextEditingController kodeController =
+    TextEditingController alamatKustomerController =
         TextEditingController(text: item.kode);
     TextEditingController kategoriController =
         TextEditingController(text: item.kategoriBarang);
-    TextEditingController namaObatController =
+    TextEditingController nomorTelefonKustomerController =
         TextEditingController(text: item.namaBarang);
     TextEditingController kadaluarsaController = TextEditingController(
         text: DateFormat('dd/MM/yyyy').format(item.kadaluarsa));
     TextEditingController satuanController =
         TextEditingController(text: item.satuan);
-    TextEditingController jumlahController =
+    TextEditingController catatanKustomerController =
         TextEditingController(text: item.stok);
 
     showDialog(
@@ -484,7 +466,7 @@ class kustomerApotek extends State<KustomerApotek>
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
+                    0.6, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -510,7 +492,7 @@ class kustomerApotek extends State<KustomerApotek>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Edit Data Penerimaan Barang",
+                            "Edit Data Kustomer",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -539,24 +521,16 @@ class kustomerApotek extends State<KustomerApotek>
                           children: [
                             Column(
                               children: [
-                                editFeld("Nomor Batch", item.noBatch,
-                                    nomorBatchController),
-                                editFeld("Kode Obat", item.kode, kodeController),
-                                // editFeld("Kategori", item.kategoriBarang,
-                                //     kategoriController),
-                                dropdownKategoriEdit(item.kategoriBarang),
-                                editFeld("Nama Obat", item.namaBarang,
-                                    namaObatController),
+                                editFeld("Nama Kustomer", item.namaBarang,
+                                    namaKustomerController),
+                                editFeld("Alamat Kustomer", item.namaSupplier,
+                                    alamatKustomerController),
                                 editFeld(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa),
-                                    kadaluarsaController),
-                                // editFeld(
-                                //     "Satuan", item.satuan, satuanController),
-                                dropdownSatuanEdit(item.satuan),
-                                editFeld("Jumlah Barang", item.stok,
-                                    jumlahController),
+                                    "Nomor Telepon Kustomer",
+                                    item.stok,
+                                    nomorTelefonKustomerController),
+                                editFeld("Catatan Kustomer", item.catatan,
+                                    catatanKustomerController),
                               ],
                             ),
                             Padding(
@@ -576,44 +550,51 @@ class kustomerApotek extends State<KustomerApotek>
                                           // 🔹 Ini yang memastikan UI diperbarui
 
                                           item.noBatch =
-                                              nomorBatchController.text;
-                                          item.kode = kodeController.text;
+                                              namaKustomerController.text;
+                                          item.kode =
+                                              alamatKustomerController.text;
                                           item.kategoriBarang =
-                                              _selectedKategoriEdit ?? item.kategoriBarang;
+                                              _selectedKategoriEdit ??
+                                                  item.kategoriBarang;
                                           item.namaBarang =
-                                              namaObatController.text;
+                                              nomorTelefonKustomerController
+                                                  .text;
                                           item.kadaluarsa =
                                               DateFormat('dd/MM/yyyy').parse(
                                                   kadaluarsaController.text);
-                                          item.satuan = _selectedSatuanEdit ?? item.satuan;
-                                          item.stok = jumlahController.text;
+                                          item.satuan = _selectedSatuanEdit ??
+                                              item.satuan;
+                                          item.stok =
+                                              catatanKustomerController.text;
                                         });
                                         _alertDone("diedit");
                                         // _updateProduk(
                                         //     item,
                                         //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
+                                        //     namaKustomerController,
+                                        //     alamatKustomerController,
                                         //     kategoriController,
-                                        //     namaObatController,
+                                        //     nomorTelefonKustomerController,
                                         //     kadaluarsaController,
                                         //     satuanController,
-                                        //     jumlahController,
+                                        //     catatanKustomerController,
                                         //     caraPemakaianController);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.button_green,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("SIMPAN",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.button_green,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -637,7 +618,7 @@ class kustomerApotek extends State<KustomerApotek>
     );
   }
 
-  void _inputPenerimaanBaru() {
+  void _inputKustomer() {
     showDialog(
       context: context,
       builder: (context) {
@@ -651,7 +632,7 @@ class kustomerApotek extends State<KustomerApotek>
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
+                    0.6, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -677,7 +658,7 @@ class kustomerApotek extends State<KustomerApotek>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Input Data Penerimaan Barang",
+                            "Input Data Kustomer",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -706,21 +687,16 @@ class kustomerApotek extends State<KustomerApotek>
                           children: [
                             Column(
                               children: [
-                                inputField("Nomor Kartu", "Nomor Kartu",
-                                    nomorKartu_text),
-                                inputField("Nomor Batch", "Nomor Batch",
-                                    nomorBatch_text),
-                                inputField("Kode", "Kode", kodeObat_text),
-                                dropdownKategori(),
+                                inputField("Nama Kustomer", "Nama Kustomer",
+                                    namaKustomer_text),
+                                inputField("Alamat Kustomer", "Alamat Kustomer",
+                                    alamatKustomer_text),
                                 inputField(
-                                    "Nama Obat", "Nama Obat", namaObat_text),
-                                inputField("Jumlah Barang", "Jumlah Barang",
-                                    jumlahBarang_text),
-                                tanggalInput("Kadaluarsa", "DD/MM/YYYY",
-                                    tanggalController),
-                                dropdownSatuan(),
-                                inputCaraPemakaian(
-                                    "Cara Pemakaian", caraPemakaian_text),
+                                    "Nomor Telepon Kustomer",
+                                    "Nomor Telepon Kustomer",
+                                    nomorTeleponKustomer_text),
+                                inputField("Catatan Kustomer",
+                                    "Catatan Kustomer", catatanKustomer_text),
                               ],
                             ),
                             Padding(
@@ -741,28 +717,30 @@ class kustomerApotek extends State<KustomerApotek>
                                         // _updateProduk(
                                         //     item,
                                         //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
+                                        //     namaKustomerController,
+                                        //     alamatKustomerController,
                                         //     kategoriController,
-                                        //     namaObatController,
+                                        //     nomorTelefonKustomerController,
                                         //     kadaluarsaController,
                                         //     satuanController,
-                                        //     jumlahController,
+                                        //     catatanKustomerController,
                                         //     caraPemakaianController);
                                       },
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.button_green,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("KONFIRMASI",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.button_green,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -774,8 +752,6 @@ class kustomerApotek extends State<KustomerApotek>
                         ),
                       ),
                     ),
-
-                    SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -786,7 +762,7 @@ class kustomerApotek extends State<KustomerApotek>
     );
   }
 
-  void _modalKosongkanObat(DataPenerimaanBarang item) {
+  void _modalKosongkanKustomer(DataPenerimaanBarang item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -800,7 +776,7 @@ class kustomerApotek extends State<KustomerApotek>
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
+                    0.6, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -825,7 +801,7 @@ class kustomerApotek extends State<KustomerApotek>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Catatan Penerimaan Barang",
+                              "Alasan Kosongkan Kustomer",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -854,7 +830,7 @@ class kustomerApotek extends State<KustomerApotek>
                             Padding(
                               padding:
                                   const EdgeInsets.only(left: 23, right: 23),
-                              child: Text("Catatan Penerimaan Barang:",
+                              child: Text("Alasan Kustomer ini dikosongkan:",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
@@ -879,7 +855,7 @@ class kustomerApotek extends State<KustomerApotek>
                                   decoration: InputDecoration(
                                     filled: true,
                                     fillColor: ColorStyle.fill_form,
-                                    hintText: "Catatan",
+                                    hintText: "Alasan",
                                     hintStyle: TextStyle(
                                       color: ColorStyle.tulisan_form,
                                       fontSize: 14,
@@ -911,14 +887,6 @@ class kustomerApotek extends State<KustomerApotek>
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 23, right: 23, top: 5.19),
-                              child: Text(
-                                "Ketik (-) jika tidak ada catatan",
-                                style: TextStyle(fontSize: 10),
-                              ),
-                            ),
                             SizedBox(height: 16),
                             Padding(
                               padding:
@@ -945,16 +913,18 @@ class kustomerApotek extends State<KustomerApotek>
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.primary,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("KONFIRMASI",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.primary,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -1030,7 +1000,7 @@ class kustomerApotek extends State<KustomerApotek>
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _modalKosongkanObat(item);
+                                  _modalKosongkanKustomer(item);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: ColorStyle.fill_stroke,
@@ -1059,15 +1029,18 @@ class kustomerApotek extends State<KustomerApotek>
                                   text2.clear();
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.button_red,
+                                  backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                        color: ColorStyle.button_red,
+                                        width: 1),
                                   ),
                                 ),
                                 child: const Text(
                                   "Iya, hapus",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: ColorStyle.button_red,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1168,15 +1141,18 @@ class kustomerApotek extends State<KustomerApotek>
                                   _alertDone("diinput");
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.button_red,
+                                  backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                        color: ColorStyle.button_yellow,
+                                        width: 1),
                                   ),
                                 ),
                                 child: const Text(
                                   "Iya, input",
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: ColorStyle.button_yellow,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -1262,7 +1238,7 @@ class kustomerApotek extends State<KustomerApotek>
     // TODO: implement initState
     super.initState();
     filterData = List.from(_data);
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {
@@ -1341,8 +1317,7 @@ class kustomerApotek extends State<KustomerApotek>
               dividerColor: Colors.transparent,
               labelPadding: const EdgeInsets.only(left: 0, right: 16),
               tabs: [
-                Tab(text: "Penerimaan"),
-                Tab(text: "Statistik"),
+                Tab(text: "Kustomer"),
                 Tab(text: "Riwayat"),
               ],
             ),
@@ -1360,24 +1335,32 @@ class kustomerApotek extends State<KustomerApotek>
                           height: 40,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              _inputPenerimaanBaru();
+                              // setState(() {
+                              //   global.selectedIndex = 3;
+                              //   global.selectedScreen = 0;
+                              // });
+                              _inputKustomer();
                             },
                             icon: Transform.translate(
                               offset: Offset(
-                                  5, 0), // Geser ikon lebih dekat ke teks
+                                  1, 0), // Geser ikon lebih dekat ke teks
                               child: Icon(Icons.add,
                                   color: Colors.white, size: 22),
                             ),
-                            label: const Text("Input Penerimaan",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
+                            label: Transform.translate(
+                              offset: Offset(-3, 0),
+                              child: const Text("Input Kustomer",
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                            ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorStyle.button_green,
+                              backgroundColor:
+                                  ColorStyle.hover.withOpacity(0.7),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 3),
+                                  horizontal: 10, vertical: 5),
                             ),
                           ),
                         ),
@@ -1434,96 +1417,6 @@ class kustomerApotek extends State<KustomerApotek>
                           ),
                         ),
                         Padding(padding: EdgeInsets.only(right: 8)),
-                        Center(
-                          child: SizedBox(
-                            width:
-                                200, // Sesuaikan lebar agar tidak terlalu besar
-                            height:
-                                40, // Tinggi dropdown agar sesuai dengan contoh gambar
-                            child: DropdownButtonFormField2<String>(
-                              isExpanded:
-                                  false, // Jangan meluaskan dropdown ke full width
-                              value: _selectedStatus,
-                              hint: Text(
-                                "-- Pilih Status --",
-                                style: TextStyle(
-                                    fontSize: 16, color: ColorStyle.text_hint),
-                              ),
-                              items: rowStatus
-                                  .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e,
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: ColorStyle.text_hint),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedStatus = value!;
-                                  filterByStatus(value);
-                                });
-                              },
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: ColorStyle.fill_form,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                                constraints: BoxConstraints(maxHeight: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      5), // Border radius halus
-                                  borderSide:
-                                      BorderSide(color: ColorStyle.button_grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(
-                                      color: ColorStyle
-                                          .text_secondary), // Saat aktif, border lebih gelap
-                                ),
-                              ),
-
-                              // **Atur Tampilan Dropdown**
-                              buttonStyleData: ButtonStyleData(
-                                height: 25, // Tinggi tombol dropdown
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 6), // Jarak dalam dropdown
-                              ),
-
-                              // **Atur Tampilan Dropdown yang Muncul**
-                              dropdownStyleData: DropdownStyleData(
-                                width:
-                                    200, // Lebar dropdown harus sama dengan input
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(color: Colors.grey),
-                                  color: ColorStyle.fill_form,
-                                ),
-                              ),
-
-                              // **Atur Posisi Item Dropdown**
-                              menuItemStyleData: const MenuItemStyleData(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        8), // Padding antar item dropdown
-                              ),
-
-                              // **Ganti Icon Dropdown**
-                              iconStyleData: IconStyleData(
-                                icon: Icon(Icons.keyboard_arrow_down_outlined,
-                                    size: 20, color: Colors.black),
-                                openMenuIcon: Icon(
-                                    Icons.keyboard_arrow_up_outlined,
-                                    size: 20,
-                                    color: Colors.black),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 30),
@@ -1561,7 +1454,7 @@ class kustomerApotek extends State<KustomerApotek>
                                               MaterialStateProperty.all(
                                                   Colors.white),
                                           columnSpacing:
-                                              80, // Menambah jarak antar kolom
+                                              60, // Menambah jarak antar kolom
                                           dataRowMinHeight:
                                               60, // Menambah tinggi minimum baris
                                           dataRowMaxHeight:
@@ -1570,7 +1463,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                                     child: Center(
-                                                        child: Text('ID',
+                                                        child: Text('No',
                                                             textAlign: TextAlign
                                                                 .center,
                                                             style: TextStyle(
@@ -1580,7 +1473,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Nama Obat',
+                                                child: Text('Nama Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -1590,7 +1483,19 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Nama Supplier',
+                                                child: Text('Alamat Kustomer',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                            )),
+                                           
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text(
+                                                    'Nomor Telepon Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -1600,17 +1505,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Jumlah Barang',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Status',
+                                                child: Text('Catatan Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -1673,6 +1568,7 @@ class kustomerApotek extends State<KustomerApotek>
                                                 ),
 
                                                 // DataCell(Text(item.quantity.toString())),
+                                                
                                                 DataCell(Center(
                                                     child: Text(
                                                         item.stok.toString(),
@@ -1684,57 +1580,21 @@ class kustomerApotek extends State<KustomerApotek>
                                                           fontSize: 14,
                                                         )))),
                                                 DataCell(
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 14,
-                                                                vertical: 4),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: item.stok ==
-                                                                  "10"
-                                                              ? ColorStyle
-                                                                  .status_green
-                                                                  .withOpacity(
-                                                                      0.8)
-                                                              : ColorStyle
-                                                                  .status_red
-                                                                  .withOpacity(
-                                                                      0.8),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(5),
-                                                          border: Border.all(
-                                                            color: item.stok ==
-                                                                    "10"
-                                                                ? ColorStyle
-                                                                    .status_green
-                                                                : ColorStyle
-                                                                    .status_red,
-                                                            width: 1,
-                                                          ),
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 150,
+                                                      child: Text(
+                                                        item.catatan,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          fontSize: 14,
                                                         ),
-                                                        child: Text(
-                                                          item.stok == "10"
-                                                              ? "SELESAI"
-                                                              : "BATAL",
-                                                          style:
-                                                              const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 14),
-                                                        ),
+                                                        maxLines: 2,
+                                                        textAlign: TextAlign
+                                                            .start, // Batas maksimal baris teks
                                                       ),
-                                                    ],
+                                                    ),
                                                   ),
                                                 ),
                                                 DataCell(
@@ -1760,19 +1620,15 @@ class kustomerApotek extends State<KustomerApotek>
                                                           // Tutup menu otomatis dan jalankan aksi sesuai pilihan
                                                           switch (value) {
                                                             case 1:
-                                                              _modalKosongkanObat(
-                                                                  item);
-                                                              break;
-                                                            case 2:
-                                                              _modalKosongkanObat(
-                                                                  item);
-                                                              break;
-                                                            case 3:
                                                               _viewDetails(
                                                                   item);
                                                               break;
-                                                            case 4:
+                                                            case 2:
                                                               _editProduk(item);
+                                                              break;
+                                                            case 3:
+                                                              _modalKosongkanKustomer(
+                                                                  item);
                                                               break;
                                                           }
                                                         },
@@ -1780,42 +1636,6 @@ class kustomerApotek extends State<KustomerApotek>
                                                             (context) => [
                                                           PopupMenuItem(
                                                             value: 1,
-                                                            child: Row(
-                                                              children: [
-                                                                Icon(Icons.done,
-                                                                    color: Colors
-                                                                        .black54),
-                                                                SizedBox(
-                                                                    width: 8),
-                                                                Text(
-                                                                    "Barang Berhasil Diterima",
-                                                                    style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold)),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          PopupMenuItem(
-                                                            value: 2,
-                                                            child: Row(
-                                                              children: [
-                                                                Icon(
-                                                                    Icons
-                                                                        .close_outlined,
-                                                                    color: Colors
-                                                                        .black54),
-                                                                SizedBox(
-                                                                    width: 8),
-                                                                Text(
-                                                                    "Barang Gagal Diterima",
-                                                                    style: TextStyle(
-                                                                        fontWeight:
-                                                                            FontWeight.bold)),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                          PopupMenuItem(
-                                                            value: 3,
                                                             child: Row(
                                                               children: [
                                                                 Icon(
@@ -1836,7 +1656,7 @@ class kustomerApotek extends State<KustomerApotek>
                                                             ),
                                                           ),
                                                           PopupMenuItem(
-                                                            value: 4,
+                                                            value: 2,
                                                             child: Row(
                                                               children: [
                                                                 Icon(
@@ -1851,6 +1671,27 @@ class kustomerApotek extends State<KustomerApotek>
                                                                     style: TextStyle(
                                                                         fontWeight:
                                                                             FontWeight.bold)),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          PopupMenuItem(
+                                                            value: 3,
+                                                            child: Row(
+                                                              children: [
+                                                                Icon(
+                                                                    Icons
+                                                                        .delete_outline_outlined,
+                                                                    color: Colors
+                                                                        .black54),
+                                                                SizedBox(
+                                                                    width: 8),
+                                                                Text(
+                                                                  "Hapus Data Kustomer",
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold),
+                                                                ),
                                                               ],
                                                             ),
                                                           ),
@@ -1997,10 +1838,6 @@ class kustomerApotek extends State<KustomerApotek>
                 ),
               ),
               Container(
-                  child: Center(
-                child: Text("data"),
-              )),
-              Container(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2068,97 +1905,6 @@ class kustomerApotek extends State<KustomerApotek>
                             ),
                           ),
                         ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Center(
-                          child: SizedBox(
-                            width:
-                                200, // Sesuaikan lebar agar tidak terlalu besar
-                            height:
-                                40, // Tinggi dropdown agar sesuai dengan contoh gambar
-                            child: DropdownButtonFormField2<String>(
-                              isExpanded:
-                                  false, // Jangan meluaskan dropdown ke full width
-                              value: _selectedStatus,
-                              hint: Text(
-                                "-- Pilih Status --",
-                                style: TextStyle(
-                                    fontSize: 16, color: ColorStyle.text_hint),
-                              ),
-                              items: rowStatus
-                                  .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e,
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: ColorStyle.text_hint),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedStatus = value!;
-                                  filterByStatus(value);
-                                });
-                              },
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: ColorStyle.fill_form,
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                                constraints: BoxConstraints(maxHeight: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      5), // Border radius halus
-                                  borderSide:
-                                      BorderSide(color: ColorStyle.button_grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(
-                                      color: ColorStyle
-                                          .text_secondary), // Saat aktif, border lebih gelap
-                                ),
-                              ),
-
-                              // **Atur Tampilan Dropdown**
-                              buttonStyleData: ButtonStyleData(
-                                height: 25, // Tinggi tombol dropdown
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 6), // Jarak dalam dropdown
-                              ),
-
-                              // **Atur Tampilan Dropdown yang Muncul**
-                              dropdownStyleData: DropdownStyleData(
-                                width:
-                                    200, // Lebar dropdown harus sama dengan input
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(color: Colors.grey),
-                                  color: ColorStyle.fill_form,
-                                ),
-                              ),
-
-                              // **Atur Posisi Item Dropdown**
-                              menuItemStyleData: const MenuItemStyleData(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        8), // Padding antar item dropdown
-                              ),
-
-                              // **Ganti Icon Dropdown**
-                              iconStyleData: IconStyleData(
-                                icon: Icon(Icons.keyboard_arrow_down_outlined,
-                                    size: 20, color: Colors.black),
-                                openMenuIcon: Icon(
-                                    Icons.keyboard_arrow_up_outlined,
-                                    size: 20,
-                                    color: Colors.black),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                     Padding(padding: EdgeInsets.only(bottom: 26)),
@@ -2205,7 +1951,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                                     child: Center(
-                                                        child: Text('ID',
+                                                        child: Text('No',
                                                             textAlign: TextAlign
                                                                 .center,
                                                             style: TextStyle(
@@ -2215,7 +1961,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Nama Obat',
+                                                child: Text('Nama Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -2225,7 +1971,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Nama Supplier',
+                                                child: Text('Alamat Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -2235,7 +1981,8 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Jumlah Barang',
+                                                child: Text(
+                                                    'Nommor Telepon Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -2245,17 +1992,7 @@ class kustomerApotek extends State<KustomerApotek>
                                             DataColumn(
                                                 label: Expanded(
                                               child: Center(
-                                                child: Text('Status',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Catatan',
+                                                child: Text('Catatan Kustomer',
                                                     textAlign: TextAlign.center,
                                                     style: TextStyle(
                                                         fontWeight:
@@ -2318,59 +2055,7 @@ class kustomerApotek extends State<KustomerApotek>
                                                               .text_secondary,
                                                           fontSize: 14,
                                                         )))),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 14,
-                                                                vertical: 4),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: item.stok == 10
-                                                              ? ColorStyle
-                                                                  .status_green
-                                                                  .withOpacity(
-                                                                      0.8)
-                                                              : ColorStyle
-                                                                  .status_red
-                                                                  .withOpacity(
-                                                                      0.8),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(5),
-                                                          border: Border.all(
-                                                            color: item.stok ==
-                                                                    10
-                                                                ? ColorStyle
-                                                                    .status_green
-                                                                : ColorStyle
-                                                                    .status_red,
-                                                            width: 1,
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          item.stok == 10
-                                                              ? "SELESAI"
-                                                              : "BATAL",
-                                                          style:
-                                                              const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                  fontSize: 14),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
+
                                                 DataCell(
                                                   Center(
                                                     child: SizedBox(
@@ -2910,7 +2595,7 @@ class kustomerApotek extends State<KustomerApotek>
     );
   }
 
- Widget tanggalInput(String label, String hint, TextEditingController text) {
+  Widget tanggalInput(String label, String hint, TextEditingController text) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
@@ -2988,383 +2673,392 @@ class kustomerApotek extends State<KustomerApotek>
               ),
             ),
           ),
-          
         ],
       ),
     );
   }
 
- Widget dropdownKategori() {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Kategori Obat",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedKategori,
-                hint: Text(
-                  "Pilih Kategori Obat",
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowKategori
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedKategori = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+  Widget dropdownKategori() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Kategori Obat",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
-Widget dropdownKategoriEdit(String isi) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Kategori Obat",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedKategoriEdit,
-                hint: Text(
-                  isi,
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowKategori
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedKategoriEdit = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedKategori,
+                  hint: Text(
+                    "Pilih Kategori Obat",
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowKategori
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedKategori = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget dropdownKategoriEdit(String isi) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Kategori Obat",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedKategoriEdit,
+                  hint: Text(
+                    isi,
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowKategori
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedKategoriEdit = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget dropdownSatuan() {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Satuan",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedSatuan,
-                hint: Text(
-                  "Pilih Satuan",
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowSatuan
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSatuan = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Satuan",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
-Widget dropdownSatuanEdit(String isi) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              "Satuan",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              " *",
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColorStyle.button_red),
-            ),
-          ],
-        ),
-        SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return SizedBox(
-              width: constraints.maxWidth, // Ikuti lebar parent
-              height: 35,
-              child: DropdownButtonFormField2<String>(
-                isExpanded: true, // Supaya input field tidak terpotong
-                value: _selectedSatuanEdit,
-                hint: Text(
-                  isi,
-                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                ),
-                items: rowSatuan
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(
-                            e,
-                            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSatuanEdit = value!;
-                  });
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColorStyle.fill_form,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.button_grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: ColorStyle.text_secondary),
-                  ),
-                ),
-
-                // **Atur Tampilan Dropdown Menu**
-                dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(color: ColorStyle.button_grey),
-                    color: ColorStyle.fill_form,
-                  ),
-                ),
-
-                // **Atur Posisi Item Dropdown**
-                menuItemStyleData: const MenuItemStyleData(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                ),
-
-                // **Ganti Icon Dropdown**
-                iconStyleData: IconStyleData(
-                  icon: Icon(Icons.keyboard_arrow_down_outlined,
-                      size: 20, color: Colors.black),
-                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                      size: 20, color: Colors.black),
-                ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
               ),
-            );
-          },
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedSatuan,
+                  hint: Text(
+                    "Pilih Satuan",
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowSatuan
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSatuan = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
 
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget dropdownSatuanEdit(String isi) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                "Satuan",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                " *",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColorStyle.button_red),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SizedBox(
+                width: constraints.maxWidth, // Ikuti lebar parent
+                height: 35,
+                child: DropdownButtonFormField2<String>(
+                  isExpanded: true, // Supaya input field tidak terpotong
+                  value: _selectedSatuanEdit,
+                  hint: Text(
+                    isi,
+                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                  ),
+                  items: rowSatuan
+                      .map((e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: TextStyle(
+                                  fontSize: 12, color: ColorStyle.text_hint),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSatuanEdit = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.button_grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: ColorStyle.text_secondary),
+                    ),
+                  ),
+
+                  // **Atur Tampilan Dropdown Menu**
+                  dropdownStyleData: DropdownStyleData(
+                    width: constraints.maxWidth, // Ikuti lebar input field
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: ColorStyle.button_grey),
+                      color: ColorStyle.fill_form,
+                    ),
+                  ),
+
+                  // **Atur Posisi Item Dropdown**
+                  menuItemStyleData: const MenuItemStyleData(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  ),
+
+                  // **Ganti Icon Dropdown**
+                  iconStyleData: IconStyleData(
+                    icon: Icon(Icons.keyboard_arrow_down_outlined,
+                        size: 20, color: Colors.black),
+                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                        size: 20, color: Colors.black),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 }

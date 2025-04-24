@@ -3,7 +3,8 @@ import 'package:apotek/Gudang/Produk/Cobaaaa.dart';
 import 'package:apotek/Gudang/Produk/Kategori.dart';
 import 'package:apotek/Gudang/Produk/mencobaa.dart';
 import 'package:apotek/Gudang/Stock/cobaaa.dart';
-import 'package:apotek/SideBarCoba2.dart';
+import 'package:apotek/SideBar.dart';
+import 'package:apotek/SideBarApotek.dart';
 import 'package:apotek/login.dart';
 import 'package:flutter/material.dart';
 
@@ -17,11 +18,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Aplikasi Apotek',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        // textSelectionTheme: TextSelectionThemeData(
+        //   cursorColor: Colors.black,
+        //   // selectionColor: Colors.grey.shade300, // warna highlight saat seleksi
+        //   selectionHandleColor: Colors.black, // titik pegangan seleksi
+        // ),
       ),
       // home: const MyHomePage(title: 'Flutter Demo Home Page'),
       home: const MyHomePage(),
@@ -50,8 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // body: Sidebar(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
-      // body: Sidebarcoba(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
+      // body: Sidebarapotek(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
       body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
       // body: Coba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),
       // body: Produkcoba2(isExpanded: isExpanded, toggleSidebar: toggleSidebar),

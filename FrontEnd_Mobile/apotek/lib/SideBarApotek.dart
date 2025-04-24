@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:apotek/Apotik/Kustomer/kustomer.dart';
+import 'package:apotek/Apotik/Transaksi/inputTransaksi.dart';
+import 'package:apotek/Apotik/Transaksi/transaksi.dart';
 import 'package:apotek/Gudang/Pembelian/pembeliaanBarang.dart';
 import 'package:apotek/Gudang/Produk/inputproduk.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
@@ -10,21 +13,21 @@ import 'package:apotek/Gudang/Produk/produk.dart';
 import 'package:apotek/Gudang/Stock/stokopname.dart';
 import 'package:apotek/global.dart' as global;
 
-class Sidebarcoba2 extends StatefulWidget {
+class Sidebarapotek extends StatefulWidget {
   final bool isExpanded;
   final VoidCallback onMenuPressed;
 
-  const Sidebarcoba2({
+  const Sidebarapotek({
     super.key,
     required this.isExpanded,
     required this.onMenuPressed,
   });
 
   @override
-  State<Sidebarcoba2> createState() => _SideBarPage();
+  State<Sidebarapotek> createState() => _SideBarPage();
 }
 
-class _SideBarPage extends State<Sidebarcoba2> {
+class _SideBarPage extends State<Sidebarapotek> {
   bool isExpanded = false;
   // int selectedIndex = 0;
   int hoveredIndex = -1;
@@ -35,12 +38,9 @@ class _SideBarPage extends State<Sidebarcoba2> {
     super.initState();
     isExpanded = widget.isExpanded;
     screenApp = [
-      PageProduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
-      stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
-      PenerimaanBarang(
-          isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2
-      Inputproduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //3
-      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar) //4
+      TransaksiApotek(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //0
+      KustomerApotek(isExpanded: isExpanded, toggleSidebar: toggleSidebar),//1
+      inputTransaksi(isExpanded: isExpanded, toggleSidebar: toggleSidebar) //2
     ];
   }
 
@@ -110,13 +110,12 @@ class _SideBarPage extends State<Sidebarcoba2> {
               SizedBox(
                 height: 40,
               ),
-              buildMenuItem("images/produk.png", "Product", 0),
+              //  buildMenuItem("images/laporan.png", "Laporan Transaksi", 0),
+              buildMenuItem("images/dashboard.png", "Dashboard", 5),
               Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/stockOpname.png", "Stock Opname", 1),
+              buildMenuItem("images/transaksi.png", "Transaksi", 0),
               Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/pembelian.png", "Pembeliaan Barang", 4),
-              Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/penerimaan.png", "Penerimaan Barang", 2),
+              buildMenuItem("images/kustomer.png", "Kustomer", 1),
               Spacer(),
               Divider(color: Colors.white, thickness: 2),
               buildMenuItem2(Icons.logout, "Keluar", 3),

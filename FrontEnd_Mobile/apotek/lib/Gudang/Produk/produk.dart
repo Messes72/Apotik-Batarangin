@@ -1,15 +1,17 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
+import 'package:apotek/main.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/global.dart' as global;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart' as im;
+import 'package:http/http.dart' as http;
 
 class PageProduk extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -49,8 +51,11 @@ class _PageProduk extends State<PageProduk> {
 
   String? _selectedKategori;
   String? _selectedSatuan;
-  String? _selectedKategoriEdit;
-  String? _selectedSatuanEdit;
+  KategoriObat? _selectedKategoriEdit;
+  SatuanObat? _selectedSatuanEdit;
+
+  KategoriObat? _pilihKategori;
+  SatuanObat? _pilihSatuan;
 
   String? selectedSatuan;
   final TextEditingController minHargaController = TextEditingController();
@@ -63,10 +68,9 @@ class _PageProduk extends State<PageProduk> {
   String? selectedValue;
   bool isAscending = true; // Menyimpan status sorting
 
-  final _formKey = GlobalKey<FormState>();
-
   var text = TextEditingController();
   var text2 = TextEditingController();
+  var searchFilterKategori = TextEditingController();
 
   // Image picker
   im.ImagePicker picker = im.ImagePicker();
@@ -74,16 +78,11 @@ class _PageProduk extends State<PageProduk> {
   bool uploadFile = false;
   Uint8List pickedImageByte = Uint8List(0);
 
-  // var nomorKartu_text = TextEditingController();
-  // var nomorBatch_text = TextEditingController();
-  // var kodeObat_text = TextEditingController();
-  // var kategori_text = TextEditingController();
-  // var namaObat_text = TextEditingController();
-  // var jumlahBarang_text = TextEditingController();
-  // var caraPemakaian_text = TextEditingController();
-  // var stokBarang_text = TextEditingController();
-  // var satuan_text = TextEditingController();
-  // var tanggalController = TextEditingController();
+  // image picker 2
+  im.ImagePicker picker2 = im.ImagePicker();
+  File? pickedImage2;
+  bool uploadFile2 = false;
+  Uint8List pickedImageByte2 = Uint8List(0);
 
   void onMenuPressed() {
     setState(() {
@@ -91,371 +90,145 @@ class _PageProduk extends State<PageProduk> {
     });
   }
 
-  List<Produk> filterData = [];
+  List<Products> filterData = [];
 
-  final List<Produk> _data = [
-    Produk(
-        nomorKartu: "C14220131",
-        nomorBatch: "0833276",
-        kategori: "Obat Panas",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 89,
-        kode: "D1425",
-        namaObat: "Paracetamol",
-        caraPemakaian:
-            "Dihancurkan hiingga lembur lalu diminumm 2 kali dalam sehari aaa sharon sharon sharon iwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiwnenkqjgegdbghqbdhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa haloooooooooooooooooooooooo   ooooooooooooooooooooo ooooooooooooooooooooooooooooo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        satuan: "strip"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "Obat Nyeri",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "Panadol",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 0,
-        kode: "kode",
-        namaObat: "A obat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 50,
-        kode: "kode",
-        namaObat: " Bobat B",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 100,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 9,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-    Produk(
-        nomorKartu: "nomorKartu",
-        nomorBatch: "nomorBatch",
-        kategori: "kategori",
-        kadaluarsa: DateTime(2030, 2, 12),
-        jumlah: 10,
-        kode: "kode",
-        namaObat: "namaObat",
-        caraPemakaian: "caraPemakaian",
-        satuan: "satuan"),
-  ];
+  List<Products> listProduk = [];
+
+  List<KategoriObat> listKategori = [];
+
+  List<SatuanObat> listSatuan = [];
+
+  bool _validasiTerisi = false;
+
+  Future<void> getDataAPI() async {
+    try {
+      listProduk = await Products.getData();
+      // print();
+      setState(() {
+        filterData = List.from(listProduk);
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> getDataSatuan() async {
+    try {
+      listSatuan = await SatuanObat.getDataSatuan();
+      // print();
+      // print("PPPPPPPPPPPPPPPPPPPPPPPP");
+      // print(listSatuan[0]);
+      setState(() {});
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> getDataKategori() async {
+    try {
+      listKategori = await KategoriObat.getDataKategori();
+      // print();
+      setState(() {});
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  String? getNamaKategori(String idKategori) {
+    try {
+      return listKategori
+          .firstWhere(
+            (item) => item.idKategori == idKategori,
+          )
+          .nama;
+    } catch (e) {
+      return null; // jika tidak ditemukan
+    }
+  }
+
+  String? getNamaSatuan(String idSatuan) {
+    try {
+      return listSatuan
+          .firstWhere(
+            (item) => item.idSatuan == idSatuan,
+          )
+          .namaSatuan;
+    } catch (e) {
+      return null; // jika tidak ditemukan
+    }
+  }
+
+  // isi data field
+
+  final _formKey = GlobalKey<FormState>();
+
+  var namaObat_text = TextEditingController();
+  var keterangan_text = TextEditingController();
+  var stokBarang_text = TextEditingController();
+  var hargajual_text = TextEditingController();
+  var hargaBeli_Text = TextEditingController();
+
+  Future<void> postData() async {
+    String url = "http://leap.crossnet.co.id:2688/product/create";
+    var response = await http.MultipartRequest('POST', Uri.parse(url));
+    response.headers.addAll(
+        {'Authorization': '${global.token}', 'x-api-key': '${global.xApiKey}'});
+    var imageInput = await http.MultipartFile.fromBytes(
+        "image", pickedImageByte,
+        filename: "test");
+    // print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    // print(hargajual_text.text);
+
+    // print(pickedImageByte.toString());
+
+    response.files.add(imageInput);
+    response.fields['nama_obat'] = namaObat_text.text;
+    response.fields['id_satuan'] = _pilihSatuan!.idSatuan;
+    response.fields['harga_jual'] = hargajual_text.text;
+    response.fields['harga_beli'] = hargaBeli_Text.text;
+    response.fields['stok_minimum'] = stokBarang_text.text;
+    response.fields['keterangan'] = keterangan_text.text;
+    response.fields['id_kategori'] = _pilihKategori!.idKategori;
+    var menerimaResponse = await response.send();
+    var body = await http.Response.fromStream(menerimaResponse);
+    String stringbody = body.body;
+    print(stringbody);
+  }
+
+  var namaObatController = TextEditingController();
+  var hargaBeliController = TextEditingController();
+  var hargaJualController = TextEditingController();
+  var keteraanganController = TextEditingController();
+  var stockMinimumController = TextEditingController();
+  var idKategori;
+
+  Future<void> putData(String id) async {
+    String url = "http://leap.crossnet.co.id:2688/product/${id}/edit";
+    var response = await http.MultipartRequest('PUT', Uri.parse(url));
+    response.headers.addAll(
+        {'Authorization': '${global.token}', 'x-api-key': '${global.xApiKey}'});
+    var imageInput = await http.MultipartFile.fromBytes(
+        "image", pickedImageByte2,
+        filename: "test");
+    // print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    // print(hargajual_text.text);
+
+    // print(pickedImageByte.toString());
+
+    response.files.add(imageInput);
+    response.fields['nama_obat'] = namaObatController.text;
+    response.fields['id_satuan'] = _selectedSatuanEdit!.idSatuan;
+    response.fields['harga_jual'] = hargaJualController.text;
+    response.fields['harga_beli'] = hargaBeliController.text;
+    response.fields['stok_minimum'] = stockMinimumController.text;
+    response.fields['keterangan'] = keteraanganController.text;
+    response.fields['id_kategori'] = _selectedKategoriEdit!.idKategori;
+    var menerimaResponse = await response.send();
+    var body = await http.Response.fromStream(menerimaResponse);
+    String stringbody = body.body;
+    print(stringbody);
+  }
+
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
   var tanggalController = TextEditingController();
@@ -478,18 +251,28 @@ class _PageProduk extends State<PageProduk> {
   void filterByStatus(String status) {
     setState(() {
       if (status == "Habis") {
-        filterData = _data.where((item) => item.jumlah == 0).toList();
+        filterData = listProduk.where((item) => item.stokMinimum == 0).toList();
       } else if (status == "Sisa") {
-        filterData = _data
-            .where((item) => item.jumlah > 0 && item.jumlah <= 10)
+        filterData = listProduk
+            .where((item) => item.stokMinimum > 0 && item.stokMinimum <= 10)
             .toList();
       } else {
-        filterData = List.from(_data); // Tampilkan semua jika tidak ada filter
+        filterData =
+            List.from(listProduk); // Tampilkan semua jika tidak ada filter
       }
     });
   }
 
-  void _viewDetails(Produk item) {
+  String formatRupiah(num number) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp. ',
+      decimalDigits: 0,
+    );
+    return formatter.format(number);
+  }
+
+  void _viewDetails(Products item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -527,10 +310,10 @@ class _PageProduk extends State<PageProduk> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Obat",
-                            style: TextStyle(
+                            "Informasi Data Obat",
+                            style: GoogleFonts.montserrat(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
@@ -554,21 +337,35 @@ class _PageProduk extends State<PageProduk> {
                           children: [
                             Column(
                               children: [
-                                detailField("Nomor Kartu", item.nomorKartu),
-                                detailField("Nomor Batch", item.nomorBatch),
-                                detailField("Kode", item.kode),
-                                detailField("Kategori", item.kategori),
+                                // detailField("Nomor Kartu", item.nomorKartu),
+                                // detailField("Nomor Batch", item.nomorBatch),
+                                // detailField("Kode", item.kode),
                                 detailField("Nama Obat", item.namaObat),
                                 detailField(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa)),
-                                detailField("Satuan", item.satuan),
+                                    "Kategori Obat",
+                                    getNamaKategori(item.idKategori) ??
+                                        "Tidak Ada"),
                                 detailField(
-                                    "Jumlah Barang", item.jumlah.toString()),
-                                inputImage(),
-                                buildFormCaraPemakaian(
-                                    "Cara Pemakaian", item.caraPemakaian)
+                                    "Harga Beli", formatRupiah(item.hargaBeli)),
+                                detailField(
+                                    "Harga Jual", formatRupiah(item.hargaJual)),
+                                detailField("Satuan", item.namaSatuan),
+                                // detailField("Jumlah Barang", "null"),
+                                detailField("Stock Minimum",
+                                    item.stokMinimum.toString()),
+                                detailImage(item.linkGambarObat),
+                                detailField("Keterangan", item.keterangan),
+
+                                // detailField(
+                                //     "Kadaluarsa",
+                                //     DateFormat('dd/MM/yyyy')
+                                //         .format(item.kadaluarsa)),
+                                // detailField("Satuan", item.satuan),
+                                // detailField(
+                                //     "Jumlah Barang", item.jumlah.toString()),
+                                // inputImage(),
+                                // buildFormCaraPemakaian(
+                                //     "Cara Pemakaian", item.caraPemakaian)
                               ],
                             ),
                           ],
@@ -615,208 +412,332 @@ class _PageProduk extends State<PageProduk> {
     _alertDone("diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
   }
 
-  var nomorKartu_text = TextEditingController();
-  var nomorBatch_text = TextEditingController();
-  var kodeObat_text = TextEditingController();
-  var kategori_text = TextEditingController();
-  var namaObat_text = TextEditingController();
-  var jumlahBarang_text = TextEditingController();
-  var caraPemakaian_text = TextEditingController();
-  var stokBarang_text = TextEditingController();
-  var satuan_text = TextEditingController();
-  void _editProduk(Produk item) {
-    TextEditingController nomorKartuController =
-        TextEditingController(text: item.nomorKartu);
-    TextEditingController nomorBatchController =
-        TextEditingController(text: item.nomorBatch);
-    TextEditingController kodeController =
-        TextEditingController(text: item.kode);
-    TextEditingController kategoriController =
-        TextEditingController(text: item.kategori);
-    TextEditingController namaObatController =
-        TextEditingController(text: item.namaObat);
-    TextEditingController kadaluarsaController = TextEditingController(
-        text: DateFormat('dd/MM/yyyy').format(item.kadaluarsa));
-    TextEditingController satuanController =
-        TextEditingController(text: item.satuan);
-    TextEditingController jumlahController =
-        TextEditingController(text: item.jumlah.toString());
-    TextEditingController caraPemakaianController =
-        TextEditingController(text: item.caraPemakaian);
+  void _editProduk(Products item) {
+    // TextEditingController namaObatController =
+    //     TextEditingController(text: item.namaObat);
+    // TextEditingController hargaBeliController =
+    //     TextEditingController(text: item.hargaBeli.toString());
+    // TextEditingController hargaJualController =
+    //     TextEditingController(text: item.hargaJual.toString());
+    // TextEditingController keteraanganController =
+    //     TextEditingController(text: item.keterangan);
+    // TextEditingController stockMinimumController =
+    //     TextEditingController(text: item.stokMinimum.toString());
+
     showDialog(
       context: context,
       builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
+        return StatefulBuilder(builder: (context, setState2) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: ColorStyle.button_grey, width: 1))),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Edit Data Obat",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: ColorStyle.text_dalam_kolom,
+                child: Container(
+                  width: constraints.maxWidth *
+                      0.6, // Sesuaikan dengan ukuran layar
+                  height: constraints.maxHeight *
+                      0.9, // Batasi tinggi agar tidak terlalu besar
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Container(
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10),
+                              topRight: Radius.circular(10),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: ColorStyle.text_dalam_kolom),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
+                            border: Border(
+                                bottom: BorderSide(
+                                    color: ColorStyle.button_grey, width: 1))),
+                        padding:
+                            const EdgeInsets.only(top: 8, left: 23, bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              children: [
-                                editFeld("Nomor Kartu", item.nomorKartu,
-                                    nomorKartuController),
-                                editFeld("Nomor Batch", item.nomorBatch,
-                                    nomorBatchController),
-                                editFeld(
-                                    "Kode Obat", item.kode, kodeController),
-                                dropdownKategoriEdit(item.kategori),
-                                editFeld("Nama Obat", item.namaObat,
-                                    namaObatController),
-                                tanggalEdit(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa),
-                                    kadaluarsaController),
-                                dropdownSatuanEdit(item.satuan),
-                                editFeld("Jumlah Barang",
-                                    item.jumlah.toString(), jumlahController),
-                                inputImage(),
-                                buildFormCaraPemakaian2(
-                                    "Cara Pemakaian",
-                                    item.caraPemakaian,
-                                    caraPemakaianController),
-                              ],
+                            Text(
+                              "Edit Data Obat",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: ColorStyle.text_dalam_kolom,
+                              ),
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16, right: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox(
-                                    width: 120,
-                                    height: 30,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        // _alertDone(item, "diedit");
-                                        setState(() {
-                                          // 🔹 Ini yang memastikan UI diperbarui
-                                          item.nomorKartu =
-                                              nomorKartuController.text;
-                                          item.nomorBatch =
-                                              nomorBatchController.text;
-                                          item.kode = kodeController.text;
-                                          item.kategori =
-                                              _selectedKategoriEdit ??
-                                                  item.kategori;
-                                          item.namaObat =
-                                              namaObatController.text;
-                                          item.kadaluarsa =
-                                              DateFormat('dd/MM/yyyy').parse(
-                                                  kadaluarsaController.text);
-                                          item.satuan = _selectedSatuanEdit ??
-                                              item.satuan;
-                                          item.jumlah =
-                                              int.parse(jumlahController.text);
-                                          item.caraPemakaian =
-                                              caraPemakaianController.text;
-                                        });
-                                        _alertDone("diedit");
-                                        // _updateProduk(
-                                        //     item,
-                                        //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
-                                        //     kategoriController,
-                                        //     namaObatController,
-                                        //     kadaluarsaController,
-                                        //     satuanController,
-                                        //     jumlahController,
-                                        //     caraPemakaianController);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        backgroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: const BorderSide(
-                                              color: ColorStyle.button_green,
-                                              width: 1),
-                                        ),
-                                      ),
-                                      child: const Text("SIMPAN",
-                                          style: TextStyle(
-                                              color: ColorStyle.button_green,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ),
-                                ],
+                              padding: const EdgeInsets.only(right: 23),
+                              child: IconButton(
+                                icon: Icon(Icons.close,
+                                    color: ColorStyle.text_dalam_kolom),
+                                onPressed: () => Navigator.pop(context),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
+                      // SizedBox(height: 16),
 
-                    SizedBox(height: 16),
-                  ],
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Wrap(
+                            spacing: 16,
+                            runSpacing: 16,
+                            children: [
+                              Form(
+                                key: _formKey,
+                                child: Column(
+                                  children: [
+                                    // idKategori = item.idKategori,
+                                    editFeld("Nama Obat", item.namaObat,
+                                        namaObatController),
+                                    dropdownKategoriEdit(
+                                        getNamaKategori(item.idKategori) ??
+                                            "Tidak ada"),
+                                    editFeld(
+                                        "Harga Beli",
+                                        item.hargaBeli.toString(),
+                                        hargaBeliController),
+                                    editFeld(
+                                        "Harga Jual",
+                                        item.hargaJual.toString(),
+                                        hargaJualController),
+                                    dropdownSatuanEdit(item.namaSatuan),
+                                    editFeld(
+                                        "Stock Minimum",
+                                        item.stokMinimum.toString(),
+                                        stockMinimumController),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 16, right: 16, top: 10.27),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Upload Gambar Kategori Obat",
+                                                style: GoogleFonts.inter(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14),
+                                              ),
+                                              Text(
+                                                " *",
+                                                style: GoogleFonts.inter(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        ColorStyle.button_red),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 8),
+                                          InkWell(
+                                            onTap: () async {
+                                              final im.XFile? photo =
+                                                  await picker2.pickImage(
+                                                      source: im
+                                                          .ImageSource.gallery);
+                                              if (photo != null) {
+                                                print("Berhasil pick photo");
+                                                setState2(() {
+                                                  pickedImage2 =
+                                                      File(photo.path);
+                                                  uploadFile2 = true;
+                                                });
+                                                pickedImageByte2 = await photo
+                                                    .readAsBytes()
+                                                    .whenComplete(() {
+                                                  setState2(() {
+                                                    uploadFile2 = true;
+                                                  });
+                                                });
+                                              }
+                                            },
+                                            child: Container(
+                                                width: double.infinity,
+                                                height: 150,
+                                                decoration: BoxDecoration(
+                                                  color: ColorStyle.fill_form,
+                                                ),
+                                                child: DottedBorder(
+                                                    color: Colors.black,
+                                                    strokeWidth: 1,
+                                                    dashPattern: [14, 8],
+                                                    borderType:
+                                                        BorderType.RRect,
+                                                    // radius: Radius.circular(10),
+                                                    child: Center(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(16.0),
+                                                        child:
+                                                            uploadFile == true
+                                                                ? Image.file(
+                                                                    pickedImage!,
+                                                                    height:
+                                                                        90, // Atur ukuran sesuai kebutuhan
+                                                                    width: 90,
+                                                                    fit: BoxFit
+                                                                        .cover,
+                                                                  )
+                                                                : Column(
+                                                                    children: [
+                                                                      Image
+                                                                          .network(
+                                                                        Uri.parse("http://leap.crossnet.co.id:2688/${item.linkGambarObat}")
+                                                                            .toString(),
+                                                                        height:
+                                                                            80, // Atur ukuran sesuai kebutuhan
+                                                                        width:
+                                                                            80,
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                        headers: {
+                                                                          'Authorization':
+                                                                              '${global.token}',
+                                                                          'x-api-key':
+                                                                              '${global.xApiKey}'
+                                                                        },
+                                                                      ),
+                                                                      Padding(
+                                                                          padding:
+                                                                              EdgeInsets.only(bottom: 8)),
+                                                                      Text(
+                                                                        "Click to Upload",
+                                                                        style: GoogleFonts.inter(
+                                                                            color: ColorStyle
+                                                                                .alert_ungu,
+                                                                            fontSize:
+                                                                                16,
+                                                                            fontWeight:
+                                                                                FontWeight.w600),
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                      ),
+                                                    ))),
+                                          ),
+                                          Text(
+                                            "Note:Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB",
+                                            style: GoogleFonts.inter(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w400),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    editFeldNonMandatory("Keterangan",
+                                        item.keterangan, keteraanganController),
+                                    // tanggalEdit(
+                                    //     "Kadaluarsa",
+                                    //     DateFormat('dd/MM/yyyy')
+                                    //         .format(item.kadaluarsa),
+                                    //     kadaluarsaController),
+                                    // dropdownSatuanEdit(item.satuan),
+                                    // editFeld("Harga Beli", value, edit)
+                                    // editFeld("Jumlah Barang",
+                                    //     item.jumlah.toString(), jumlahController),
+                                    // inputImage(),
+                                    // buildFormCaraPemakaian2(
+                                    //     "Cara Pemakaian",
+                                    //     item.caraPemakaian,
+                                    //     caraPemakaianController),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 16, right: 16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    SizedBox(
+                                      width: 120,
+                                      height: 30,
+                                      child: ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          // _alertDone(item, "diedit");
+                                          setState(() {
+                                            _alertInput("put", "diedit", item.idObat);
+                                            // 🔹 Ini yang memastikan UI diperbarui
+                                            // item.nomorKartu =
+                                            //     nomorKartuController.text;
+                                            // item.nomorBatch =
+                                            //     nomorBatchController.text;
+                                            // item.kode = kodeController.text;
+                                            // item.kategori =
+                                            //     _selectedKategoriEdit ??
+                                            //         item.kategori;
+                                            // item.namaObat =
+                                            //     namaObatController.text;
+                                            // item.kadaluarsa =
+                                            //     DateFormat('dd/MM/yyyy').parse(
+                                            //         kadaluarsaController.text);
+                                            // item.satuan = _selectedSatuanEdit ??
+                                            //     item.satuan;
+                                            // item.jumlah =
+                                            //     int.parse(jumlahController.text);
+                                            // item.caraPemakaian =
+                                            //     caraPemakaianController.text;
+                                          });
+                                          // _updateProduk(
+                                          //     item,
+                                          //     nomorKartuController,
+                                          //     nomorBatchController,
+                                          //     kodeController,
+                                          //     kategoriController,
+                                          //     namaObatController,
+                                          //     kadaluarsaController,
+                                          //     satuanController,
+                                          //     jumlahController,
+                                          //     caraPemakaianController);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 6),
+                                          backgroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            side: const BorderSide(
+                                                color: ColorStyle.button_green,
+                                                width: 1),
+                                          ),
+                                        ),
+                                        child: Text("SIMPAN",
+                                            style: GoogleFonts.inter(
+                                                color: ColorStyle.button_green,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: 16),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
+              );
+            },
+          );
+        });
       },
     );
   }
@@ -865,9 +786,9 @@ class _PageProduk extends State<PageProduk> {
                             children: [
                               Text(
                                 "Input Data Obat",
-                                style: TextStyle(
+                                style: GoogleFonts.montserrat(
                                   fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w600,
                                   color: ColorStyle.text_dalam_kolom,
                                 ),
                               ),
@@ -890,130 +811,137 @@ class _PageProduk extends State<PageProduk> {
                               spacing: 16,
                               runSpacing: 16,
                               children: [
-                                Column(
-                                  children: [
-                                    inputField("Nomor Kartu", "Nomor Kartu",
-                                        nomorKartu_text),
-                                    inputField("Nomor Batch", "Nomor Batch",
-                                        nomorBatch_text),
-                                    inputField(
-                                        "Kode Obat", "Kode", kodeObat_text),
-                                    dropdownKategori(),
-                                    inputField("Nama Obat", "Nama Obat",
-                                        namaObat_text),
-                                    tanggalInput("Kadaluarsa", "DD/MM/YYYY",
-                                        tanggalController),
-                                    dropdownSatuan(),
-                                    inputField("Jumlah Barang", "Jumlah Barang",
-                                        jumlahBarang_text),
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 16, right: 16, top: 10.27),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Text(
-                                                "Upload Gambar Kategori Obat",
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14),
-                                              ),
-                                              Text(
-                                                " *",
-                                                style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color:
-                                                        ColorStyle.button_red),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(height: 8),
-                                          InkWell(
-                                            onTap: () async {
-                                              final im.XFile? photo =
-                                                  await picker.pickImage(
-                                                      source: im
-                                                          .ImageSource.gallery);
-                                              if (photo != null) {
-                                                print("Berhasil pick photo");
-                                                setState2(() {
-                                                  pickedImage =
-                                                      File(photo.path);
-                                                  uploadFile = true;
-                                                });
-                                                pickedImageByte = await photo
-                                                    .readAsBytes()
-                                                    .whenComplete(() {
+                                Form(
+                                  key: _formKey,
+                                  child: Column(
+                                    children: [
+                                      inputField("Nama Obat", "Nama Obat",
+                                          namaObat_text),
+                                      dropdownKategori(),
+                                      inputField("Harga Beli", "Harga Beli",
+                                          hargaBeli_Text),
+                                      inputField("Harga Jual", "Harga Jual",
+                                          hargajual_text),
+                                      dropdownSatuan(),
+                                      inputField("Stock Minimum",
+                                          "Stock Minimum", stokBarang_text),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 16, right: 16, top: 10.27),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  "Upload Gambar Kategori Obat",
+                                                  style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 14),
+                                                ),
+                                                Text(
+                                                  " *",
+                                                  style: GoogleFonts.inter(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: ColorStyle
+                                                          .button_red),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            InkWell(
+                                              onTap: () async {
+                                                final im.XFile? photo =
+                                                    await picker.pickImage(
+                                                        source: im.ImageSource
+                                                            .gallery);
+                                                if (photo != null) {
+                                                  print("Berhasil pick photo");
                                                   setState2(() {
+                                                    pickedImage =
+                                                        File(photo.path);
                                                     uploadFile = true;
                                                   });
-                                                });
-                                              }
-                                            },
-                                            child: Container(
-                                                width: double.infinity,
-                                                height: 120,
-                                                decoration: BoxDecoration(
-                                                  color: ColorStyle.fill_form,
-                                                ),
-                                                child: DottedBorder(
-                                                    color: Colors.black,
-                                                    strokeWidth: 1,
-                                                    dashPattern: [14, 8],
-                                                    borderType:
-                                                        BorderType.RRect,
-                                                    // radius: Radius.circular(10),
-                                                    child: Center(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(16.0),
-                                                        child: uploadFile ==
-                                                                true
-                                                            ? Image.file(
-                                                                pickedImage!,
-                                                                height:
-                                                                    80, // Atur ukuran sesuai kebutuhan
-                                                                width: 80,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              )
-                                                            : Column(
-                                                                children: [
-                                                                  Image.asset(
-                                                                    "images/upload_pict.png",
-                                                                    height: 50,
-                                                                    width: 50,
-                                                                  ),
-                                                                  Padding(
-                                                                      padding: EdgeInsets.only(
-                                                                          bottom:
-                                                                              8)),
-                                                                  Text(
-                                                                    "Click to Upload",
-                                                                    style: TextStyle(
-                                                                        color: ColorStyle
-                                                                            .alert_ungu,
-                                                                        fontSize:
-                                                                            16,
-                                                                        fontWeight:
-                                                                            FontWeight.bold),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                      ),
-                                                    ))),
-                                          ),
-                                        ],
+                                                  pickedImageByte = await photo
+                                                      .readAsBytes()
+                                                      .whenComplete(() {
+                                                    setState2(() {
+                                                      uploadFile = true;
+                                                    });
+                                                  });
+                                                }
+                                              },
+                                              child: Container(
+                                                  width: double.infinity,
+                                                  height: 120,
+                                                  decoration: BoxDecoration(
+                                                    color: ColorStyle.fill_form,
+                                                  ),
+                                                  child: DottedBorder(
+                                                      color: Colors.black,
+                                                      strokeWidth: 1,
+                                                      dashPattern: [14, 8],
+                                                      borderType:
+                                                          BorderType.RRect,
+                                                      // radius: Radius.circular(10),
+                                                      child: Center(
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(16.0),
+                                                          child: uploadFile ==
+                                                                  true
+                                                              ? Image.file(
+                                                                  pickedImage!,
+                                                                  height:
+                                                                      80, // Atur ukuran sesuai kebutuhan
+                                                                  width: 80,
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                )
+                                                              : Column(
+                                                                  children: [
+                                                                    Image.asset(
+                                                                      "images/upload_pict.png",
+                                                                      height:
+                                                                          50,
+                                                                      width: 50,
+                                                                    ),
+                                                                    Padding(
+                                                                        padding:
+                                                                            EdgeInsets.only(bottom: 8)),
+                                                                    Text(
+                                                                      "Click to Upload",
+                                                                      style: GoogleFonts.inter(
+                                                                          color: ColorStyle
+                                                                              .alert_ungu,
+                                                                          fontSize:
+                                                                              16,
+                                                                          fontWeight:
+                                                                              FontWeight.w600),
+                                                                    )
+                                                                  ],
+                                                                ),
+                                                        ),
+                                                      ))),
+                                            ),
+                                            Text(
+                                              "Note:Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB",
+                                              style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w400),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    inputCaraPemakaian(
-                                        "Cara Pemakaian", caraPemakaian_text),
-                                  ],
+                                      inputFieldNonMandatory("Keterangan",
+                                          "Keterangan", keterangan_text),
+                                    ],
+                                  ),
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(
@@ -1026,9 +954,15 @@ class _PageProduk extends State<PageProduk> {
                                         height: 30,
                                         child: ElevatedButton(
                                           onPressed: () {
-                                            Navigator.pop(context);
+                                            _validasiTerisi = true;
+                                            if (_formKey.currentState!
+                                                .validate()) {
+                                              Navigator.pop(context);
+                                              _alertInput("post", "menginput","");
+                                            }
+                                            // Navigator.pop(context);
                                             // _alertDone(item, "diedit");
-                                            _alertInput();
+                                            // _alertInput();
                                             // _alertDone("diinput");
                                             // _updateProduk(
                                             //     item,
@@ -1055,12 +989,12 @@ class _PageProduk extends State<PageProduk> {
                                                   width: 1),
                                             ),
                                           ),
-                                          child: const Text("KONFIRMASI",
-                                              style: TextStyle(
+                                          child: Text("KONFIRMASI",
+                                              style: GoogleFonts.inter(
                                                   color:
                                                       ColorStyle.button_green,
                                                   fontSize: 11,
-                                                  fontWeight: FontWeight.bold)),
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       ),
                                     ],
@@ -1084,7 +1018,7 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  void _modalKosongkanObat(Produk item) {
+  void _modalKosongkanObat(Products item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1124,9 +1058,9 @@ class _PageProduk extends State<PageProduk> {
                           children: [
                             Text(
                               "Alasan Kosongkan Obat",
-                              style: TextStyle(
+                              style: GoogleFonts.montserrat(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
@@ -1141,7 +1075,7 @@ class _PageProduk extends State<PageProduk> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 47),
 
                     Expanded(
                       child: SingleChildScrollView(
@@ -1151,18 +1085,18 @@ class _PageProduk extends State<PageProduk> {
                           children: [
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Text(
-                                  "Alasan \"${item.namaObat}\" Kosongkan Obat",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
+                                  "Alasan \"${item.namaObat}\" Kosongkan Obat :",
+                                  style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600)),
                             ),
                             const SizedBox(height: 8),
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Container(
-                                height: 225,
+                                height: 150,
                                 // decoration: BoxDecoration(
                                 //   color: ColorStyle.fill_form,
                                 //   border:
@@ -1172,7 +1106,7 @@ class _PageProduk extends State<PageProduk> {
                                 // padding:
                                 //     const EdgeInsets.symmetric(horizontal: 12),
                                 alignment: Alignment.topLeft,
-                                child: TextField(
+                                child: TextFormField(
                                   controller: text2,
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
@@ -1214,7 +1148,7 @@ class _PageProduk extends State<PageProduk> {
                             SizedBox(height: 16),
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -1245,11 +1179,11 @@ class _PageProduk extends State<PageProduk> {
                                               width: 1),
                                         ),
                                       ),
-                                      child: const Text("KONFIRMASI",
-                                          style: TextStyle(
+                                      child:  Text("KONFIRMASI",
+                                          style: GoogleFonts.inter(
                                               color: ColorStyle.primary,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.w600)),
                                     ),
                                   ),
                                 ],
@@ -1259,7 +1193,7 @@ class _PageProduk extends State<PageProduk> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: 28.57),
                   ],
                 ),
               ),
@@ -1270,7 +1204,7 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  void _alertDelete(Produk item) {
+  void _alertDelete(Products item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1383,7 +1317,7 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  void _alertInput() {
+  void _alertInput(String condition, String isi, String data) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1415,7 +1349,7 @@ class _PageProduk extends State<PageProduk> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        "Apakah Anda yakin akan \nmenginput data ini?",
+                        "Apakah Anda yakin akan \n ${isi} data ini?",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: constraints.maxWidth *
@@ -1458,9 +1392,17 @@ class _PageProduk extends State<PageProduk> {
                               width: constraints.maxWidth * 0.15,
                               height: 35,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _alertDone("diinput");
+                                onPressed: () async {
+                                  if (condition == "post") {
+                                    await postData();
+                                    Navigator.pop(context);
+                                    _alertDone("diinput");
+                                  }
+                                  if (condition == "put") {
+                                    await putData(data);
+                                    Navigator.pop(context);
+                                    _alertDone("diedit");
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
@@ -1501,7 +1443,8 @@ class _PageProduk extends State<PageProduk> {
       builder: (context) {
         // Tutup dialog otomatis setelah 2 detik
         Future.delayed(const Duration(seconds: 2), () {
-          Navigator.of(context).pop();
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => MyHomePage()));
         });
 
         return Dialog(
@@ -1568,19 +1511,22 @@ class _PageProduk extends State<PageProduk> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    filterData = List.from(_data);
+    getDataAPI();
+    getDataKategori();
+    getDataSatuan();
+    filterData = List.from(listProduk);
   }
 
   void filtering(String query) {
     setState(() {
       if (query.isEmpty) {
-        filterData = List.from(_data);
+        filterData = List.from(listProduk);
       } else {
-        filterData = _data.where((item) {
-          return item.kode.toLowerCase().contains(query.toLowerCase()) ||
+        filterData = listProduk.where((item) {
+          return item.idObat.toLowerCase().contains(query.toLowerCase()) ||
               item.namaObat.toLowerCase().contains(query.toLowerCase()) ||
-              item.kategori.toLowerCase().contains(query.toLowerCase()) ||
-              item.jumlah
+              item.idKategori.toLowerCase().contains(query.toLowerCase()) ||
+              item.stokMinimum
                   .toString()
                   .toLowerCase()
                   .contains(query.toLowerCase());
@@ -1599,7 +1545,7 @@ class _PageProduk extends State<PageProduk> {
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex =
         (startIndex + _rowsPerPage).clamp(0, filterData.length); // Batas aman
-    List<Produk> paginatedData = filterData.sublist(startIndex, endIndex);
+    List<Products> paginatedData = filterData.sublist(startIndex, endIndex);
     return Scaffold(
       appBar: NavbarTop(
           title: "PRODUK",
@@ -1629,15 +1575,14 @@ class _PageProduk extends State<PageProduk> {
                         // });
                         _inputProdukBaru();
                       },
-                      icon: Transform.translate(
-                        offset: Offset(1, 0), // Geser ikon lebih dekat ke teks
-                        child: Icon(Icons.add, color: Colors.white, size: 22),
-                      ),
+                      icon: Icon(Icons.add, color: Colors.white, size: 22),
                       label: Transform.translate(
                         offset: Offset(-3, 0),
-                        child: const Text("Input Produk",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
+                        child: Text("Input Produk",
+                            style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorStyle.hover.withOpacity(0.7),
@@ -1660,7 +1605,7 @@ class _PageProduk extends State<PageProduk> {
                       //   color: ColorStyle.fill_form,
                       //   borderRadius: BorderRadius.circular(4),
                       // ),
-                      child: TextField(
+                      child: TextFormField(
                         controller: text,
                         onChanged: filtering,
                         decoration: InputDecoration(
@@ -1680,8 +1625,9 @@ class _PageProduk extends State<PageProduk> {
 
                           hintText: "Search",
                           contentPadding: EdgeInsets.only(bottom: 12.5),
-                          hintStyle: TextStyle(
+                          hintStyle: GoogleFonts.notoSans(
                             color: ColorStyle.text_hint,
+                            fontWeight: FontWeight.w400,
                             fontSize: 16,
                           ),
 
@@ -1712,8 +1658,11 @@ class _PageProduk extends State<PageProduk> {
                         child: Icon(Icons.sort_by_alpha_outlined,
                             color: Colors.black, size: 22),
                       ),
-                      label: const Text("Sort Ascending",
-                          style: TextStyle(color: Colors.black, fontSize: 12)),
+                      label: Text("Sort Ascending",
+                          style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -1737,17 +1686,20 @@ class _PageProduk extends State<PageProduk> {
                         value: _selectedStatus,
                         hint: Text(
                           "-- Pilih Status --",
-                          style: TextStyle(
-                              fontSize: 16, color: ColorStyle.text_hint),
+                          style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: ColorStyle.text_hint,
+                              fontWeight: FontWeight.w400),
                         ),
                         items: rowStatus
                             .map((e) => DropdownMenuItem(
                                   value: e,
                                   child: Text(
                                     e,
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        color: ColorStyle.text_hint),
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: ColorStyle.text_hint,
+                                        fontWeight: FontWeight.w400),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ))
@@ -1822,8 +1774,11 @@ class _PageProduk extends State<PageProduk> {
                       },
                       icon:
                           Icon(Icons.filter_alt, color: Colors.black, size: 22),
-                      label: const Text("Filter",
-                          style: TextStyle(color: Colors.black, fontSize: 16)),
+                      label: Text("Filter",
+                          style: GoogleFonts.inter(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
@@ -1884,9 +1839,22 @@ class _PageProduk extends State<PageProduk> {
                                     ),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image.asset(
-                                        "images/background.jpg",
+                                      child: Image.network(
+                                        Uri.parse(
+                                                "http://leap.crossnet.co.id:2688/${produk.linkGambarObat}")
+                                            .toString(),
+                                        headers: {
+                                          'Authorization': '${global.token}',
+                                          'x-api-key': '${global.xApiKey}'
+                                        },
                                         fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return Image.asset(
+                                            "images/gambarObat.png",
+                                            fit: BoxFit.cover,
+                                          );
+                                        },
                                       ),
                                     ),
                                   ),
@@ -1912,10 +1880,10 @@ class _PageProduk extends State<PageProduk> {
                                                 Expanded(
                                                   child: Text(
                                                     produk.namaObat,
-                                                    style: TextStyle(
+                                                    style: GoogleFonts.inter(
                                                       fontSize: 20,
                                                       fontWeight:
-                                                          FontWeight.bold,
+                                                          FontWeight.w600,
                                                       color: Colors.black,
                                                     ),
                                                     overflow: TextOverflow
@@ -2012,11 +1980,12 @@ class _PageProduk extends State<PageProduk> {
                                             Transform.translate(
                                               offset: Offset(0, -6),
                                               child: Text(
-                                                produk.kode,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.black,
-                                                ),
+                                                produk.idObat,
+                                                style: GoogleFonts.inter(
+                                                    fontSize: 14,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w400),
                                               ),
                                             ),
                                             Row(
@@ -2025,13 +1994,15 @@ class _PageProduk extends State<PageProduk> {
                                                       .spaceBetween,
                                               children: [
                                                 Text(
-                                                  "Stock: ${produk.jumlah} ${produk.satuan}",
-                                                  style: TextStyle(
+                                                  "Stock: ${produk.stokMinimum} ${produk.namaSatuan}",
+                                                  style: GoogleFonts.inter(
                                                       fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w400,
                                                       color: Colors.black),
                                                 ),
                                                 // Status Stock: "Sisa" jika <= 10, "Habis" jika 0
-                                                if (produk.jumlah <= 10)
+                                                if (produk.stokMinimum <= 10)
                                                   Container(
                                                     width: 61,
                                                     height: 20,
@@ -2041,18 +2012,23 @@ class _PageProduk extends State<PageProduk> {
                                                     //         horizontal: 15,
                                                     //         vertical: 2),
                                                     decoration: BoxDecoration(
-                                                      color: produk.jumlah == 0
-                                                          ? ColorStyle
-                                                              .button_red
-                                                              .withOpacity(0.8)
-                                                          : ColorStyle
-                                                              .button_yellow
-                                                              .withOpacity(0.8),
+                                                      color:
+                                                          produk.stokMinimum ==
+                                                                  0
+                                                              ? ColorStyle
+                                                                  .button_red
+                                                                  .withOpacity(
+                                                                      0.8)
+                                                              : ColorStyle
+                                                                  .button_yellow
+                                                                  .withOpacity(
+                                                                      0.8),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               2),
                                                       border: Border.all(
-                                                        color: produk.jumlah ==
+                                                        color: produk
+                                                                    .stokMinimum ==
                                                                 0
                                                             ? ColorStyle
                                                                 .button_red
@@ -2062,13 +2038,13 @@ class _PageProduk extends State<PageProduk> {
                                                       ),
                                                     ),
                                                     child: Text(
-                                                      produk.jumlah == 0
+                                                      produk.stokMinimum == 0
                                                           ? "HABIS"
                                                           : "SISA",
-                                                      style: const TextStyle(
+                                                      style: GoogleFonts.inter(
                                                           color: Colors.white,
-                                                          // fontWeight:
-                                                          //     FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.w500,
                                                           fontSize: 13),
                                                       textAlign:
                                                           TextAlign.center,
@@ -2223,9 +2199,9 @@ class _PageProduk extends State<PageProduk> {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           Container(
             width: double.infinity,
             height: 35,
@@ -2238,7 +2214,8 @@ class _PageProduk extends State<PageProduk> {
               padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
               child: Text(
                 value,
-                style: TextStyle(fontSize: 12),
+                style: GoogleFonts.inter(
+                    fontSize: 13, fontWeight: FontWeight.w400),
               ),
             ),
           )
@@ -2257,62 +2234,152 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            height: 35,
-            // decoration: BoxDecoration(
-            //   border: Border.all(color: ColorStyle.fill_stroke),
-            //   color: ColorStyle.fill_form,
-            //   borderRadius: BorderRadius.circular(8),
-            // ),
-            child: TextField(
-              controller: edit,
-              style: TextStyle(
+          SizedBox(height: 4),
+          TextFormField(
+            controller: edit,
+            onChanged: (value) {
+              if (_validasiTerisi == true) {
+                _formKey.currentState?.validate();
+              }
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Tidak boleh kosong";
+              }
+              return null;
+            },
+            style: GoogleFonts.inter(
                 color: ColorStyle.tulisan_form,
-                fontSize: 12,
+                fontSize: 13,
+                fontWeight: FontWeight.w400),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: isi,
+              filled: true,
+              fillColor: ColorStyle.fill_form,
+              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              hintStyle: GoogleFonts.inter(
+                  color: ColorStyle.tulisan_form,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                borderRadius: BorderRadius.circular(5),
               ),
-              decoration: InputDecoration(
-                hintText: isi,
-                filled: true,
-                fillColor: ColorStyle.fill_form,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-                hintStyle: TextStyle(
+
+              // Border saat ditekan (fokus)
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black, width: 1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.button_red,
+                    width: 1), // Warna biru saat fokus
+                borderRadius: BorderRadius.circular(5),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.button_red,
+                    width: 1), // Warna biru saat fokus
+                borderRadius: BorderRadius.circular(5),
+              ),
+
+              // Border saat error
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget inputFieldNonMandatory(
+      String title, String isi, TextEditingController edit) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              // Text(
+              //   " *",
+              //   style: TextStyle(
+              //       fontSize: 14,
+              //       fontWeight: FontWeight.bold,
+              //       color: ColorStyle.button_red),
+              // ),
+            ],
+          ),
+          SizedBox(height: 4),
+          TextFormField(
+            controller: edit,
+            onChanged: (value) {
+              _formKey.currentState?.validate();
+            },
+            // validator: (value) {
+            //   if (value == null || value.isEmpty) {
+            //     return "Tidak boleh kosong";
+            //   }
+            //   return null;
+            // },
+            style: GoogleFonts.inter(
+                color: ColorStyle.tulisan_form,
+                fontSize: 13,
+                fontWeight: FontWeight.w400),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: isi,
+              filled: true,
+              fillColor: ColorStyle.fill_form,
+              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              hintStyle: GoogleFonts.inter(
                   color: ColorStyle.tulisan_form,
                   fontSize: 12,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat ditekan (fokus)
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black, width: 1), // Warna biru saat fokus
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat error
-                errorBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.button_red,
-                      width: 1), // Warna merah jika error
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                  fontWeight: FontWeight.w400),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                borderRadius: BorderRadius.circular(5),
               ),
+
+              // Border saat ditekan (fokus)
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black, width: 1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              // focusedErrorBorder: OutlineInputBorder(
+              //   borderSide: BorderSide(
+              //       color: ColorStyle.button_red,
+              //       width: 1), // Warna biru saat fokus
+              //   borderRadius: BorderRadius.circular(5),
+              // ),
+              // errorBorder: OutlineInputBorder(
+              //   borderSide: BorderSide(
+              //       color: ColorStyle.button_red,
+              //       width: 1), // Warna biru saat fokus
+              //   borderRadius: BorderRadius.circular(5),
+              // ),
+
+              // Border saat error
             ),
           ),
         ],
@@ -2330,18 +2397,19 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           Container(
             width: double.infinity,
             height: 35,
@@ -2354,7 +2422,7 @@ class _PageProduk extends State<PageProduk> {
               controller: edit,
               style: TextStyle(
                 color: ColorStyle.tulisan_form,
-                fontSize: 12,
+                fontSize: 13,
               ),
               decoration: InputDecoration(
                 hintText: value,
@@ -2363,7 +2431,7 @@ class _PageProduk extends State<PageProduk> {
                 contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -2393,81 +2461,40 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  Widget buildFormCaraPemakaian(String label, String value) {
+  Widget editFeldNonMandatory(
+      String title, String value, TextEditingController edit) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            title,
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           Container(
             width: double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
-            ),
-            decoration: BoxDecoration(
-              color: ColorStyle.fill_form,
-              border: Border.all(color: ColorStyle.fill_stroke),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            alignment: Alignment.topLeft,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Text(
-                value,
-                style: TextStyle(fontSize: 12),
-                softWrap: true,
-                // biar turun kebawah
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildFormCaraPemakaian2(
-      String label, String value, TextEditingController text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
-            ),
+            height: 35,
             // decoration: BoxDecoration(
-            //   color: ColorStyle.fill_form,
             //   border: Border.all(color: ColorStyle.fill_stroke),
+            //   color: ColorStyle.fill_form,
             //   borderRadius: BorderRadius.circular(8),
             // ),
-            // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            alignment: Alignment.topLeft,
             child: TextField(
-              controller: text,
+              controller: edit,
               style: TextStyle(
                 color: ColorStyle.tulisan_form,
-                fontSize: 12,
+                fontSize: 13,
               ),
               decoration: InputDecoration(
+                hintText: value,
                 filled: true,
                 fillColor: ColorStyle.fill_form,
-                hintText: "Cara Pemakaian",
+                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(
@@ -2490,8 +2517,6 @@ class _PageProduk extends State<PageProduk> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              maxLines: 10,
-              // biar turun kebawah
             ),
           ),
         ],
@@ -2499,154 +2524,54 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  Widget inputCaraPemakaian(String label, TextEditingController text) {
+  Widget detailImage(String image) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            "Gambar Kategori Obat",
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
           ),
           SizedBox(height: 8),
           Container(
-            width: double.infinity,
-            constraints: BoxConstraints(
-              maxHeight: 150, // Batasi tinggi agar bisa di-scroll
-            ),
-            // decoration: BoxDecoration(
-            //   color: ColorStyle.fill_form,
-            //   border: Border.all(color: ColorStyle.fill_stroke),
-            //   borderRadius: BorderRadius.circular(8),
-            // ),
-            // padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            alignment: Alignment.topLeft,
-            child: TextField(
-              controller: text,
-              style: TextStyle(
-                color: ColorStyle.tulisan_form,
-                fontSize: 12,
+              width: double.infinity,
+              height: 120,
+              decoration: BoxDecoration(
+                color: ColorStyle.fill_form,
               ),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: ColorStyle.fill_form,
-                hintText: "Cara Pemakaian",
-                hintStyle: TextStyle(
-                  color: ColorStyle.tulisan_form,
-                  fontSize: 12,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat ditekan (fokus)
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black, width: 1), // Warna biru saat fokus
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat error
-                errorBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.button_red,
-                      width: 1), // Warna merah jika error
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              maxLines: 10,
-              // biar turun kebawah
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget inputImage() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                "Upload Gambar Kategori Obat",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              Text(
-                " *",
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: ColorStyle.button_red),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          InkWell(
-            onTap: () async {
-              final im.XFile? photo =
-                  await picker.pickImage(source: im.ImageSource.gallery);
-              if (photo != null) {
-                print("Berhasil pick photo");
-                setState(() {
-                  pickedImage = File(photo.path);
-                  uploadFile = true;
-                });
-                pickedImageByte = await photo.readAsBytes().whenComplete(() {
-                  setState(() {
-                    uploadFile = true;
-                  });
-                });
-              }
-            },
-            child: Container(
-                width: double.infinity,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: ColorStyle.fill_form,
-                ),
-                child: DottedBorder(
-                    color: Colors.black,
-                    strokeWidth: 1,
-                    dashPattern: [14, 8],
-                    borderType: BorderType.RRect,
-                    // radius: Radius.circular(10),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: uploadFile == true
-                            ? Image.file(
-                                pickedImage!,
-                                height: 80, // Atur ukuran sesuai kebutuhan
-                                width: 80,
-                                fit: BoxFit.cover,
-                              )
-                            : Column(
-                                children: [
-                                  Image.asset(
-                                    "images/upload_pict.png",
-                                    height: 50,
-                                    width: 50,
-                                  ),
-                                  Padding(padding: EdgeInsets.only(bottom: 8)),
-                                  Text(
-                                    "Click to Upload",
-                                    style: TextStyle(
-                                        color: ColorStyle.alert_ungu,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  )
-                                ],
-                              ),
-                      ),
-                    ))),
-          ),
+              child: DottedBorder(
+                  color: Colors.black,
+                  strokeWidth: 1,
+                  dashPattern: [14, 8],
+                  borderType: BorderType.RRect,
+                  // radius: Radius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        Image.network(
+                          Uri.parse("http://leap.crossnet.co.id:2688/${image}")
+                              .toString(),
+                          headers: {
+                            'Authorization': '${global.token}',
+                            'x-api-key': '${global.xApiKey}'
+                          },
+                          height: 90,
+                          width: 90,
+                          errorBuilder: (context, error, stackTrace) {
+                            return SizedBox.shrink();
+                          },
+                        ),
+                        // Image.asset(
+                        //   "images/upload_pict.png",
+                        //   height: 50,
+                        //   width: 50,
+                        // ),
+                      ],
+                    ),
+                  ))),
         ],
       ),
     );
@@ -2814,83 +2739,104 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 "Kategori Obat",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           LayoutBuilder(
             builder: (context, constraints) {
-              return SizedBox(
-                width: constraints.maxWidth, // Ikuti lebar parent
-                height: 35,
-                child: DropdownButtonFormField2<String>(
-                  isExpanded: true, // Supaya input field tidak terpotong
-                  value: _selectedKategori,
-                  hint: Text(
-                    "Pilih Kategori Obat",
-                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+              return DropdownButtonFormField2<KategoriObat>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _pilihKategori,
+                validator: (value) {
+                  if (value == null) {
+                    return "Silahkan Pilih Satuan";
+                  }
+                },
+                hint: Text(
+                  "Pilih Kategori Obat",
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: ColorStyle.text_hint,
+                      fontWeight: FontWeight.w400),
+                ),
+                items: listKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e.nama,
+                            style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: ColorStyle.text_hint,
+                                fontWeight: FontWeight.w400),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  _formKey.currentState?.validate();
+                  setState(() {
+                    _pilihKategori = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  isDense: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
                   ),
-                  items: rowKategori
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e,
-                              style: TextStyle(
-                                  fontSize: 12, color: ColorStyle.text_hint),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedKategori = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: ColorStyle.fill_form,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.button_grey),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.text_secondary),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
                   ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
 
-                  // **Atur Tampilan Dropdown Menu**
-                  dropdownStyleData: DropdownStyleData(
-                    width: constraints.maxWidth, // Ikuti lebar input field
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: ColorStyle.button_grey),
-                      color: ColorStyle.fill_form,
-                    ),
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
                   ),
+                ),
 
-                  // **Atur Posisi Item Dropdown**
-                  menuItemStyleData: const MenuItemStyleData(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                  ),
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
 
-                  // **Ganti Icon Dropdown**
-                  iconStyleData: IconStyleData(
-                    icon: Icon(Icons.keyboard_arrow_down_outlined,
-                        size: 20, color: Colors.black),
-                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                        size: 20, color: Colors.black),
-                  ),
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
                 ),
               );
             },
@@ -2910,83 +2856,105 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 "Kategori Obat",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           LayoutBuilder(
             builder: (context, constraints) {
-              return SizedBox(
-                width: constraints.maxWidth, // Ikuti lebar parent
-                height: 35,
-                child: DropdownButtonFormField2<String>(
-                  isExpanded: true, // Supaya input field tidak terpotong
-                  value: _selectedKategoriEdit,
-                  hint: Text(
-                    isi,
-                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+              return DropdownButtonFormField2<KategoriObat>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedKategoriEdit,
+                validator: (value) {
+                  if (value == null) {
+                    return "Silahkan Pilih Satuan";
+                  }
+                },
+                hint: Text(
+                  isi,
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: ColorStyle.text_hint,
+                      fontWeight: FontWeight.w400),
+                ),
+                items: listKategori
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e.nama,
+                            style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: ColorStyle.text_hint,
+                                fontWeight: FontWeight.w400),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  _formKey.currentState?.validate();
+                  setState(() {
+                    _selectedKategoriEdit = value!;
+                    print(value.idKategori);
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  isDense: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
                   ),
-                  items: rowKategori
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e,
-                              style: TextStyle(
-                                  fontSize: 12, color: ColorStyle.text_hint),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedKategoriEdit = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: ColorStyle.fill_form,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.button_grey),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.text_secondary),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
                   ),
-
-                  // **Atur Tampilan Dropdown Menu**
-                  dropdownStyleData: DropdownStyleData(
-                    width: constraints.maxWidth, // Ikuti lebar input field
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: ColorStyle.button_grey),
-                      color: ColorStyle.fill_form,
-                    ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
                   ),
-
-                  // **Atur Posisi Item Dropdown**
-                  menuItemStyleData: const MenuItemStyleData(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  errorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
                   ),
-
-                  // **Ganti Icon Dropdown**
-                  iconStyleData: IconStyleData(
-                    icon: Icon(Icons.keyboard_arrow_down_outlined,
-                        size: 20, color: Colors.black),
-                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                        size: 20, color: Colors.black),
+                ),
+              
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
                   ),
+                ),
+              
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+              
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
                 ),
               );
             },
@@ -3006,89 +2974,189 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 "Satuan",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           LayoutBuilder(
             builder: (context, constraints) {
-              return SizedBox(
-                width: constraints.maxWidth, // Ikuti lebar parent
-                height: 35,
-                child: DropdownButtonFormField2<String>(
-                  isExpanded: true, // Supaya input field tidak terpotong
-                  value: _selectedSatuan,
-                  hint: Text(
-                    "Pilih Satuan",
-                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                  ),
-                  items: rowSatuan
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e,
-                              style: TextStyle(
-                                  fontSize: 12, color: ColorStyle.text_hint),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSatuan = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: ColorStyle.fill_form,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.button_grey),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.text_secondary),
-                    ),
-                  ),
+              return DropdownButtonFormField2<SatuanObat>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _pilihSatuan,
 
-                  // **Atur Tampilan Dropdown Menu**
-                  dropdownStyleData: DropdownStyleData(
-                    width: constraints.maxWidth, // Ikuti lebar input field
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: ColorStyle.button_grey),
-                      color: ColorStyle.fill_form,
-                    ),
+                validator: (value) {
+                  if (value == null) {
+                    return "Silahkan Pilih Satuan";
+                  }
+                },
+                hint: Text(
+                  "Pilih Satuan",
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: ColorStyle.text_hint,
+                      fontWeight: FontWeight.w400),
+                ),
+                items: listSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e.namaSatuan,
+                            style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: ColorStyle.text_hint,
+                                fontWeight: FontWeight.w400),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  _formKey.currentState?.validate();
+                  setState(() {
+                    _pilihSatuan = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  isDense: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
 
-                  // **Atur Posisi Item Dropdown**
-                  menuItemStyleData: const MenuItemStyleData(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
                   ),
+                ),
 
-                  // **Ganti Icon Dropdown**
-                  iconStyleData: IconStyleData(
-                    icon: Icon(Icons.keyboard_arrow_down_outlined,
-                        size: 20, color: Colors.black),
-                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                        size: 20, color: Colors.black),
-                  ),
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
                 ),
               );
             },
           ),
         ],
       ),
+    );
+  }
+
+  Widget dropdownSatuanFilter() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: constraints.maxWidth, // Ikuti lebar parent
+              height: 35,
+              child: DropdownButtonFormField2<String>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuan,
+                hint: Text(
+                  "Pilih Satuan",
+                  style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+                ),
+                items: rowSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e,
+                            style: TextStyle(
+                                fontSize: 12, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSatuan = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
+                  ),
+                ),
+
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
+                  ),
+                ),
+
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -3102,83 +3170,102 @@ class _PageProduk extends State<PageProduk> {
             children: [
               Text(
                 "Satuan",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
+          SizedBox(height: 4),
           LayoutBuilder(
             builder: (context, constraints) {
-              return SizedBox(
-                width: constraints.maxWidth, // Ikuti lebar parent
-                height: 35,
-                child: DropdownButtonFormField2<String>(
-                  isExpanded: true, // Supaya input field tidak terpotong
-                  value: _selectedSatuanEdit,
-                  hint: Text(
-                    isi,
-                    style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
+              return DropdownButtonFormField2<SatuanObat>(
+                isExpanded: true, // Supaya input field tidak terpotong
+                value: _selectedSatuanEdit,
+                validator: (value) {
+                  if (value == null) {
+                    return "Silahkan Pilih Satuan";
+                  }
+                },
+                hint: Text(
+                  isi,
+                  style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: ColorStyle.text_hint,
+                      fontWeight: FontWeight.w400),
+                ),
+                items: listSatuan
+                    .map((e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            e.namaSatuan,
+                            style: TextStyle(
+                                fontSize: 13, color: ColorStyle.text_hint),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  _formKey.currentState?.validate();
+                  setState(() {
+                    _selectedSatuanEdit = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  isDense: true,
+                  fillColor: ColorStyle.fill_form,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.button_grey),
                   ),
-                  items: rowSatuan
-                      .map((e) => DropdownMenuItem(
-                            value: e,
-                            child: Text(
-                              e,
-                              style: TextStyle(
-                                  fontSize: 12, color: ColorStyle.text_hint),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSatuanEdit = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: ColorStyle.fill_form,
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.button_grey),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      borderSide: BorderSide(color: ColorStyle.text_secondary),
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: ColorStyle.text_secondary),
                   ),
-
-                  // **Atur Tampilan Dropdown Menu**
-                  dropdownStyleData: DropdownStyleData(
-                    width: constraints.maxWidth, // Ikuti lebar input field
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: ColorStyle.button_grey),
-                      color: ColorStyle.fill_form,
-                    ),
+                  errorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
                   ),
-
-                  // **Atur Posisi Item Dropdown**
-                  menuItemStyleData: const MenuItemStyleData(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: ColorStyle.button_red,
+                        width: 1), // Warna biru saat fokus
+                    borderRadius: BorderRadius.circular(5),
                   ),
-
-                  // **Ganti Icon Dropdown**
-                  iconStyleData: IconStyleData(
-                    icon: Icon(Icons.keyboard_arrow_down_outlined,
-                        size: 20, color: Colors.black),
-                    openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                        size: 20, color: Colors.black),
+                ),
+              
+                // **Atur Tampilan Dropdown Menu**
+                dropdownStyleData: DropdownStyleData(
+                  width: constraints.maxWidth, // Ikuti lebar input field
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: ColorStyle.button_grey),
+                    color: ColorStyle.fill_form,
                   ),
+                ),
+              
+                // **Atur Posisi Item Dropdown**
+                menuItemStyleData: const MenuItemStyleData(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                ),
+              
+                // **Ganti Icon Dropdown**
+                iconStyleData: IconStyleData(
+                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                      size: 20, color: Colors.black),
+                  openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                      size: 20, color: Colors.black),
                 ),
               );
             },
@@ -3195,25 +3282,31 @@ class _PageProduk extends State<PageProduk> {
       child: AnimatedContainer(
         decoration: BoxDecoration(
           color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2), // Warna bayangan
-              blurRadius: 10, // Blur bayangan
-              spreadRadius: 2, // Penyebaran bayangan
-              offset: Offset(0, 4), // Posisi bayangan (X, Y)
+          border: const Border(
+            left: BorderSide(
+              color: ColorStyle.button_grey, // Warna border
+              width: 1, // Ketebalan border
             ),
-          ],
+          ),
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: Colors.black.withOpacity(0.2), // Warna bayangan
+          //     blurRadius: 10, // Blur bayangan
+          //     spreadRadius: 2, // Penyebaran bayangan
+          //     offset: Offset(0, 4), // Posisi bayangan (X, Y)
+          //   ),
+          // ],
         ),
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         width: 208,
-        height: cek ? 500 : 0, // Memanjang ke bawah
+        height: cek ? 550 : 0, // Memanjang ke bawah
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(4.5),
+                padding: const EdgeInsets.all(6),
                 child: Row(
                   children: [
                     Icon(Icons.filter_alt, color: Colors.black, size: 22),
@@ -3229,12 +3322,14 @@ class _PageProduk extends State<PageProduk> {
               Divider(),
               // Kategori Obat
               Padding(
-                padding: const EdgeInsets.all(4.5),
+                padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
                 child: Text("Kategori Obat",
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               ...kategoriObatPick.sublist(0, 4).map((item) {
                 return CheckboxListTile(
+                  // contentPadding: EdgeInsets.zero,
+                  // visualDensity: VisualDensity.compact,
                   title: Text(item["title"]),
                   value: item["isChecked"],
                   onChanged: (value) {
@@ -3242,7 +3337,12 @@ class _PageProduk extends State<PageProduk> {
                       item["isChecked"] = value!;
                     });
                   },
-                  controlAffinity: ListTileControlAffinity.leading,
+                  controlAffinity:
+                      ListTileControlAffinity.leading, // Checkbox di kiri
+                  visualDensity: VisualDensity.compact, // Rapatkan elemen
+                  activeColor:
+                      ColorStyle.button_grey, // Warna checkbox saat aktif
+                  checkColor: Colors.white, // Warna centang di dalam checkbox
                 );
               }).toList(),
 
@@ -3254,12 +3354,14 @@ class _PageProduk extends State<PageProduk> {
                   });
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 24.3),
                   child: Row(
                     children: [
                       Icon(showMoreCategories
                           ? Icons.keyboard_arrow_up
                           : Icons.keyboard_arrow_right),
+                      Padding(padding: EdgeInsets.only(right: 20)),
                       Text("Lainnya", style: TextStyle(fontSize: 16)),
                     ],
                   ),
@@ -3268,19 +3370,59 @@ class _PageProduk extends State<PageProduk> {
 
               // Kategori tambahan
               if (showMoreCategories)
-                Column(
-                  children: kategoriObatPick.sublist(4).map((item) {
-                    return CheckboxListTile(
-                      title: Text(item["title"]),
-                      value: item["isChecked"],
-                      onChanged: (value) {
-                        setState(() {
-                          item["isChecked"] = value!;
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
-                    );
-                  }).toList(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.3),
+                  child: Expanded(
+                    child: Container(
+                      height: 35,
+                      // width: 242,
+                      // decoration: BoxDecoration(
+                      //   border:
+                      //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+                      //   color: ColorStyle.fill_form,
+                      //   borderRadius: BorderRadius.circular(4),
+                      // ),
+                      child: TextField(
+                        controller: searchFilterKategori,
+                        // onChanged: filtering,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: ColorStyle.fill_form,
+
+                          // Menambahkan ikon di dalam TextField
+                          prefixIcon: Padding(
+                            padding: EdgeInsets.only(left: 8, right: 8),
+                            child: Icon(
+                              Icons.search_outlined,
+                              color: Color(0XFF1B1442),
+                              size: 25, // Sesuaikan ukuran ikon
+                            ),
+                          ),
+
+                          hintText: "Search",
+                          contentPadding:
+                              EdgeInsets.only(bottom: 12.5, right: 8),
+                          hintStyle: TextStyle(
+                            color: ColorStyle.text_hint,
+                            fontSize: 16,
+                          ),
+
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: ColorStyle.fill_stroke, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
 
               Divider(),
@@ -3299,9 +3441,10 @@ class _PageProduk extends State<PageProduk> {
 
               // Jumlah Stock
               Padding(
-                padding: const EdgeInsets.all(4.5),
+                padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
                 child: Text("Jumlah Stock",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
               ...stockOptions.map((option) {
                 return CheckboxListTile(
@@ -3316,58 +3459,93 @@ class _PageProduk extends State<PageProduk> {
 
               // Dropdown Satuan
               Padding(
-                padding: const EdgeInsets.all(4.5),
+                padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
                 child: Text("Satuan",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
               Padding(
-                padding: const EdgeInsets.all(4.5),
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(border: OutlineInputBorder()),
-                  hint: Text("Pilih Satuan"),
-                  value: selectedUnit,
-                  items: ["Pcs", "Box", "Botol"].map((String unit) {
-                    return DropdownMenuItem<String>(
-                      value: unit,
-                      child: Text(unit),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedUnit = value;
-                    });
-                  },
-                ),
+                padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
+                child: dropdownSatuanFilter(),
               ),
 
               Divider(),
 
               // Batas Harga
               Padding(
-                padding: const EdgeInsets.all(4.5),
+                padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
                 child: Text("Batas Harga",
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
-              Padding(
-                padding: const EdgeInsets.all(4.5),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Rp. Minimal",
-                    border: OutlineInputBorder(),
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
+                    child: Container(
+                      height: 35,
+                      child: TextField(
+                        controller: searchFilterKategori,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: ColorStyle.fill_form,
+                          hintText: "Rp. Minimal",
+                          contentPadding:
+                              EdgeInsets.only(bottom: 12.5, right: 8, left: 8),
+                          hintStyle: TextStyle(
+                            color: ColorStyle.text_hint,
+                            fontSize: 16,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: ColorStyle.fill_stroke, width: 1),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.all(4.5),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Rp. Maximal",
-                    border: OutlineInputBorder(),
+                  SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 11, top: 7, bottom: 4),
+                    child: Container(
+                      height: 35,
+                      child: TextField(
+                        controller: searchFilterKategori,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: true,
+                          fillColor: ColorStyle.fill_form,
+                          hintText: "Rp. Maximal",
+                          contentPadding:
+                              EdgeInsets.only(bottom: 12.5, right: 8, left: 8),
+                          hintStyle: TextStyle(
+                            color: ColorStyle.text_hint,
+                            fontSize: 16,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: ColorStyle.fill_stroke, width: 1),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.black, width: 1),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                  keyboardType: TextInputType.number,
-                ),
+                ],
               ),
 
               SizedBox(height: 16),
@@ -3381,11 +3559,16 @@ class _PageProduk extends State<PageProduk> {
   Widget _buildFilterOption(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
+      child: Column(
         children: [
-          Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-          Spacer(),
-          Icon(Icons.filter_list),
+          Row(
+            children: [
+              Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+              Spacer(),
+              Icon(Icons.filter_list),
+            ],
+          ),
+          Divider()
         ],
       ),
     );
