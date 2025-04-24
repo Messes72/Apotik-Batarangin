@@ -9,6 +9,7 @@ type ActivePage =
   | 'karyawan'
   | 'role_karyawan' 
   | 'privilege_karyawan'
+  | 'manajemen_kategori_obat'
   | '';
 
 export const activeHover = writable<ActivePage>('');
@@ -23,5 +24,6 @@ export const getActivePage = (path: string): ActivePage => {
   if (path.startsWith('/karyawan')) return 'karyawan';
   if (path.startsWith('/role_karyawan')) return 'role_karyawan';
   if (path.startsWith('/privilege_karyawan')) return 'privilege_karyawan';
+  if (path.startsWith('/manajemen_kategori_obat')) return 'manajemen_kategori_obat'
   return '';
 };

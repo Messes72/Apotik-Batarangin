@@ -85,10 +85,10 @@ export const actions: Actions = {
                     message: 'Token tidak ditemukan. Silakan hubungi administrator.'
                 });
             }
-
             const sessionData = {
-                ...result_json,
-                accessToken: token
+                accessToken: token,
+                karyawan_id: result_json.karyawan_id,
+                nama: result_json.nama
             };
 
             cookies.set('session', JSON.stringify(sessionData), {
@@ -101,6 +101,7 @@ export const actions: Actions = {
 
             return { success: true };
         } catch (error) {
+            
             return fail(500, { message: 'Username atau Password Salah' });
         }
     }

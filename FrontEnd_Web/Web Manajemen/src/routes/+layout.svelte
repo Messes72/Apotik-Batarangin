@@ -20,7 +20,8 @@
 			$page.url.pathname.startsWith('/karyawan') ||
 			$page.url.pathname.startsWith('/role_karyawan') ||
 			$page.url.pathname.startsWith('/privilege_karyawan') ||
-			$page.url.pathname.startsWith('/laporan')
+			$page.url.pathname.startsWith('/laporan') ||
+			$page.url.pathname.startsWith('/manajemen_kategori_obat')
 	);
 
 	let activeHoverValue = $derived(getActivePage($page.url.pathname));
@@ -267,6 +268,29 @@
 											Privilege Karyawan
 										</a>
 									</li>
+									<li
+										class={$activeHover === 'manajemen_kategori_obat'
+											? 'rounded-md bg-[#003349]'
+											: ''}
+									>
+										<a
+											href="/manajemen_kategori_obat"
+											class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><g fill="#fff" clip-path="url(#a)"
+													><path
+														d="M12 15.75a3.75 3.75 0 1 1 0-7.5 3.75 3.75 0 0 1 0 7.5m0-6a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5"
+													/><path
+														d="M15 24H9v-3.045a.75.75 0 0 0-1.207-.502l-2.16 2.152-4.238-4.238 2.153-2.152a.69.69 0 0 0 .15-.75.7.7 0 0 0-.645-.45H0V9h3.045a.69.69 0 0 0 .638-.435.7.7 0 0 0-.143-.75L1.395 5.633l4.238-4.238 2.152 2.153A.75.75 0 0 0 9 3.044V0h6v3.045a.75.75 0 0 0 1.207.502l2.153-2.152 4.245 4.245-2.152 2.153a.69.69 0 0 0-.15.75.7.7 0 0 0 .645.45H24v6h-3.045a.69.69 0 0 0-.637.434.7.7 0 0 0 .142.75l2.153 2.153-4.245 4.245-2.153-2.152a.75.75 0 0 0-1.207.502zm-4.5-1.5h3v-1.545a2.25 2.25 0 0 1 3.75-1.56l1.095 1.095 2.123-2.122-1.073-1.118a2.25 2.25 0 0 1 1.56-3.75H22.5v-3h-1.545a2.25 2.25 0 0 1-1.56-3.75l1.095-1.095-2.122-2.137-1.118 1.087a2.25 2.25 0 0 1-3.75-1.56V1.5h-3v1.545a2.25 2.25 0 0 1-3.75 1.56L5.633 3.517 3.518 5.634 4.605 6.75a2.25 2.25 0 0 1-1.56 3.75H1.5v3h1.545a2.25 2.25 0 0 1 1.56 3.75l-1.088 1.117L5.64 20.49l1.11-1.095a2.25 2.25 0 0 1 3.75 1.56z"
+													/></g
+												><defs
+													><clipPath id="a"><path fill="#fff" d="M0 0h24v24H0z" /></clipPath></defs
+												></svg
+											>
+											Manajemen Kategori Obat
+										</a>
+									</li>
 								</ul>
 							</div>
 							<div class="absolute bottom-0 w-full">
@@ -496,6 +520,29 @@
 											</svg>
 										</a>
 									</li>
+									<li
+										class={$activeHover === 'manajemen_kategori_obat'
+											? 'flex w-12 justify-center rounded-md bg-[#003349]'
+											: 'flex w-12 justify-center'}
+									>
+										<a
+											href="/manajemen_kategori_obat"
+											class="rounded p-2 hover:bg-[#003349]"
+											title="Manajemen Kategori Obat"
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><g fill="#fff" clip-path="url(#a)"
+													><path
+														d="M12 15.75a3.75 3.75 0 1 1 0-7.5 3.75 3.75 0 0 1 0 7.5m0-6a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5"
+													/><path
+														d="M15 24H9v-3.045a.75.75 0 0 0-1.207-.502l-2.16 2.152-4.238-4.238 2.153-2.152a.69.69 0 0 0 .15-.75.7.7 0 0 0-.645-.45H0V9h3.045a.69.69 0 0 0 .638-.435.7.7 0 0 0-.143-.75L1.395 5.633l4.238-4.238 2.152 2.153A.75.75 0 0 0 9 3.044V0h6v3.045a.75.75 0 0 0 1.207.502l2.153-2.152 4.245 4.245-2.152 2.153a.69.69 0 0 0-.15.75.7.7 0 0 0 .645.45H24v6h-3.045a.69.69 0 0 0-.637.434.7.7 0 0 0 .142.75l2.153 2.153-4.245 4.245-2.153-2.152a.75.75 0 0 0-1.207.502zm-4.5-1.5h3v-1.545a2.25 2.25 0 0 1 3.75-1.56l1.095 1.095 2.123-2.122-1.073-1.118a2.25 2.25 0 0 1 1.56-3.75H22.5v-3h-1.545a2.25 2.25 0 0 1-1.56-3.75l1.095-1.095-2.122-2.137-1.118 1.087a2.25 2.25 0 0 1-3.75-1.56V1.5h-3v1.545a2.25 2.25 0 0 1-3.75 1.56L5.633 3.517 3.518 5.634 4.605 6.75a2.25 2.25 0 0 1-1.56 3.75H1.5v3h1.545a2.25 2.25 0 0 1 1.56 3.75l-1.088 1.117L5.64 20.49l1.11-1.095a2.25 2.25 0 0 1 3.75 1.56z"
+													/></g
+												><defs
+													><clipPath id="a"><path fill="#fff" d="M0 0h24v24H0z" /></clipPath></defs
+												></svg
+											>
+										</a>
+									</li>
 								</ul>
 							</div>
 							<div class="absolute bottom-4 flex w-full justify-center">
@@ -590,6 +637,8 @@
 								LAPORAN GUDANG
 							{:else if $page.url.pathname === '/laporan/laporan_apotik'}
 								LAPORAN APOTIK
+							{:else if $page.url.pathname === '/manajemen_kategori_obat'}
+								MANAJEMEN KATEGORI OBAT
 							{:else}
 								{$page.url.pathname.slice(1).toUpperCase()}
 							{/if}

@@ -69,6 +69,8 @@
 		isModalOpen = false;
 		isModalKonfirmInputOpen = true;
 	};
+
+	$inspect(data);
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -133,7 +135,7 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
 					['children', 'Gender'],
 					['children', 'Nama Lengkap'],
@@ -231,7 +233,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalOpen}
 		<div

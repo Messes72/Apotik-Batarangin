@@ -34,66 +34,123 @@
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
-	let currentRole = $state<any>(null);
-	let currentDeleteRoleId = $state<string>('');
-	let alasanDeleteRole = $state<string>('');
+	let currentKetegori = $state<any>(null);
+	let currentDeleteKetegoriId = $state<string>('');
+	let alasanDeleteKategori = $state<string>('');
 
-	interface Role {
-		id_role: string;
-		nama_role: string;
+	let selectedDepos = $state<string[]>([]);
+	
+	interface Kategori {
+		id_kategori: string;
+		nama: string;
 		catatan: string;
+		depo: Array<{ id_depo: string }>;
 	}
-
-	let currentDetailRole = $state<Role | null>(null);
+	
+	let currentDetailKategori = $state<Kategori | null>(null);
 
 	let inputForm = $state({
-		nama_role: '',
-		catatan: ''
+		nama: '',
+		catatan: '',
+		depo: [] as string[]
 	});
 
 	let inputErrors = $state({
-		nama_role: '',
+		nama: '',
 		catatan: '',
+		depo: '',
 		general: ''
 	});
 
 	let editErrors = $state({
-		nama_role: '',
+		nama: '',
 		catatan: '',
+		depo: '',
 		general: ''
 	});
 
 	let deleteError = $state('');
 
-	function setRoleForEdit(role: any) {
-		currentRole = role;
+	function setKategoriForEdit(kategori: any) {
+		currentKetegori = kategori;
+		selectedDepos = kategori.depo?.map((depo: { id_depo: string }) => depo.id_depo) || [];
 		isModalEditOpen = true;
 	}
 
 	$effect(() => {
 		if (form?.values) {
+			const getStringValue = (key: string): string => {
+				try {
+					const formDataObject = form.values as Record<string, FormDataEntryValue>;
+					const value = formDataObject[key];
+					return typeof value === 'string' ? value : '';
+				} catch {
+					return '';
+				}
+			};
+
+			const getArrayValue = (key: string): string[] => {
+				try {
+					const formDataObject = form.values as Record<string, FormDataEntryValue>;
+					const value = formDataObject[key];
+
+					if (Array.isArray(value)) return value;
+					if (typeof value === 'string') {
+						try {
+							return JSON.parse(value) || [];
+						} catch {
+							return value ? [value] : [];
+						}
+					}
+					return [];
+				} catch {
+					return [];
+				}
+			};
+
 			try {
-				inputForm.nama_role = String((form.values as any)['nama_role'] || '');
-				inputForm.catatan = String((form.values as any)['catatan'] || '');
+				inputForm.nama = getStringValue('nama');
+				inputForm.catatan = getStringValue('catatan');
+				inputForm.depo = getArrayValue('depo');
 			} catch (e) {}
 		}
 
 		if (form?.error) {
 			inputErrors = {
-				nama_role: '',
+				nama: '',
 				catatan: '',
+				depo: '',
 				general: ''
 			};
-
+			
 			const errorMsg = form.message || '';
-
-			if (errorMsg.toLowerCase().includes('nama role')) {
-				inputErrors.nama_role = errorMsg;
+			
+			
+			if (errorMsg.toLowerCase().includes('depo')) {
+				inputErrors.depo = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('nama')) {
+				inputErrors.nama = errorMsg;
 			} else {
 				inputErrors.general = errorMsg;
 			}
 
-			isModalOpen = true;
+			const formHasKategoriId = form.values && 'id_kategori' in (form.values as Record<string, unknown>);
+			const formHasAlasanDelete = form.values && 'alasan_delete' in (form.values as Record<string, unknown>);
+
+			if (formHasKategoriId) {
+				editErrors = {
+					nama: inputErrors.nama,
+					catatan: inputErrors.catatan,
+					depo: inputErrors.depo,
+					general: inputErrors.general
+				};
+				isModalEditOpen = true;
+			} else if (formHasAlasanDelete) {
+				deleteError = errorMsg;
+				isModalKonfirmDeleteOpen = true;
+			} else {
+				isModalOpen = true;
+			}
 		}
 	});
 
@@ -101,7 +158,7 @@
 </script>
 
 <svelte:head>
-	<title>Manajemen - Role Karyawan</title>
+	<title>Manajemen - Manajemen Kategori Karyawan</title>
 </svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -119,7 +176,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Role Karyawan</span>
+				<span class="ml-1 text-[16px]">Input Kategori Obat</span>
 			</button>
 		</div>
 		<div class="flex-1"><Search2 /></div>
@@ -130,23 +187,23 @@
 			<Table
 				table_data={data.data}
 				table_header={[
-					['children', 'ID Role'],
-					['children', 'Nama Role'],
-					['children', 'Catatan Role'],
+					['children', 'ID Kategori'],
+					['children', 'Nama Kategori'],
+					['children', 'Catatan Kategori'],
 					['children', 'Action']
 				]}
 				column_widths={['25%', '25%', '25%', '20%']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'ID Role'}
-						<div>{body.id_role}</div>
+					{#if head === 'ID Kategori'}
+						<div>{body.id_kategori}</div>
 					{/if}
 
-					{#if head === 'Nama Role'}
-						<div>{body.nama_role}</div>
+					{#if head === 'Nama Kategori'}
+						<div>{body.nama}</div>
 					{/if}
 
-					{#if head === 'Catatan Role'}
+					{#if head === 'Catatan Kategori'}
 						<div>{body.catatan}</div>
 					{/if}
 
@@ -154,7 +211,7 @@
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
 							on:click={() => {
-								currentDetailRole = body;
+								currentKetegori = body;
 								isModalDetailOpen = true;
 							}}
 						>
@@ -169,7 +226,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => setRoleForEdit(body)}
+							on:click={() => setKategoriForEdit(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -191,7 +248,7 @@
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
 							on:click={() => {
-								currentDeleteRoleId = body.id_role || '';
+								currentDeleteKetegoriId = body.id_kategori || '';
 								isModalAlasanOpen = true;
 							}}
 						>
@@ -230,7 +287,7 @@
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-10">
 					<div class="font-montserrat text-[26px] leading-normal text-[#515151]">
-						Input Data Role Karyawan
+						Input Data Kategori
 					</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
@@ -244,19 +301,20 @@
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
 				<form
 					method="POST"
-					action="?/createRole"
+					action="?/createKategori"
 					class="flex flex-col gap-4 px-10 py-6"
 					use:enhance={() => {
 						isModalOpen = false;
 						isModalKonfirmInputOpen = false;
 
 						return async ({ result, update }) => {
-							console.log('Create role result:', result);
+							console.log('Create Kategori result:', result);
 							if (result.type === 'success') {
 								isModalSuccessInputOpen = true;
 								inputForm = {
-									nama_role: '',
-									catatan: ''
+									nama: '',
+									catatan: '',
+									depo: [],
 								};
 								setTimeout(() => {
 									window.location.reload();
@@ -268,28 +326,101 @@
 							}
 						};
 					}}
-					id="roleForm"
+					id="kategoriForm"
 				>
 					<Input
-						id="nama_role"
-						name="nama_role"
-						label="Nama Role"
-						placeholder="Nama Role"
-						bind:value={inputForm.nama_role}
+						id="nama"
+						name="nama"
+						label="Nama Kategori"
+						placeholder="Nama Kategori"
+						bind:value={inputForm.nama}
 					/>
-					{#if inputErrors.nama_role}
-						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama_role}</div>
+					{#if inputErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama}</div>
 					{/if}
 					<TextArea
 						id="catatan"
 						name="catatan"
-						label="Catatan Role"
-						placeholder="Catatan Role"
+						label="Catatan Kategori"
+						placeholder="Catatan Kategori"
 						bind:value={inputForm.catatan}
 					/>
 					{#if inputErrors.catatan}
 						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.catatan}</div>
 					{/if}
+					<div class="flex flex-col gap-2">
+						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
+						<div class="relative">
+							<button
+								type="button"
+								id="depo_button"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('depo_dropdown')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{inputForm.depo.length > 0
+										? inputForm.depo
+												.map((id) => {
+													const depo = data?.depos?.find((d) => d.id_depo === id);
+													return depo?.nama || id;
+												})
+												.join(', ')
+										: 'Pilih Depo'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="depo_dropdown"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.depos}
+									{#each data.depos as depo (depo.id_depo)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`depo_${depo.id_depo}`}
+												value={depo.id_depo}
+												checked={inputForm.depo.includes(depo.id_depo)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														inputForm.depo = [...inputForm.depo, depo.id_depo];
+													} else {
+														inputForm.depo = inputForm.depo.filter((id) => id !== depo.id_depo);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`depo_${depo.id_depo}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{depo.nama}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input type="hidden" name="depo" value={JSON.stringify(inputForm.depo)} />
+						</div>
+					</div>
 					{#if inputErrors.general}
 						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.general}</div>
 					{/if}
@@ -299,21 +430,28 @@
 							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
 								inputErrors = {
-									nama_role: '',
+									nama: '',
 									catatan: '',
+									depo: '',
 									general: ''
 								};
 								let isValid = true;
 
-								if (!inputForm.nama_role) {
-									inputErrors.nama_role = 'Nama Role tidak boleh kosong';
+								if (!inputForm.nama) {
+									inputErrors.nama = 'Nama Kategori tidak boleh kosong';
 									isValid = false;
 								}
 
 								if (!inputForm.catatan) {
-									inputErrors.catatan = 'Catatan Role tidak boleh kosong';
+									inputErrors.catatan = 'Catatan Kategori tidak boleh kosong';
 									isValid = false;
 								}
+
+								if (inputForm.depo.length === 0) {
+									inputErrors.depo = 'Pilih minimal satu depo karyawan';
+									isValid = false;
+								}
+
 								if (isValid) {
 									isModalKonfirmInputOpen = true;
 								}
@@ -321,7 +459,7 @@
 						>
 							KONFIRMASI
 						</button>
-						<button type="submit" id="hiddenSubmitRole" class="hidden">Submit</button>
+						<button type="submit" id="hiddenSubmitDepo" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -336,7 +474,7 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Role Karyawan</div>
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Kategori</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -349,21 +487,21 @@
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
 				<form
 					method="POST"
-					action="?/editRole"
+					action="?/editKategori"
 					class="flex flex-col gap-4 px-10 py-6"
 					use:enhance={() => {
 						isModalEditOpen = false;
 						isModalKonfirmEditOpen = false;
 
 						return async ({ result, update }) => {
-							console.log('Edit role result:', result);
+							console.log('Edit kategori result:', result);
 							if (result.type === 'success') {
 								isModalSuccessEditOpen = true;
 								setTimeout(() => {
 									window.location.reload();
 								}, 2500);
 							} else if (result.type === 'failure') {
-								console.error('Edit role failed:', result.data);
+								console.error('Edit kategori failed:', result.data);
 								await update();
 								isModalEditOpen = true;
 							} else {
@@ -371,29 +509,102 @@
 							}
 						};
 					}}
-					id="editRoleForm"
+					id="editKategoriForm"
 				>
-					<input type="hidden" name="role_id" value={currentRole?.id_role || ''} />
+					<input type="hidden" name="id_kategori" value={currentKetegori?.id_kategori || ''} />
 					<Input
-						id="nama_role"
-						name="nama_role"
-						label="Nama Role"
-						placeholder="Nama Role"
-						value={currentRole?.nama_role || ''}
+						id="nama"
+						name="nama"
+						label="Nama Kategori"
+						placeholder="Nama Kategori"
+						value={currentKetegori?.nama || ''}
 					/>
-					{#if editErrors.nama_role}
-						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama_role}</div>
+					{#if editErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama}</div>
 					{/if}
 					<TextArea
 						id="catatan"
 						name="catatan"
-						label="Catatan Role"
-						placeholder="Catatan Role"
-						value={currentRole?.catatan || ''}
+						label="Catatan Kategori"
+						placeholder="Catatan Kategori"
+						value={currentKetegori?.catatan || ''}
 					/>
 					{#if editErrors.catatan}
 						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
 					{/if}
+					<div class="flex flex-col gap-2">
+						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
+						<div class="relative">
+							<button
+								type="button"
+								id="depo_button_edit"
+								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
+								on:click|stopPropagation={() => {
+									document.getElementById('depo_dropdown_edit')?.classList.toggle('hidden');
+								}}
+							>
+								<span>
+									{selectedDepos.length > 0
+										? selectedDepos
+												.map((id) => {
+													const depo = data?.depos?.find((d) => d.id_depo === id);
+													return depo?.nama || id;
+												})
+												.join(', ')
+										: 'Pilih Depo'}
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="12"
+									height="8"
+									viewBox="0 0 12 8"
+									fill="none"
+								>
+									<path
+										d="M1 1.5L6 6.5L11 1.5"
+										stroke="#1E1E1E"
+										stroke-width="1.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</svg>
+							</button>
+							<div
+								id="depo_dropdown_edit"
+								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+								style="max-height: 200px; z-index: 10;"
+							>
+								{#if data?.depos}
+									{#each data.depos as depo (depo.id_depo)}
+										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
+											<input
+												type="checkbox"
+												id={`depo_edit_${depo.id_depo}`}
+												value={depo.id_depo}
+												checked={selectedDepos.includes(depo.id_depo)}
+												on:change={(e) => {
+													const target = e.target as HTMLInputElement;
+													if (target.checked) {
+														selectedDepos = [...selectedDepos, depo.id_depo];
+													} else {
+														selectedDepos = selectedDepos.filter((id) => id !== depo.id_depo);
+													}
+												}}
+												class="mr-2 h-4 w-4"
+											/>
+											<label
+												for={`depo_edit_${depo.id_depo}`}
+												class="font-inter w-full cursor-pointer text-[13px]"
+											>
+												{depo.nama}
+											</label>
+										</div>
+									{/each}
+								{/if}
+							</div>
+							<input type="hidden" name="depo" value={JSON.stringify(selectedDepos)} />
+						</div>
+					</div>
 					{#if editErrors.general}
 						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
 					{/if}
@@ -403,19 +614,25 @@
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
 							on:click={() => {
 								editErrors = {
-									nama_role: '',
+									nama: '',
 									catatan: '',
+									depo: '',
 									general: ''
 								};
 								let isValid = true;
 
-								if (!currentRole?.nama_role) {
-									editErrors.nama_role = 'Nama Role tidak boleh kosong';
+								if (!currentKetegori?.nama) {
+									editErrors.nama = 'Nama Kategori tidak boleh kosong';
 									isValid = false;
 								}
 
-								if (!currentRole?.catatan) {
-									editErrors.catatan = 'Catatan Role tidak boleh kosong';
+								if (!currentKetegori?.catatan) {
+									editErrors.catatan = 'Catatan Kategori tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (selectedDepos.length === 0) {
+									editErrors.depo = 'Pilih minimal satu depo';
 									isValid = false;
 								}
 
@@ -427,7 +644,7 @@
 								}
 							}}>KONFIRMASI</button
 						>
-						<button type="submit" id="hiddenSubmitEditRole" class="hidden">Submit</button>
+						<button type="submit" id="hiddenSubmitEditKategori" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -440,7 +657,7 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-					<div class="font-montserrat text-[26px] text-white">Informasi Data Role Karyawan</div>
+					<div class="font-montserrat text-[26px] text-white">Informasi Data Kategori</div>
 					<button
 						class="rounded-xl hover:bg-gray-100/20"
 						on:click={() => (isModalDetailOpen = false)}
@@ -455,10 +672,19 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						{#if currentDetailRole}
-							<Detail label="ID Role" value={currentDetailRole.id_role || '-'} />
-							<Detail label="Nama Role" value={currentDetailRole.nama_role || '-'} />
-							<Detail label="Catatan Role" value={currentDetailRole.catatan || '-'} />
+						{#if currentKetegori}
+							<Detail label="ID Kategori" value={currentKetegori.id_kategori || '-'} />
+							<Detail label="Nama Kategori" value={currentKetegori.nama || '-'} />
+							<Detail label="Catatan Kategori" value={currentKetegori.catatan || '-'} />
+							<Detail
+								label="Depo Karyawan"
+								value={currentDetailKategori.depo
+									?.map((d) => {
+										const depoInfo = data?.depos?.find((depo) => depo.id_depo === d.id_depo);
+										return depoInfo?.nama || d.id_depo;
+									})
+									.join(', ') || '-'}
+							/>
 						{:else}
 							<p>Memuat data...</p>
 						{/if}
@@ -474,7 +700,7 @@
 		bind:isSuccess={isModalSuccessInputOpen}
 		on:confirm={() => {
 			console.log('Confirming input submission');
-			document.getElementById('hiddenSubmitRole')?.click();
+			document.getElementById('hiddenSubmitKategori')?.click();
 		}}
 		on:closed={() => {
 			isModalKonfirmInputOpen = false;
@@ -488,7 +714,7 @@
 		bind:isSuccess={isModalSuccessEditOpen}
 		on:confirm={() => {
 			console.log('Confirming edit submission');
-			document.getElementById('hiddenSubmitEditRole')?.click();
+			document.getElementById('hiddenSubmitEditKategori')?.click();
 		}}
 		on:closed={() => {
 			isModalKonfirmEditOpen = false;
@@ -500,20 +726,20 @@
 	<AlasanDeleteRoleKaryawan
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
-		bind:roleId={currentDeleteRoleId}
-		bind:alasanValue={alasanDeleteRole}
+		bind:roleId={currentDeleteKetegoriId}
+		bind:alasanValue={alasanDeleteKategori}
 		on:reason={(e) => {
-			alasanDeleteRole = e.detail;
+			alasanDeleteKategori = e.detail;
 		}}
 	/>
 	<KonfirmDeleteRoleKaryawan
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
-		roleId={currentDeleteRoleId}
-		alasanDelete={alasanDeleteRole}
+		roleId={currentDeleteKetegoriId}
+		alasanDelete={alasanDeleteKategori}
 		on:confirm={() => {
-			currentDeleteRoleId = '';
-			alasanDeleteRole = '';
+			currentDeleteKetegoriId = '';
+			alasanDeleteKategori = '';
 		}}
 		on:closed={() => {
 			isModalKonfirmDeleteOpen = false;

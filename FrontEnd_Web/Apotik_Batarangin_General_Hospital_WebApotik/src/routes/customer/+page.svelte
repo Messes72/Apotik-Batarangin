@@ -32,12 +32,24 @@
 	let isModalKonfirmDeleteOpen = $state(false);
 	let isModalSuccessDeleteOpen = $state(false);
 
-	let currentKustomer = $state<any>(null);
-
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
 	let active_button = $state('customer');
+
+	let currentKustomer = $state<any>(null);
+	let currentDeleteKustomerId = $state<string>('');
+	let alasanDeleteKustomer = $state<string>('');
+
+	interface Kustomer {
+		id_kustomer: string;
+		nama: string;
+		alamat: string;
+		no_telp: string;
+		catatan: string;
+	}
+
+	let currentDetailKustomer = $state<Kustomer | null>(null);
 
 	let inputForm = $state({
 		nama: '',
@@ -61,6 +73,8 @@
 		catatan: '',
 		general: ''
 	});
+
+	let deleteError = $state('');
 
 	function setKustomerForEdit(kustomer: any) {
 		currentKustomer = kustomer;
@@ -157,7 +171,7 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data}
+				table_data={data.data.data}
 				table_header={[
 					['children', 'Nama Kustomer'],
 					['children', 'Alamat Kustomer'],
@@ -186,7 +200,10 @@
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={() => {
+								currentDetailKustomer = body;
+								isModalDetailOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -220,7 +237,10 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalAlasanOpen = true)}
+							on:click={() => {
+								currentDeleteKustomerId = body.id_kustomer || '';
+								isModalAlasanOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -547,10 +567,14 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						<Detail label="Nama Kustomer" value="Nama Kustomer" />
-						<Detail label="Alamat Kustomer" value="Alamat Kustomer" />
-						<Detail label="Nomor Telepon Kustomer" value="Nomor Telepon Kustomer" />
-						<Detail label="Catatan Customer" value="Catatan Customer" />
+						{#if currentDetailKustomer}
+							<Detail label="Nama Kustomer" value={currentDetailKustomer.nama} />
+							<Detail label="Alamat Kustomer" value={currentDetailKustomer.alamat} />
+							<Detail label="Nomor Telepon Kustomer" value={currentDetailKustomer.no_telp} />
+							<Detail label="Catatan Customer" value={currentDetailKustomer.catatan} />
+						{:else}
+							<p>Memuat data...</p>
+						{/if}
 					</div>
 				</form>
 			</div>
@@ -589,10 +613,24 @@
 	<AlasanDeleteCustomer
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:kustomerId={currentDeleteKustomerId}
+		bind:alasanValue={alasanDeleteKustomer}
+		on:reason={(e) => {
+			alasanDeleteKustomer = e.detail;
+		}}
 	/>
 	<KonfirmDeleteCustomer
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
+		kustomerId={currentDeleteKustomerId}
+		alasanDelete={alasanDeleteKustomer}
+		on:confirm={() => {
+			currentDeleteKustomerId = '';
+			alasanDeleteKustomer = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
 	/>
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>

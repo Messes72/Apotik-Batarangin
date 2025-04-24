@@ -11,20 +11,52 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 	const page_size = limit;
 	const keyword = url.searchParams.get('keyword') || '';
 
-	const apiUrl = `${env.BASE_URL3}/kustomer?page=${page}&page_size=${page_size}`;
+	const apiUrl = `${env.BASE_URL3}/category?page=${page}&page_size=${page_size}`;
+	const depoUrl = `${env.BASE_URL3}/depo`;
 
 	try {
-		const response = await fetchWithAuth(apiUrl, {}, locals.token, fetch);
+		const [kategoriResponse, depoResponse] = await Promise.all([
+			fetchWithAuth(apiUrl, {}, locals.token, fetch),
+			fetchWithAuth(depoUrl, {}, locals.token, fetch)
+		]);
 
-		if (!response.ok) {
+		if (!kategoriResponse.ok) {
 			let errorBody = '';
 			try {
-				errorBody = await response.text();
+				errorBody = await kategoriResponse.text();
 			} catch {}
-			throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+			throw new Error(
+				`HTTP error! status: ${kategoriResponse.status} - ${kategoriResponse.statusText}`
+			);
 		}
 
-		const data = await response.json();
+		const data = await kategoriResponse.json();
+
+		let depos = [];
+		if (depoResponse.ok) {
+			const depoText = await depoResponse.text();
+
+			try {
+				const depoData = JSON.parse(depoText);
+
+				if (Array.isArray(depoData)) {
+					depos = depoData;
+				} else if (depoData && Array.isArray(depoData.data)) {
+					depos = depoData.data;
+				} else if (depoData && typeof depoData === 'object') {
+					for (const key in depoData) {
+						if (Array.isArray(depoData[key])) {
+							if (depoData[key].length > 0) {
+								depos = depoData[key];
+								break;
+							}
+						}
+					}
+				}
+			} catch (e) {
+				console.error('Error parsing product JSON:', e);
+			}
+		}
 
 		const filteredData = keyword
 			? data.filter((item: any) => item.nama.toLowerCase().includes(keyword.toLowerCase()))
@@ -34,45 +66,58 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 
 		const result = {
 			data: filteredData,
-			total_content: keyword ? filteredData.length : totalRecords
+			total_content: keyword ? filteredData.length : totalRecords,
+			depos
 		};
 
+		console.log(result);
 		return result;
 	} catch (err) {
+		console.error('Error dalam load function:', err);
 		return {
 			data: [],
-			total_content: 0
+			total_content: 0,
+			depos: []
 		};
 	}
 };
 
 export const actions: Actions = {
-	createKustomer: async ({ request, fetch, locals }) => {
+	createKategori: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
 
 			const nama = formData.get('nama') as string;
-			const alamat = formData.get('alamat') as string;
-			const no_telp = formData.get('no_telp') as string;
 			const catatan = formData.get('catatan') as string;
+			const depoIdJson = formData.get('depo') as string;
 
 			const payload = {
 				nama: nama || '',
-				alamat: alamat || '',
-				no_telp: no_telp || '',
-				catatan: catatan || ''
+				catatan: catatan || '',
+				depo: [] as Array<{ id_depo: string; }>
 			};
 
-			if (!nama || !alamat || !no_telp) {
+			if (depoIdJson) {
+				try {
+					const depoIds = JSON.parse(depoIdJson);
+					if (Array.isArray(depoIds) && depoIds.length > 0) {
+						payload.depo = depoIds.map(id => ({
+							id_depo: id
+						}));
+					}
+				} catch (e) {}
+			}
+
+			if (!nama) {
 				return fail(400, {
 					error: true,
-					message: 'Nama, alamat, dan no_telp diperlukan.',
+					message: 'Nama Kategori diperlukan.',
 					values: Object.fromEntries(formData)
 				});
 			}
 
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/kustomer/create`,
+				`${env.BASE_URL3}/category/create`,
 				{
 					method: 'POST',
 					headers: {
@@ -98,7 +143,7 @@ export const actions: Actions = {
 			if (!response.ok) {
 				return fail(response.status, {
 					error: true,
-					message: 'Gagal membuat Kustomer',
+					message: 'Gagal membuat Kategori',
 					values: Object.fromEntries(formData)
 				});
 			}
@@ -107,38 +152,34 @@ export const actions: Actions = {
 		} catch (err) {
 			return {
 				success: false,
-				message: 'Failed to create Kustomer'
+				message: 'Failed to create Kategori'
 			};
 		}
 	},
 
-	editKustomer: async ({ request, fetch, locals }) => {
+	editRole: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
 
-			const kustomerId = formData.get('id_kustomer') as string;
-			if (!kustomerId) {
+			const roleId = formData.get('role_id') as string;
+			if (!roleId) {
 				return fail(400, {
 					error: true,
-					message: 'ID Kustomer diperlukan',
+					message: 'ID Role diperlukan',
 					values: Object.fromEntries(formData)
 				});
 			}
 
 			const nama = formData.get('nama') as string;
-			const alamat = formData.get('alamat') as string;
-			const no_telp = formData.get('no_telp') as string;
 			const catatan = formData.get('catatan') as string;
 
 			const payload = {
 				nama: nama || '',
-				alamat: alamat || '',
-				no_telp: no_telp || '',
 				catatan: catatan || ''
 			};
 
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/kustomer/${kustomerId}/edit`,
+				`${env.BASE_URL3}/role/${roleId}/edit`,
 				{
 					method: 'PUT',
 					headers: {
@@ -164,7 +205,7 @@ export const actions: Actions = {
 			if (!response.ok) {
 				return fail(response.status, {
 					error: true,
-					message: 'Gagal mengedit Kustomer',
+					message: 'Gagal mengedit role',
 					values: Object.fromEntries(formData)
 				});
 			}
@@ -179,17 +220,17 @@ export const actions: Actions = {
 		}
 	},
 
-	deleteKustomer: async ({ request, fetch, locals }) => {
+	deleteRole: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
 
-			const kustomerId = formData.get('id_kustomer');
+			const roleId = formData.get('role_id');
 			const alasanDelete = formData.get('alasan_delete') as string;
 
-			if (!kustomerId) {
+			if (!roleId) {
 				return fail(400, {
 					error: true,
-					message: 'ID Kustomer diperlukan',
+					message: 'ID Role diperlukan',
 					values: Object.fromEntries(formData)
 				});
 			}
@@ -206,7 +247,7 @@ export const actions: Actions = {
 			apiFormData.append('alasandelete', alasanDelete);
 
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/kustomer/${kustomerId}/delete`,
+				`${env.BASE_URL3}/role/${roleId}/delete`,
 				{
 					method: 'PUT',
 					body: apiFormData
@@ -237,7 +278,7 @@ export const actions: Actions = {
 			if (!response.ok) {
 				return fail(response.status, {
 					error: true,
-					message: result.message || `Gagal menghapus kustomer (Status: ${response.status})`,
+					message: result.message || `Gagal menghapus role (Status: ${response.status})`,
 					values: Object.fromEntries(formData)
 				});
 			}

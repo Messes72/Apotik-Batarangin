@@ -178,4 +178,78 @@ export const actions: Actions = {
 			});
 		}
 	},
+
+	deleteKustomer: async ({ request, fetch, locals }) => {
+		try {
+			const formData = await request.formData();
+
+			const kustomerId = formData.get('id_kustomer');
+			const alasanDelete = formData.get('alasan_delete') as string;
+
+			if (!kustomerId) {
+				return fail(400, {
+					error: true,
+					message: 'ID Kustomer diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			if (!alasanDelete || alasanDelete.trim() === '') {
+				return fail(400, {
+					error: true,
+					message: 'Alasan penghapusan diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			const apiFormData = new FormData();
+			apiFormData.append('alasandelete', alasanDelete);
+
+			const response = await fetchWithAuth(
+				`${env.BASE_URL3}/kustomer/${kustomerId}/delete`,
+				{
+					method: 'PUT',
+					body: apiFormData
+				},
+				locals.token,
+				fetch
+			);
+			let result;
+			try {
+				const contentType = response.headers.get('content-type');
+				if (contentType && contentType.includes('application/json')) {
+					result = await response.json();
+				} else {
+					result = {
+						message:
+							(await response.text()) ||
+							(response.ok ? 'Penghapusan berhasil' : 'Penghapusan gagal')
+					};
+				}
+			} catch (e) {
+				return fail(500, {
+					error: true,
+					message: 'Gagal memproses respons dari server setelah penghapusan',
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			if (!response.ok) {
+				return fail(response.status, {
+					error: true,
+					message: result.message || `Gagal menghapus kustomer (Status: ${response.status})`,
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			return { success: true };
+		} catch (err) {
+			return fail(500, {
+				error: true,
+				message:
+					err instanceof Error ? err.message : 'Terjadi kesalahan pada server saat menghapus',
+				values: {}
+			});
+		}
+	}
 };
