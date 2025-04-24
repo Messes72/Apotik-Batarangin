@@ -1,14 +1,7 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { createEventDispatcher } from 'svelte';
-
 	export let isOpen = false;
 	export let width = 'w-[606px]';
 	export let isSuccess = false;
-	export let privilegeId = '';
-	export let alasanDelete = '';
-
-	const dispatch = createEventDispatcher();
 </script>
 
 {#if isOpen}
@@ -46,43 +39,19 @@
 					Apakah anda yakin <br />
 					akan menghapus data ini?
 				</div>
-				<form
-					method="POST"
-					action="?/deletePrivilege"
-					use:enhance={() => {
-						return async ({ result }) => {
+				<div class="flex flex-row items-center justify-center gap-6">
+					<button
+						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
+						on:click={() => (isOpen = false)}>Tidak</button
+					>
+					<button
+						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#FF3B30] text-center text-[16px] text-white"
+						on:click={() => {
 							isOpen = false;
-
-							if (result.type === 'success') {
-								isSuccess = true;
-								dispatch('confirm');
-
-								setTimeout(() => {
-									window.location.reload();
-								}, 2500);
-							}
-						};
-					}}
-					id="deletePrivilegeForm"
-				>
-					<input type="hidden" name="privilege_id" value={privilegeId} />
-					<input type="hidden" name="alasan_delete" value={alasanDelete} />
-					<div class="flex flex-row items-center justify-center gap-6">
-						<button
-							type="button"
-							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
-							on:click={() => {
-								isOpen = false;
-								dispatch('closed');
-							}}>Tidak</button
-						>
-						<button
-							type="submit"
-							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#FF3B30] text-center text-[16px] text-white"
-							>Iya, hapus</button
-						>
-					</div>
-				</form>
+							isSuccess = true;
+						}}>Iya, hapus</button
+					>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -5,20 +5,28 @@
 		table_data: Record<string, any>[];
 		table_header: (string | string[])[];
 		children?: Snippet<[any]>;
+		column_widths?: string[];
 	}
 
-	const { table_data, table_header, children }: IProps = $props();
+	const { table_data, table_header, children, column_widths = [] }: IProps = $props();
+	
+	const getColumnWidth = (index: number): string => {
+		if (column_widths && column_widths[index]) {
+			return column_widths[index];
+		}
+		return '20%';
+	};
 </script>
 
 <table class="w-full">
 	<thead class="font-notosanssemi text-[12px] text-[#101018]">
 		<tr>
 			<th class="w-[5%]">No</th>
-			{#each table_header as head}
+			{#each table_header as head, index}
 				{#if typeof head === 'string'}
-					<th class="w-[20%]">{head}</th>
+					<th style="width: {getColumnWidth(index)}">{head}</th>
 				{:else}
-					<th class="w-[20%]">{head[1]}</th>
+					<th style="width: {getColumnWidth(index)}">{head[1]}</th>
 				{/if}
 			{/each}
 		</tr>

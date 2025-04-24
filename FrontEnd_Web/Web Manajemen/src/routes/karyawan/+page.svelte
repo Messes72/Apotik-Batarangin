@@ -17,25 +17,23 @@
 
 	const { data, form } = $props();
 
-	// Modal Input
 	let isModalInputOpen = $state(false);
 	let isModalKonfirmInputOpen = $state(false);
 	let isModalSuccessInputOpen = $state(false);
 
-	// Modal Edit
 	let isModalEditOpen = $state(false);
 	let isModalKonfirmEditOpen = $state(false);
 	let isModalSuccessEditOpen = $state(false);
 
-	// Modal Delete
 	let isModalAlasanOpen = $state(false);
 	let isModalKonfirmDeleteOpen = $state(false);
 	let isModalSuccessDeleteOpen = $state(false);
 
-	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
-	// Current data for edit and delete
+	let currentDeleteKaryawanId = $state<string>('');
+	let alasanDeleteKaryawan = $state<string>('');
+
 	interface Karyawan {
 		id: string;
 		id_karyawan: string;
@@ -43,9 +41,9 @@
 		alamat: string;
 		no_telp: string;
 		catatan: string;
-		roles: Array<{id_role: string, nama_role: string}>;
-		privileges: Array<{id_privilege: string, nama_privilege: string}>;
-		depo: Array<{id_depo: string, catatan: string}>;
+		roles: Array<{ id_role: string; nama_role: string }>;
+		privileges: Array<{ id_privilege: string; nama_privilege: string }>;
+		depo: Array<{ id_depo: string; catatan: string }>;
 	}
 
 	let currentKaryawan = $state<Karyawan | null>(null);
@@ -58,7 +56,6 @@
 	let filterState = $state('none');
 	let sortedData = $derived(getSortedData());
 
-	// Form state for input modal
 	let inputForm = $state({
 		nama_karyawan: '',
 		alamat_karyawan: '',
@@ -71,33 +68,38 @@
 		depo: [] as string[]
 	});
 
-	/**
-	 * Set current karyawan data for editing
-	 */
+	let inputErrors = $state({
+		nama_karyawan: '',
+		username_karyawan: '',
+		password_karyawan: '',
+		role_karyawan: '',
+		privilege_karyawan: '',
+		general: ''
+	});
+
+	let editErrors = $state({
+		nama_karyawan: '',
+		role_karyawan: '',
+		privilege_karyawan: '',
+		general: ''
+	});
+
+	let deleteError = $state('');
+
 	function setKaryawanForEdit(karyawan: any) {
-		// console.log('[setKaryawanForEdit] Received karyawan object:', karyawan);
 		currentKaryawan = karyawan;
-		
-		// Set selected roles
-		selectedRoles = karyawan.roles?.map((role: {id_role: string}) => role.id_role) || [];
-		
-		// Set selected privileges
-		selectedPrivileges = karyawan.privileges?.map((privilege: {id_privilege: string}) => privilege.id_privilege) || [];
-		
-		// Set selected depos
-		selectedDepos = karyawan.depo?.map((depo: {id_depo: string}) => depo.id_depo) || [];
-		
-		// Open edit modal
+		selectedRoles = karyawan.roles?.map((role: { id_role: string }) => role.id_role) || [];
+		selectedPrivileges =
+			karyawan.privileges?.map((privilege: { id_privilege: string }) => privilege.id_privilege) ||
+			[];
+		selectedDepos = karyawan.depo?.map((depo: { id_depo: string }) => depo.id_depo) || [];
 		isModalEditOpen = true;
 	}
 
-	// Update form state if form prop changes (e.g., after failed submission)
 	$effect(() => {
 		if (form?.values) {
-			// Helper to safely convert FormDataEntryValue to string
 			const getStringValue = (key: string): string => {
 				try {
-					// Type assertion untuk mengakses form.values dengan aman
 					const formDataObject = form.values as Record<string, FormDataEntryValue>;
 					const value = formDataObject[key];
 					return typeof value === 'string' ? value : '';
@@ -106,13 +108,11 @@
 				}
 			};
 
-			// Helper to convert FormDataEntryValue to string array
 			const getArrayValue = (key: string): string[] => {
 				try {
-					// Type assertion untuk mengakses form.values dengan aman
 					const formDataObject = form.values as Record<string, FormDataEntryValue>;
 					const value = formDataObject[key];
-					
+
 					if (Array.isArray(value)) return value;
 					if (typeof value === 'string') {
 						try {
@@ -127,7 +127,6 @@
 				}
 			};
 
-			// Update form values safely
 			try {
 				inputForm.nama_karyawan = getStringValue('nama_karyawan');
 				inputForm.alamat_karyawan = getStringValue('alamat_karyawan');
@@ -138,13 +137,52 @@
 				inputForm.role_karyawan = getArrayValue('role_karyawan');
 				inputForm.privilege_karyawan = getArrayValue('privilege_karyawan');
 				inputForm.depo = getArrayValue('depo');
-			} catch (e) {
-				// Ignore errors when updating form values
-			}
+			} catch (e) {}
 		}
-		
+
 		if (form?.error) {
-			isModalInputOpen = true; // Re-open modal on error
+			inputErrors = {
+				nama_karyawan: '',
+				username_karyawan: '',
+				password_karyawan: '',
+				role_karyawan: '',
+				privilege_karyawan: '',
+				general: ''
+			};
+			
+			const errorMsg = form.message || '';
+			
+			if (errorMsg.toLowerCase().includes('username')) {
+				inputErrors.username_karyawan = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('password')) {
+				inputErrors.password_karyawan = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('role')) {
+				inputErrors.role_karyawan = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('privilege')) {
+				inputErrors.privilege_karyawan = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('nama')) {
+				inputErrors.nama_karyawan = errorMsg;
+			} else {
+				inputErrors.general = errorMsg;
+			}
+			
+			const formHasKaryawanId = form.values && 'karyawan_id' in (form.values as Record<string, unknown>);
+			const formHasAlasanDelete = form.values && 'alasan_delete' in (form.values as Record<string, unknown>);
+			
+			if (formHasKaryawanId) {
+				editErrors = {
+					nama_karyawan: inputErrors.nama_karyawan,
+					role_karyawan: inputErrors.role_karyawan,
+					privilege_karyawan: inputErrors.privilege_karyawan,
+					general: inputErrors.general
+				};
+				isModalEditOpen = true;
+			} else if (formHasAlasanDelete) {
+				deleteError = errorMsg;
+				isModalKonfirmDeleteOpen = true;
+			} else {
+				isModalInputOpen = true;
+			}
 		}
 	});
 
@@ -187,54 +225,51 @@
 
 	$inspect(data);
 
-	// Close dropdowns when clicking outside
 	function handleClickOutside(event: MouseEvent) {
 		const target = event.target as HTMLElement;
 
-		// Check and close role dropdown
 		if (!target.closest('#role_dropdown') && !target.closest('#role_button')) {
 			document.getElementById('role_dropdown')?.classList.add('hidden');
 		}
 
-		// Check and close privilege dropdown
 		if (!target.closest('#privilege_dropdown') && !target.closest('#privilege_button')) {
 			document.getElementById('privilege_dropdown')?.classList.add('hidden');
 		}
 
-		// Check and close depo dropdown
 		if (!target.closest('#depo_dropdown') && !target.closest('#depo_button')) {
 			document.getElementById('depo_dropdown')?.classList.add('hidden');
 		}
-		
-		// Check and close edit dropdowns
+
 		if (!target.closest('#role_dropdown_edit') && !target.closest('#role_button_edit')) {
 			document.getElementById('role_dropdown_edit')?.classList.add('hidden');
 		}
-		
+
 		if (!target.closest('#privilege_dropdown_edit') && !target.closest('#privilege_button_edit')) {
 			document.getElementById('privilege_dropdown_edit')?.classList.add('hidden');
 		}
-		
+
 		if (!target.closest('#depo_dropdown_edit') && !target.closest('#depo_button_edit')) {
 			document.getElementById('depo_dropdown_edit')?.classList.add('hidden');
 		}
 	}
 
-	// Add click event listener when component mounts
 	$effect(() => {
 		document.addEventListener('click', handleClickOutside);
 
-		// Cleanup when component unmounts
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
 		};
 	});
 </script>
 
-<!-- svelte-ignore event_directive_deprecated -->
-<!-- svelte-ignore a11y_consider_explicit_label -->
+<svelte:head>
+	<title>Manajemen - Karyawan</title>
+</svelte:head>
+
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore event_directive_deprecated -->
+<!-- svelte-ignore a11y_consider_explicit_label -->
 <div class="mb-16">
 	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
 		<button
@@ -261,7 +296,7 @@
 		</button>
 	</div>
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalInputOpen = true)}
@@ -330,7 +365,6 @@
 		</div>
 	</div>
 
-	<!-- Card Karyawan -->
 	<div class="flex">
 		<div class="w-full justify-start">
 			<CardKaryawan card_data={sortedData}>
@@ -381,6 +415,7 @@
 						<button
 							class="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
 							on:click={() => {
+								currentDeleteKaryawanId = body.id_karyawan || '';
 								isModalAlasanOpen = true;
 							}}
 						>
@@ -400,12 +435,7 @@
 	<div class="mt-4 flex justify-end">
 		<Pagination20 total_content={data?.total_content} />
 	</div>
-	<!-- <div class="block items-center rounded-xl border px-8 pb-5 pt-4 shadow-xl drop-shadow-md">
-		<div class="mb-8 flex items-center justify-between px-2">
-			<Pagination total_content={data.data_table.total_content} />
-		</div>
 
-	</div> -->
 	{#if isModalInputOpen}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
@@ -448,7 +478,6 @@
 						return async ({ result, update }) => {
 							if (result.type === 'success') {
 								isModalSuccessInputOpen = true;
-								// Optionally reset form state here if needed before reload
 								inputForm = {
 									nama_karyawan: '',
 									alamat_karyawan: '',
@@ -460,19 +489,12 @@
 									privilege_karyawan: [],
 									depo: []
 								};
-								// No need to call update() explicitly, SvelteKit handles it.
-								// Reload after success modal shown
 								setTimeout(() => {
 									window.location.reload();
-								}, 1500); // Adjust delay as needed
+								}, 2500);
 							} else if (result.type === 'failure') {
-								// Error handling is now managed by the $effect for form prop
-								// We just need to ensure the form state is updated via SvelteKit's default behavior
 								await update();
-								// Optionally, show an alert, though the form prop effect already re-opens the modal
-								// alert(result.data?.message || 'An error occurred');
 							} else {
-								// Handle other result types if necessary
 								await update();
 							}
 						};
@@ -486,6 +508,9 @@
 						placeholder="Nama Karyawan"
 						bind:value={inputForm.nama_karyawan}
 					/>
+					{#if inputErrors.nama_karyawan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama_karyawan}</div>
+					{/if}
 					<Input
 						id="alamat_karyawan"
 						name="alamat_karyawan"
@@ -507,6 +532,9 @@
 						placeholder="Username Karyawan"
 						bind:value={inputForm.username_karyawan}
 					/>
+					{#if inputErrors.username_karyawan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.username_karyawan}</div>
+					{/if}
 					<Input
 						id="password_karyawan"
 						name="password_karyawan"
@@ -515,6 +543,9 @@
 						bind:value={inputForm.password_karyawan}
 						type="password"
 					/>
+					{#if inputErrors.password_karyawan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.password_karyawan}</div>
+					{/if}
 					<TextArea
 						id="catatan_karyawan"
 						name="catatan_karyawan"
@@ -561,6 +592,9 @@
 									/>
 								</svg>
 							</button>
+							{#if inputErrors.role_karyawan}
+								<div class="mt-1 text-xs text-red-500">{inputErrors.role_karyawan}</div>
+							{/if}
 							<div
 								id="role_dropdown"
 								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
@@ -642,6 +676,9 @@
 									/>
 								</svg>
 							</button>
+							{#if inputErrors.privilege_karyawan}
+								<div class="mt-1 text-xs text-red-500">{inputErrors.privilege_karyawan}</div>
+							{/if}
 							<div
 								id="privilege_dropdown"
 								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
@@ -760,17 +797,59 @@
 							<input type="hidden" name="depo" value={JSON.stringify(inputForm.depo)} />
 						</div>
 					</div>
-					{#if form?.error}
-						<div class="rounded-md bg-red-100 p-2 text-sm text-red-700">
-							{form.message}
+
+					{#if inputErrors.general}
+						<div class="mb-4 rounded-md bg-red-100 p-3 text-sm text-red-700">
+							{inputErrors.general}
 						</div>
 					{/if}
+
 					<div class="flex items-center justify-end">
 						<button
 							type="button"
 							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalKonfirmInputOpen = true;
+								inputErrors = {
+									nama_karyawan: '',
+									username_karyawan: '',
+									password_karyawan: '',
+									role_karyawan: '',
+									privilege_karyawan: '',
+									general: ''
+								};
+
+								// Validasi
+								let isValid = true;
+
+								if (!inputForm.nama_karyawan) {
+									inputErrors.nama_karyawan = 'Nama karyawan tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.username_karyawan) {
+									inputErrors.username_karyawan = 'Username tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.password_karyawan) {
+									inputErrors.password_karyawan = 'Password tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (inputForm.role_karyawan.length === 0) {
+									inputErrors.role_karyawan = 'Pilih minimal satu role karyawan';
+									isValid = false;
+								}
+
+								if (inputForm.privilege_karyawan.length === 0) {
+									inputErrors.privilege_karyawan = 'Pilih minimal satu privilege karyawan';
+									isValid = false;
+								}
+
+								// Jika semua validasi lulus, buka modal konfirmasi
+								if (isValid) {
+									isModalKonfirmInputOpen = true;
+								}
 							}}
 						>
 							KONFIRMASI
@@ -783,7 +862,9 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen ? 'pointer-events-none opacity-0' : ''}"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[992px] rounded-xl bg-[#F9F9F9]" on:click|stopPropagation>
@@ -810,7 +891,7 @@
 					>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form 
+				<form
 					class="flex flex-col gap-4 px-10 py-6"
 					method="POST"
 					action="?/editKaryawan"
@@ -839,19 +920,22 @@
 					<!-- ID Fields -->
 					<input type="hidden" name="karyawan_id" value={currentKaryawan?.id_karyawan || ''} />
 
-					<Input 
-						id="nama_karyawan" 
-						name="nama_karyawan" 
-						label="Nama Karyawan" 
+					<Input
+						id="nama_karyawan"
+						name="nama_karyawan"
+						label="Nama Karyawan"
 						placeholder="Nama Karyawan"
-						value={currentKaryawan?.nama || ''} 
+						value={currentKaryawan?.nama || ''}
 					/>
-					<Input 
-						id="alamat_karyawan" 
-						name="alamat_karyawan" 
-						label="Alamat Karyawan" 
+					{#if editErrors.nama_karyawan}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama_karyawan}</div>
+					{/if}
+					<Input
+						id="alamat_karyawan"
+						name="alamat_karyawan"
+						label="Alamat Karyawan"
 						placeholder="Alamat Karyawan"
-						value={currentKaryawan?.alamat || ''} 
+						value={currentKaryawan?.alamat || ''}
 					/>
 					<Input
 						id="no_telepon_karyawan"
@@ -860,10 +944,10 @@
 						placeholder="No Telepon Karyawan"
 						value={currentKaryawan?.no_telp || ''}
 					/>
-					<TextArea 
-						id="catatan_karyawan" 
-						name="catatan_karyawan" 
-						label="Catatan Karyawan" 
+					<TextArea
+						id="catatan_karyawan"
+						name="catatan_karyawan"
+						label="Catatan Karyawan"
 						placeholder="Catatan Karyawan"
 						value={currentKaryawan?.catatan || ''}
 					/>
@@ -906,6 +990,9 @@
 									/>
 								</svg>
 							</button>
+							{#if editErrors.role_karyawan}
+								<div class="mt-1 text-xs text-red-500">{editErrors.role_karyawan}</div>
+							{/if}
 							<div
 								id="role_dropdown_edit"
 								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
@@ -924,9 +1011,7 @@
 													if (target.checked) {
 														selectedRoles = [...selectedRoles, role.id_role];
 													} else {
-														selectedRoles = selectedRoles.filter(
-															(id) => id !== role.id_role
-														);
+														selectedRoles = selectedRoles.filter((id) => id !== role.id_role);
 													}
 												}}
 												class="mr-2 h-4 w-4"
@@ -941,11 +1026,7 @@
 									{/each}
 								{/if}
 							</div>
-							<input
-								type="hidden"
-								name="role_karyawan"
-								value={JSON.stringify(selectedRoles)}
-							/>
+							<input type="hidden" name="role_karyawan" value={JSON.stringify(selectedRoles)} />
 						</div>
 					</div>
 					<div class="flex flex-col gap-2">
@@ -987,6 +1068,9 @@
 									/>
 								</svg>
 							</button>
+							{#if editErrors.privilege_karyawan}
+								<div class="mt-1 text-xs text-red-500">{editErrors.privilege_karyawan}</div>
+							{/if}
 							<div
 								id="privilege_dropdown_edit"
 								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
@@ -1003,10 +1087,7 @@
 												on:change={(e) => {
 													const target = e.target as HTMLInputElement;
 													if (target.checked) {
-														selectedPrivileges = [
-															...selectedPrivileges,
-															privilege.id_privilege
-														];
+														selectedPrivileges = [...selectedPrivileges, privilege.id_privilege];
 													} else {
 														selectedPrivileges = selectedPrivileges.filter(
 															(id) => id !== privilege.id_privilege
@@ -1105,9 +1186,9 @@
 							<input type="hidden" name="depo" value={JSON.stringify(selectedDepos)} />
 						</div>
 					</div>
-					{#if form?.error}
-						<div class="rounded-md bg-red-100 p-2 text-sm text-red-700">
-							{form.message}
+					{#if editErrors.general}
+						<div class="mb-4 rounded-md bg-red-100 p-3 text-sm text-red-700">
+							{editErrors.general}
 						</div>
 					{/if}
 					<div class="flex items-center justify-end">
@@ -1115,7 +1196,36 @@
 							type="button"
 							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalKonfirmEditOpen = true;
+								// Reset error
+								editErrors = {
+									nama_karyawan: '',
+									role_karyawan: '',
+									privilege_karyawan: '',
+									general: ''
+								};
+								
+								// Validasi
+								let isValid = true;
+								
+								if (!currentKaryawan?.nama) {
+									editErrors.nama_karyawan = 'Nama karyawan tidak boleh kosong';
+									isValid = false;
+								}
+								
+								if (selectedRoles.length === 0) {
+									editErrors.role_karyawan = 'Pilih minimal satu role karyawan';
+									isValid = false;
+								}
+								
+								if (selectedPrivileges.length === 0) {
+									editErrors.privilege_karyawan = 'Pilih minimal satu privilege karyawan';
+									isValid = false;
+								}
+								
+								// Jika semua validasi lulus, buka modal konfirmasi
+								if (isValid) {
+									isModalKonfirmEditOpen = true;
+								}
 							}}
 						>
 							SIMPAN
@@ -1135,7 +1245,7 @@
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
 					<div class="font-montserrat text-[26px] text-white">Informasi Data Karyawan</div>
 					<button
-						class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
+						class="rounded-xl hover:bg-gray-100/20"
 						on:click={() => (isModalDetailOpen = false)}
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
@@ -1146,30 +1256,35 @@
 						>
 					</button>
 				</div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					{#if currentDetailKaryawan}
-						<Detail label="Nama Karyawan" value={currentDetailKaryawan.nama || '-'} />
-						<Detail label="Alamat Karyawan" value={currentDetailKaryawan.alamat || '-'} />
-						<Detail label="No Telepon Karyawan" value={currentDetailKaryawan.no_telp || '-'} />
-						<Detail label="Catatan Karyawan" value={currentDetailKaryawan.catatan || '-'} />
-						<Detail 
-							label="Role Karyawan" 
-							value={currentDetailKaryawan.roles?.map(r => r.nama_role).join(', ') || '-'} 
-						/>
-						<Detail 
-							label="Privilege Karyawan" 
-							value={currentDetailKaryawan.privileges?.map(p => p.nama_privilege).join(', ') || '-'} 
-						/>
-						<Detail 
-							label="Depo Karyawan" 
-							value={currentDetailKaryawan.depo?.map(d => {
-								const depoInfo = data?.depos?.find(depo => depo.id_depo === d.id_depo);
-								return depoInfo?.nama || d.id_depo;
-							}).join(', ') || '-'} 
-						/>
-					{:else}
-						<p>Memuat data...</p>
-					{/if}
+				<form class="my-6 px-8 pb-3">
+					<div class="mt-2 flex flex-col gap-2">
+						{#if currentDetailKaryawan}
+							<Detail label="Nama Karyawan" value={currentDetailKaryawan.nama || '-'} />
+							<Detail label="Alamat Karyawan" value={currentDetailKaryawan.alamat || '-'} />
+							<Detail label="No Telepon Karyawan" value={currentDetailKaryawan.no_telp || '-'} />
+							<Detail label="Catatan Karyawan" value={currentDetailKaryawan.catatan || '-'} />
+							<Detail
+								label="Role Karyawan"
+								value={currentDetailKaryawan.roles?.map((r) => r.nama_role).join(', ') || '-'}
+							/>
+							<Detail
+								label="Privilege Karyawan"
+								value={currentDetailKaryawan.privileges?.map((p) => p.nama_privilege).join(', ') ||
+									'-'}
+							/>
+							<Detail
+								label="Depo Karyawan"
+								value={currentDetailKaryawan.depo
+									?.map((d) => {
+										const depoInfo = data?.depos?.find((depo) => depo.id_depo === d.id_depo);
+										return depoInfo?.nama || d.id_depo;
+									})
+									.join(', ') || '-'}
+							/>
+						{:else}
+							<p>Memuat data...</p>
+						{/if}
+					</div>
 				</form>
 			</div>
 		</div>
@@ -1189,9 +1304,9 @@
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit 
-		bind:isOpen={isModalKonfirmEditOpen} 
-		bind:isSuccess={isModalSuccessEditOpen} 
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
 		on:confirm={() => {
 			document.getElementById('hiddenSubmitEditKaryawan')?.click();
 		}}
@@ -1205,11 +1320,38 @@
 	<AlasanDeleteKaryawan
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:karyawanId={currentDeleteKaryawanId}
+		bind:alasanValue={alasanDeleteKaryawan}
+		on:reason={(e) => {
+			alasanDeleteKaryawan = e.detail;
+		}}
 	/>
 	<KonfirmDeleteKaryawan
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
+		karyawanId={currentDeleteKaryawanId}
+		alasanDelete={alasanDeleteKaryawan}
+		on:confirm={() => {
+			currentDeleteKaryawanId = '';
+			alasanDeleteKaryawan = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
 	/>
+	{#if deleteError}
+		<div class="fixed inset-0 z-[10000] flex items-center justify-center" on:click|stopPropagation>
+			<div class="w-80 rounded-md bg-red-100 p-4 text-center text-sm text-red-700">
+				{deleteError}
+				<button 
+					class="mt-2 rounded-md bg-red-500 px-4 py-2 text-white"
+					on:click={() => deleteError = ''}
+				>
+					Tutup
+				</button>
+			</div>
+		</div>
+	{/if}
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>
 

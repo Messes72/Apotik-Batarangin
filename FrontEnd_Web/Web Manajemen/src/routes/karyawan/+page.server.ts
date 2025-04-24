@@ -29,10 +29,6 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 			try {
 				errorBody = await karyawanResponse.text();
 			} catch {}
-			console.error('Karyawan API request failed:', { 
-				status: karyawanResponse.status, 
-				statusText: karyawanResponse.statusText
-			});
 			throw new Error(`HTTP error! status: ${karyawanResponse.status} - ${karyawanResponse.statusText}`);
 		}
 
@@ -42,24 +38,18 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 		if (roleResponse.ok) {
 			const roleData = await roleResponse.json();
 			roles = Array.isArray(roleData) ? roleData : [];
-		} else {
-			console.warn(`Failed to fetch roles: ${roleResponse.status}`);
 		}
 
 		let privileges = [];
 		if (privilegeResponse.ok) {
 			const privilegeData = await privilegeResponse.json();
 			privileges = Array.isArray(privilegeData) ? privilegeData : [];
-		} else {
-			console.warn(`Failed to fetch privileges: ${privilegeResponse.status}`);
 		}
 
 		let depos = [];
 		if (depoResponse.ok) {
 			const depoData = await depoResponse.json();
 			depos = Array.isArray(depoData) ? depoData : [];
-		} else {
-			console.warn(`Failed to fetch depos: ${depoResponse.status}`);
 		}
 
 		const processedData = Array.isArray(data.data)
@@ -73,7 +63,6 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 		}))
 		: [];
 
-		// Filter data by nama if keyword is provided
 		const filteredData = keyword
 				? processedData.filter((item: any) => 
 					item.nama.toLowerCase().includes(keyword.toLowerCase())
@@ -93,10 +82,6 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 		return result;
 
 	} catch (err) {
-		console.error('Karyawan Page Load Error:', {
-			message: err instanceof Error ? err.message : 'Unknown error'
-		});
-
 		return {
 			data: [],
 			total_content: 0,
@@ -112,7 +97,6 @@ export const actions: Actions = {
 		try {
 			const formData = await request.formData();
 
-			// Extract data from formData
 			const nama = formData.get('nama_karyawan') as string;
 			const alamat = formData.get('alamat_karyawan') as string;
 			const no_telp = formData.get('no_telepon_karyawan') as string;
@@ -123,7 +107,6 @@ export const actions: Actions = {
 			const privilegeIdJson = formData.get('privilege_karyawan') as string;
 			const depoIdJson = formData.get('depo') as string;
 			
-			// Buat payload dengan struktur yang diharapkan API
 			const payload = {
 				karyawan: {
 					nama: nama || '',
@@ -138,7 +121,6 @@ export const actions: Actions = {
 				password: password || ''
 			};
 			
-			// Tambahkan values dari JSON jika valid
 			if (roleIdJson) {
 				try {
 					const roleIds = JSON.parse(roleIdJson);
@@ -148,9 +130,7 @@ export const actions: Actions = {
 							nama_role: ""
 						}));
 					}
-				} catch (e) {
-					console.error('Error parsing role JSON:', e);
-				}
+				} catch (e) {}
 			}
 			
 			if (privilegeIdJson) {
@@ -162,9 +142,7 @@ export const actions: Actions = {
 							nama_privilege: ""
 						}));
 					}
-				} catch (e) {
-					console.error('Error parsing privilege JSON:', e);
-				}
+				} catch (e) {}
 			}
 			
 			if (depoIdJson) {
@@ -176,14 +154,9 @@ export const actions: Actions = {
 							catatan: ""
 						}));
 					}
-				} catch (e) {
-					console.error('Error parsing depo JSON:', e);
-				}
+				} catch (e) {}
 			}
 
-			console.log('CreateKaryawan payload:', JSON.stringify(payload));
-
-			// Basic validation
 			if (!username || !password || payload.karyawan.roles.length === 0 || payload.karyawan.privileges.length === 0) {
 				return fail(400, {
 					error: true,
@@ -192,7 +165,6 @@ export const actions: Actions = {
 				});
 			}
 
-			// Gunakan fetch langsung dengan URL dan parameter yang benar
 			const myHeaders = new Headers();
 			myHeaders.append("x-api-key", "helopanda");
 			const token = locals.token || "";
@@ -200,7 +172,7 @@ export const actions: Actions = {
 			myHeaders.append("Content-Type", "application/json");
 
 			const response = await fetch(
-				"http://leap.crossnet.co.id:2688/karyawan/create",
+				`${env.BASE_URL3}/karyawan/create`,
 				{
 					method: "POST",
 					headers: myHeaders,
@@ -208,7 +180,6 @@ export const actions: Actions = {
 				}
 			);
 
-			// Proses hasil dari fetch
 			let result;
 			try {
 				result = await response.json();
@@ -241,11 +212,8 @@ export const actions: Actions = {
 	editKaryawan: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
-			// console.log('[editKaryawan] Received formData:', Object.fromEntries(formData)); // Log formData
 
-			// Get the Karyawan ID from the form data
 			const karyawanId = formData.get('karyawan_id');
-			// console.log('[editKaryawan] Extracted karyawanId:', karyawanId); // Log karyawanId
 			if (!karyawanId) {
 				return fail(400, {
 					error: true,
@@ -254,7 +222,6 @@ export const actions: Actions = {
 				});
 			}
 
-			// Extract other data from formData
 			const nama = formData.get('nama_karyawan') as string;
 			const alamat = formData.get('alamat_karyawan') as string;
 			const no_telp = formData.get('no_telepon_karyawan') as string;
@@ -263,7 +230,6 @@ export const actions: Actions = {
 			const privilegeIdJson = formData.get('privilege_karyawan') as string;
 			const depoIdJson = formData.get('depo') as string;
 
-			// Construct the payload according to the API requirements
 			const payload = {
 				nama: nama || '',
 				alamat: alamat || '',
@@ -274,46 +240,33 @@ export const actions: Actions = {
 				depo: [] as Array<{id_depo: string}>
 			};
 
-			// Parse and add roles if valid
 			if (roleIdJson) {
 				try {
 					const roleIds = JSON.parse(roleIdJson);
 					if (Array.isArray(roleIds) && roleIds.length > 0) {
-						payload.roles = roleIds.map(id => ({ id_role: id })); // Hanya ID
+						payload.roles = roleIds.map(id => ({ id_role: id }));
 					}
-				} catch (e) {
-					console.error('[editKaryawan] Error parsing role JSON for edit:', e); // Log parsing error
-					// Optionally return a fail response if parsing fails critically
-				}
+				} catch (e) {}
 			}
 
-			// Parse and add privileges if valid
 			if (privilegeIdJson) {
 				try {
 					const privilegeIds = JSON.parse(privilegeIdJson);
 					if (Array.isArray(privilegeIds) && privilegeIds.length > 0) {
-						payload.privileges = privilegeIds.map(id => ({ id_privilege: id })); // Hanya ID
+						payload.privileges = privilegeIds.map(id => ({ id_privilege: id }));
 					}
-				} catch (e) {
-					console.error('[editKaryawan] Error parsing privilege JSON for edit:', e); // Log parsing error
-				}
+				} catch (e) {}
 			}
 
-			// Parse and add depos if valid
 			if (depoIdJson) {
 				try {
 					const depoIds = JSON.parse(depoIdJson);
 					if (Array.isArray(depoIds) && depoIds.length > 0) {
-						payload.depo = depoIds.map(id => ({ id_depo: id })); // Hanya ID
+						payload.depo = depoIds.map(id => ({ id_depo: id }));
 					}
-				} catch (e) {
-					console.error('[editKaryawan] Error parsing depo JSON for edit:', e); // Log parsing error
-				}
+				} catch (e) {}
 			}
 
-			// console.log('[editKaryawan] Constructed payload (Corrected):', JSON.stringify(payload, null, 2)); // Log constructed payload
-
-			// Send the payload to the API endpoint
 			const response = await fetchWithAuth(
 				`${env.BASE_URL3}/karyawan/${karyawanId}/edit`,
 				{
@@ -327,23 +280,15 @@ export const actions: Actions = {
 				fetch
 			);
 
-			// console.log(`[editKaryawan] API Response Status: ${response.status}`); // Log API status
-
-			// Process the API response
 			let result;
 			try {
-				// Check if response has content before parsing JSON
 				const contentType = response.headers.get("content-type");
 				if (contentType && contentType.includes("application/json")) {
 					result = await response.json();
 				} else {
-					// Handle non-JSON responses (e.g., success with no content or text error)
 					result = { message: await response.text() || (response.ok ? 'Update berhasil' : 'Update gagal') };
 				}
-				// console.log('[editKaryawan] Parsed API response:', result); // Log parsed API response
 			} catch (e) {
-				// console.error('[editKaryawan] Error parsing API response:', e); // Log parsing error
-				// Handle JSON parsing errors or empty response
 				return fail(500, {
 					error: true,
 					message: 'Gagal memproses respons dari server setelah update',
@@ -362,12 +307,81 @@ export const actions: Actions = {
 			return { success: true };
 
 		} catch (err) {
-			// console.error('[editKaryawan] Error in editKaryawan action:', err); // Log caught error
 			return fail(500, {
 				error: true,
 				message: err instanceof Error ? err.message : 'Terjadi kesalahan pada server saat mengedit',
-				values: {} // Provide form values back if possible
+				values: {}
 			});
 		}
 	},
+	deleteKaryawan: async ({ request, fetch, locals }) => {
+		try {
+			const formData = await request.formData();
+			
+			const karyawanId = formData.get('karyawan_id');
+			const alasanDelete = formData.get('alasan_delete') as string;
+			
+			if (!karyawanId) {
+				return fail(400, {
+					error: true,
+					message: 'ID Karyawan diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
+			
+			if (!alasanDelete || alasanDelete.trim() === '') {
+				return fail(400, {
+					error: true,
+					message: 'Alasan penghapusan diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
+			
+			const apiFormData = new FormData();
+			apiFormData.append("alasandelete", alasanDelete);
+			
+			const response = await fetchWithAuth(
+				`${env.BASE_URL3}/karyawan/${karyawanId}/delete`,
+				{
+					method: 'PUT',
+					body: apiFormData
+				},
+				locals.token,
+				fetch
+			);
+			
+			let result;
+			try {
+				const contentType = response.headers.get("content-type");
+				if (contentType && contentType.includes("application/json")) {
+					result = await response.json();
+				} else {
+					result = { message: await response.text() || (response.ok ? 'Penghapusan berhasil' : 'Penghapusan gagal') };
+				}
+			} catch (e) {
+				return fail(500, {
+					error: true,
+					message: 'Gagal memproses respons dari server setelah penghapusan',
+					values: Object.fromEntries(formData)
+				});
+			}
+			
+			if (!response.ok) {
+				return fail(response.status, {
+					error: true,
+					message: result.message || `Gagal menghapus karyawan (Status: ${response.status})`,
+					values: Object.fromEntries(formData)
+				});
+			}
+			
+			return { success: true };
+			
+		} catch (err) {
+			return fail(500, {
+				error: true,
+				message: err instanceof Error ? err.message : 'Terjadi kesalahan pada server saat menghapus',
+				values: {}
+			});
+		}
+	}
 };

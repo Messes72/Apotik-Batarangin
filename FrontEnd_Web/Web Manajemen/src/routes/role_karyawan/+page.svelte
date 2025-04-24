@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
@@ -13,7 +14,7 @@
 	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalOpen = $state(false);
@@ -33,8 +34,75 @@
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
-	let active_button = $state('supplier');
+	let currentRole = $state<any>(null);
+	let currentDeleteRoleId = $state<string>('');
+	let alasanDeleteRole = $state<string>('');
+
+	interface Role {
+		id_role: string;
+		nama_role: string;
+		catatan: string;
+	}
+
+	let currentDetailRole = $state<Role | null>(null);
+
+	let inputForm = $state({
+		nama_role: '',
+		catatan: ''
+	});
+
+	let inputErrors = $state({
+		nama_role: '',
+		catatan: '',
+		general: ''
+	});
+
+	let editErrors = $state({
+		nama_role: '',
+		catatan: '',
+		general: ''
+	});
+
+	let deleteError = $state('');
+
+	function setRoleForEdit(role: any) {
+		currentRole = role;
+		isModalEditOpen = true;
+	}
+
+	$effect(() => {
+		if (form?.values) {
+			try {
+				inputForm.nama_role = String((form.values as any)['nama_role'] || '');
+				inputForm.catatan = String((form.values as any)['catatan'] || '');
+			} catch (e) {}
+		}
+
+		if (form?.error) {
+			inputErrors = {
+				nama_role: '',
+				catatan: '',
+				general: ''
+			};
+
+			const errorMsg = form.message || '';
+
+			if (errorMsg.toLowerCase().includes('nama role')) {
+				inputErrors.nama_role = errorMsg;
+			} else {
+				inputErrors.general = errorMsg;
+			}
+
+			isModalOpen = true;
+		}
+	});
+
+	$inspect(data);
 </script>
+
+<svelte:head>
+	<title>Manajemen - Role Karyawan</title>
+</svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
@@ -43,7 +111,7 @@
 
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalOpen = true)}
@@ -60,37 +128,35 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'ID Role'],
+					['children', 'Nama Role'],
+					['children', 'Catatan Role'],
 					['children', 'Action']
 				]}
+				column_widths={['25%', '25%', '25%', '20%']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'ID Role'}
+						<div>{body.id_role}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
-						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
+					{#if head === 'Nama Role'}
+						<div>{body.nama_role}</div>
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
-					{/if}
-
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Catatan Role'}
+						<div>{body.catatan}</div>
 					{/if}
 
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={() => {
+								currentDetailRole = body;
+								isModalDetailOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -103,7 +169,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalEditOpen = true)}
+							on:click={() => setRoleForEdit(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -124,7 +190,10 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalAlasanOpen = true)}
+							on:click={() => {
+								currentDeleteRoleId = body.id_role || '';
+								isModalAlasanOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -149,16 +218,20 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Input Data Role Karyawan</div>
+				<div class="flex items-center justify-between p-10">
+					<div class="font-montserrat text-[26px] leading-normal text-[#515151]">
+						Input Data Role Karyawan
+					</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -169,20 +242,86 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="id_role" label="ID Role" placeholder="ID Role" />
-					<Input id="nama_role" label="Nama Role" placeholder="Nama Role" />
-					<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
+				<form
+					method="POST"
+					action="?/createRole"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Create role result:', result);
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								inputForm = {
+									nama_role: '',
+									catatan: ''
+								};
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								await update();
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="roleForm"
+				>
+					<Input
+						id="nama_role"
+						name="nama_role"
+						label="Nama Role"
+						placeholder="Nama Role"
+						bind:value={inputForm.nama_role}
+					/>
+					{#if inputErrors.nama_role}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama_role}</div>
+					{/if}
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan Role"
+						placeholder="Catatan Role"
+						bind:value={inputForm.catatan}
+					/>
+					{#if inputErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.catatan}</div>
+					{/if}
+					{#if inputErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.general}</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalOpen = false;
-								isModalKonfirmInputOpen = true;
+								inputErrors = {
+									nama_role: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!inputForm.nama_role) {
+									inputErrors.nama_role = 'Nama Role tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.catatan) {
+									inputErrors.catatan = 'Catatan Role tidak boleh kosong';
+									isValid = false;
+								}
+								if (isValid) {
+									isModalKonfirmInputOpen = true;
+								}
 							}}
 						>
 							KONFIRMASI
 						</button>
+						<button type="submit" id="hiddenSubmitRole" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -190,7 +329,9 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
@@ -206,18 +347,87 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="id_role" label="ID Role" placeholder="ID Role" />
-					<Input id="nama_role" label="Nama Role" placeholder="Nama Role" />
-					<TextArea id="catatan_role" label="Catatan Role" placeholder="Catatan Role" />
+				<form
+					method="POST"
+					action="?/editRole"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Edit role result:', result);
+							if (result.type === 'success') {
+								isModalSuccessEditOpen = true;
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								console.error('Edit role failed:', result.data);
+								await update();
+								isModalEditOpen = true;
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="editRoleForm"
+				>
+					<input type="hidden" name="role_id" value={currentRole?.id_role || ''} />
+					<Input
+						id="nama_role"
+						name="nama_role"
+						label="Nama Role"
+						placeholder="Nama Role"
+						value={currentRole?.nama_role || ''}
+					/>
+					{#if editErrors.nama_role}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama_role}</div>
+					{/if}
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan Role"
+						placeholder="Catatan Role"
+						value={currentRole?.catatan || ''}
+					/>
+					{#if editErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
+					{/if}
+					{#if editErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
+							type="button"
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
 							on:click={() => {
-								isModalOpen = false;
-								isModalKonfirmInputOpen = true;
+								editErrors = {
+									nama_role: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!currentRole?.nama_role) {
+									editErrors.nama_role = 'Nama Role tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!currentRole?.catatan) {
+									editErrors.catatan = 'Catatan Role tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (isValid) {
+									console.log('Validation passed, opening confirm modal');
+									isModalKonfirmEditOpen = true;
+								} else {
+									console.log('Validation failed:', editErrors);
+								}
 							}}>KONFIRMASI</button
 						>
+						<button type="submit" id="hiddenSubmitEditRole" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -245,9 +455,13 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						<Detail label="ID Role" value="ID Role" />
-						<Detail label="Nama Role" value="Nama Role" />
-						<Detail label="Catatan Role" value="Catatan Role" />
+						{#if currentDetailRole}
+							<Detail label="ID Role" value={currentDetailRole.id_role || '-'} />
+							<Detail label="Nama Role" value={currentDetailRole.nama_role || '-'} />
+							<Detail label="Catatan Role" value={currentDetailRole.catatan || '-'} />
+						{:else}
+							<p>Memuat data...</p>
+						{/if}
 					</div>
 				</form>
 			</div>
@@ -255,21 +469,77 @@
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={() => {
+			console.log('Confirming input submission');
+			document.getElementById('hiddenSubmitRole')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
+		on:confirm={() => {
+			console.log('Confirming edit submission');
+			document.getElementById('hiddenSubmitEditRole')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->
 	<AlasanDeleteRoleKaryawan
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:roleId={currentDeleteRoleId}
+		bind:alasanValue={alasanDeleteRole}
+		on:reason={(e) => {
+			alasanDeleteRole = e.detail;
+		}}
 	/>
 	<KonfirmDeleteRoleKaryawan
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
+		roleId={currentDeleteRoleId}
+		alasanDelete={alasanDeleteRole}
+		on:confirm={() => {
+			currentDeleteRoleId = '';
+			alasanDeleteRole = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
+	/>
+	<AlasanDeleteRoleKaryawan
+		bind:isOpen={isModalAlasanOpen}
+		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:roleId={currentDeleteRoleId}
+		bind:alasanValue={alasanDeleteRole}
+		on:reason={(e) => {
+			alasanDeleteRole = e.detail;
+		}}
+	/>
+	<KonfirmDeleteRoleKaryawan
+		bind:isOpen={isModalKonfirmDeleteOpen}
+		bind:isSuccess={isModalSuccessDeleteOpen}
+		roleId={currentDeleteRoleId}
+		alasanDelete={alasanDeleteRole}
+		on:confirm={() => {
+			currentDeleteRoleId = '';
+			alasanDeleteRole = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
 	/>
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>

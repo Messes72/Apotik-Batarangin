@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
@@ -14,7 +15,7 @@
 	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalOpen = $state(false);
@@ -31,12 +32,82 @@
 	let isModalKonfirmDeleteOpen = $state(false);
 	let isModalSuccessDeleteOpen = $state(false);
 
+	let currentKustomer = $state<any>(null);
+
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
 	let active_button = $state('customer');
-	let active_button_history = $state('riwayat');
+
+	let inputForm = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: ''
+	});
+
+	let inputErrors = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: '',
+		general: ''
+	});
+
+	let editErrors = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: '',
+		general: ''
+	});
+
+	function setKustomerForEdit(kustomer: any) {
+		currentKustomer = kustomer;
+		isModalEditOpen = true;
+	}
+
+	$effect(() => {
+		if (form?.values) {
+			try {
+				inputForm.nama = String((form.values as any)['nama'] || '');
+				inputForm.alamat = String((form.values as any)['alamat'] || '');
+				inputForm.no_telp = String((form.values as any)['no_telp'] || '');
+				inputForm.catatan = String((form.values as any)['catatan'] || '');
+			} catch (e) {}
+		}
+
+		if (form?.error) {
+			inputErrors = {
+				nama: '',
+				alamat: '',
+				no_telp: '',
+				catatan: '',
+				general: ''
+			};
+
+			const errorMsg = form.message || '';
+
+			if (errorMsg.toLowerCase().includes('nama')) {
+				inputErrors.nama = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('alamat')) {
+				inputErrors.alamat = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('no_telp')) {
+				inputErrors.no_telp = errorMsg;
+			} else {
+				inputErrors.general = errorMsg;
+			}
+
+			isModalOpen = true;
+		}
+	});
+
+	$inspect(data);
 </script>
+
+<svelte:head>
+	<title>Manajemen - Kustomer</title>
+</svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
@@ -54,14 +125,14 @@
 				goto('/customer');
 			}}
 		>
-			Customer
+			Kustomer
 		</button>
 		<button
 			class="px-4 py-2 {active_button === 'riwayat'
 				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
 				: 'text-black hover:border-b-2 hover:text-gray-500'}"
 			on:click={() => {
-				active_button_history = 'riwayat';
+				active_button = 'riwayat';
 				goto('/customer/riwayat_customer');
 			}}
 		>
@@ -69,7 +140,7 @@
 		</button>
 	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalOpen = true)}
@@ -77,7 +148,7 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none">
 					<path fill="#fff" d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6v2Z" />
 				</svg>
-				<span class="ml-1 text-[16px]">Input Pembelian</span>
+				<span class="ml-1 text-[16px]">Input Kustomer</span>
 			</button>
 		</div>
 		<div class="flex-1"><Search2 /></div>
@@ -86,31 +157,30 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'Nama Kustomer'],
+					['children', 'Alamat Kustomer'],
+					['children', 'Nomor Telepon Customer'],
+					['children', 'Catatan Customer'],
 					['children', 'Action']
 				]}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
-					{/if}
-
-					{#if head === 'Nama Lengkap'}
+					{#if head === 'Nama Kustomer'}
 						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
+					{#if head === 'Alamat Kustomer'}
+						<div>{body.alamat}</div>
 					{/if}
 
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Nomor Telepon Customer'}
+						<div>{body.no_telp}</div>
+					{/if}
+
+					{#if head === 'Catatan Customer'}
+						<div>{body.catatan}</div>
 					{/if}
 
 					{#if head === 'Action'}
@@ -129,7 +199,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalEditOpen = true)}
+							on:click={() => setKustomerForEdit(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -175,16 +245,20 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Input Data Customer</div>
+				<div class="flex items-center justify-between p-10">
+					<div class="font-montserrat text-[26px] leading-normal text-[#515151]">
+						Input Data Customer
+					</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -195,29 +269,118 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8">
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="nama_kustomer" label="Nama Kustomer" placeholder="Nama Kustomer" />
-						<Input id="alamat_kustomer" label="Alamat Kustomer" placeholder="Alamat Kustomer" />
-						<Input
-							id="nomor_telepon_kustomer"
-							label="Nomor Telepon Kustomer"
-							placeholder="Nomor Telepon Kustomer"
-						/>
-						<TextArea
-							id="catatan_customer"
-							label="Catatan Customer"
-							placeholder="Catatan Customer"
-						/>
-						<div class="mt-6 flex justify-end">
-							<button
-								class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
-								on:click={() => {
-									isModalOpen = false;
+				<form
+					method="POST"
+					action="?/createKustomer"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Create Kustomer result:', result);
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								inputForm = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: ''
+								};
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								await update();
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="kustomerForm"
+				>
+					<Input
+						id="nama"
+						name="nama"
+						label="Nama Kustomer"
+						placeholder="Nama Kustomer"
+						bind:value={inputForm.nama}
+					/>
+					{#if inputErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama}</div>
+					{/if}
+					<Input
+						id="alamat"
+						name="alamat"
+						label="Alamat Kustomer"
+						placeholder="Alamat Kustomer"
+						bind:value={inputForm.alamat}
+					/>
+					{#if inputErrors.alamat}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.alamat}</div>
+					{/if}
+					<Input
+						id="no_telp"
+						name="no_telp"
+						label="Nomor Telepon Kustomer"
+						placeholder="Nomor Telepon Kustomer"
+						bind:value={inputForm.no_telp}
+					/>
+					{#if inputErrors.no_telp}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.no_telp}</div>
+					{/if}
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan Customer"
+						placeholder="Catatan Customer"
+						bind:value={inputForm.catatan}
+					/>
+					{#if inputErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.catatan}</div>
+					{/if}
+					{#if inputErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.general}</div>
+					{/if}
+					<div class="flex items-center justify-end">
+						<button
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
+							on:click={() => {
+								inputErrors = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!inputForm.nama) {
+									inputErrors.nama = 'Nama Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.alamat) {
+									inputErrors.alamat = 'Alamat Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.no_telp) {
+									inputErrors.no_telp = 'Nomor Telepon Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.catatan) {
+									inputErrors.catatan = 'Catatan Customer tidak boleh kosong';
+									isValid = false;
+								}
+								if (isValid) {
 									isModalKonfirmInputOpen = true;
-								}}>KONFIRMASI</button
-							>
-						</div>
+								}
+							}}>KONFIRMASI</button
+						>
+						<button type="submit" id="hiddenSubmitKustomer" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -225,7 +388,9 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
@@ -241,29 +406,120 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8">
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="nama_kustomer" label="Nama Kustomer" placeholder="Nama Kustomer" />
-						<Input id="alamat_kustomer" label="Alamat Kustomer" placeholder="Alamat Kustomer" />
-						<Input
-							id="nomor_telepon_kustomer"
-							label="Nomor Telepon Kustomer"
-							placeholder="Nomor Telepon Kustomer"
-						/>
-						<TextArea
-							id="catatan_customer"
-							label="Catatan Customer"
-							placeholder="Catatan Customer"
-						/>
-					</div>
-					<div class="mt-6 flex justify-end">
+				<form
+					method="POST"
+					action="?/editKustomer"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Edit kustomer result:', result);
+							if (result.type === 'success') {
+								isModalSuccessEditOpen = true;
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								console.error('Edit kustomer failed:', result.data);
+								await update();
+								isModalEditOpen = true;
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="editKustomerForm"
+				>
+					<input type="hidden" name="id_kustomer" value={currentKustomer?.id_kustomer || ''} />
+					<Input
+						id="nama"
+						name="nama"
+						label="Nama Kustomer"
+						placeholder="Nama Kustomer"
+						value={currentKustomer?.nama || ''}
+					/>
+					{#if editErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama}</div>
+					{/if}
+					<Input
+						id="alamat"
+						name="alamat"
+						label="Alamat Kustomer"
+						placeholder="Alamat Kustomer"
+						value={currentKustomer?.alamat || ''}
+					/>
+					{#if editErrors.alamat}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.alamat}</div>
+					{/if}
+
+					<Input
+						id="no_telp"
+						name="no_telp"
+						label="Nomor Telepon Kustomer"
+						placeholder="Nomor Telepon Kustomer"
+						value={currentKustomer?.no_telp || ''}
+					/>
+					{#if editErrors.no_telp}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.no_telp}</div>
+					{/if}
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan Customer"
+						placeholder="Catatan Customer"
+						value={currentKustomer?.catatan || ''}
+					/>
+					{#if editErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
+					{/if}
+					{#if editErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
+					{/if}
+					<div class="flex items-center justify-end">
 						<button
+							type="button"
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
 							on:click={() => {
-								isModalEditOpen = false;
-								isModalKonfirmEditOpen = true;
-							}}>SAVE</button
+								editErrors = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!currentKustomer?.nama) {
+									editErrors.nama = 'Nama Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!currentKustomer?.alamat) {
+									editErrors.alamat = 'Alamat Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!currentKustomer?.no_telp) {
+									editErrors.no_telp = 'Nomor Telepon Kustomer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!currentKustomer?.catatan) {
+									editErrors.catatan = 'Catatan Customer tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (isValid) {
+									console.log('Validation passed, opening confirm modal');
+									isModalKonfirmEditOpen = true;
+								} else {
+									console.log('Validation failed:', editErrors);
+								}
+							}}>KONFIRMASI</button
 						>
+						<button type="submit" id="hiddenSubmitEditKustomer" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -302,11 +558,31 @@
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={() => {
+			console.log('Confirming input submission');
+			document.getElementById('hiddenSubmitKustomer')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
+		on:confirm={() => {
+			console.log('Confirming edit submission');
+			document.getElementById('hiddenSubmitEditKustomer')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->

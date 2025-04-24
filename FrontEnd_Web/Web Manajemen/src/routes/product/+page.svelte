@@ -337,8 +337,7 @@
 </script>
 
 <svelte:head>
-	<title>Gudang - Product</title>
-	<link href={gambar_logo} rel="icon" />
+	<title>Manajemen - Product</title>
 </svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->

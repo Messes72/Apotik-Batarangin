@@ -1,4 +1,6 @@
+
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
@@ -13,7 +15,7 @@
 	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalOpen = $state(false);
@@ -33,17 +35,83 @@
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
-	let active_button = $state('supplier');
+	let currentPrivilege = $state<any>(null);
+	let currentDeletePrivilegeId = $state<string>('');
+	let alasanDeletePrivilege = $state<string>('');
+
+	interface Privilege {
+		id_privilege: string;
+		nama_privilege: string;
+		catatan: string;
+	}
+
+	let currentDetailPrivilege = $state<Privilege | null>(null);
+
+	let inputForm = $state({
+		nama_privilege: '',
+		catatan: ''
+	});
+
+	let inputErrors = $state({
+		nama_privilege: '',
+		catatan: '',
+		general: ''
+	});
+
+	let editErrors = $state({
+		nama_privilege: '',
+		catatan: '',
+		general: ''
+	});
+
+	let deleteError = $state('');
+
+	function setPrivilegeForEdit(privilege: any) {
+		currentPrivilege = privilege;
+		isModalEditOpen = true;
+	}
+
+	$effect(() => {
+		if (form?.values) {
+			try {
+				inputForm.nama_privilege = String((form.values as any)['nama_privilege'] || '');
+				inputForm.catatan = String((form.values as any)['catatan'] || '');
+			} catch (e) {}
+		}
+
+		if (form?.error) {
+			inputErrors = {
+				nama_privilege: '',
+				catatan: '',
+				general: ''
+			};
+
+			const errorMsg = form.message || '';
+
+			if (errorMsg.toLowerCase().includes('nama privilege')) {
+				inputErrors.nama_privilege = errorMsg;
+			} else {
+				inputErrors.general = errorMsg;
+			}
+
+			isModalOpen = true;
+		}
+	});
+
+	$inspect(data);
 </script>
+
+<svelte:head>
+	<title>Manajemen - Privilege Karyawan</title>
+</svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-
 <div class="mb-16">
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalOpen = true)}
@@ -60,37 +128,35 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'ID Privilege'],
+					['children', 'Nama Privilege'],
+					['children', 'Catatan Privilege'],
 					['children', 'Action']
 				]}
+				column_widths={['25%', '25%', '25%', '20%']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'ID Privilege'}
+						<div>{body.id_privilege}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
-						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
+					{#if head === 'Nama Privilege'}
+						<div>{body.nama_privilege}</div>
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
-					{/if}
-
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Catatan Privilege'}
+						<div>{body.catatan}</div>
 					{/if}
 
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={() => {
+								currentDetailPrivilege = body;
+								isModalDetailOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -103,7 +169,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalEditOpen = true)}
+							on:click={() => setPrivilegeForEdit(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -124,7 +190,10 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalAlasanOpen = true)}
+							on:click={() => {
+								currentDeletePrivilegeId = body.id_privilege || '';
+								isModalAlasanOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -149,16 +218,18 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">
+				<div class="flex items-center justify-between p-10">
+					<div class="font-montserrat text-[26px] leading-normal text-[#515151]">
 						Input Data Privilege Karyawan
 					</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
@@ -171,24 +242,83 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="id_privilege" label="ID Privilege" placeholder="ID Privilege" />
-					<Input id="nama_privilege" label="Nama Privilege" placeholder="Nama Privilege" />
+				<form
+					method="POST"
+					action="?/createPrivilege"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Create privilege result:', result);
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								inputForm = {
+									nama_privilege: '',
+									catatan: ''
+								};
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								await update();
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="privilegeForm"
+				>
+					<Input
+						id="nama_privilege"
+						name="nama_privilege"
+						label="Nama Privilege"
+						placeholder="Nama Privilege"
+						bind:value={inputForm.nama_privilege}
+					/>
+					{#if inputErrors.nama_privilege}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama_privilege}</div>
+					{/if}
 					<TextArea
-						id="catatan_privilege"
+						id="catatan"
+						name="catatan"
 						label="Catatan Privilege"
 						placeholder="Catatan Privilege"
+						bind:value={inputForm.catatan}
 					/>
+					{#if inputErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.catatan}</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
-							class="font-intersemi h-10 w-[130px] rounded-md bg-[#329B0D] text-white"
+							type="button"
+							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
 							on:click={() => {
-								isModalOpen = false;
-								isModalKonfirmInputOpen = true;
+								inputErrors = {
+									nama_privilege: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!inputForm.nama_privilege) {
+									inputErrors.nama_privilege = 'Nama Privilege tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!inputForm.catatan) {
+									inputErrors.catatan = 'Catatan Privilege tidak boleh kosong';
+									isValid = false;
+								}
+								if (isValid) {
+									isModalKonfirmInputOpen = true;
+								}
 							}}
 						>
 							KONFIRMASI
 						</button>
+						<button type="submit" id="hiddenSubmitPrivilege" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -196,7 +326,9 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
@@ -212,22 +344,87 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="flex flex-col gap-4 px-10 py-6">
-					<Input id="id_privilege" label="ID Privilege" placeholder="ID Privilege" />
-					<Input id="nama_privilege" label="Nama Privilege" placeholder="Nama Privilege" />
+				<form
+					method="POST"
+					action="?/editPrivilege"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Edit privilege result:', result);
+							if (result.type === 'success') {
+								isModalSuccessEditOpen = true;
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								console.error('Edit privilege failed:', result.data);
+								await update();
+								isModalEditOpen = true;
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="editPrivilegeForm"
+				>
+					<input type="hidden" name="privilege_id" value={currentPrivilege?.id_privilege || ''} />
+					<Input
+						id="nama_privilege"
+						name="nama_privilege"
+						label="Nama Privilege"
+						placeholder="Nama Privilege"
+						value={currentPrivilege?.nama_privilege || ''}
+					/>
+					{#if editErrors.nama_privilege}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama_privilege}</div>
+					{/if}
 					<TextArea
-						id="catatan_privilege"
+						id="catatan"
+						name="catatan"
 						label="Catatan Privilege"
 						placeholder="Catatan Privilege"
+						value={currentPrivilege?.catatan || ''}
 					/>
+					{#if editErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
+					{/if}
+					{#if editErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
+					{/if}
 					<div class="flex items-center justify-end">
 						<button
+							type="button"
 							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
 							on:click={() => {
-								isModalOpen = false;
-								isModalKonfirmInputOpen = true;
+								editErrors = {
+									nama_privilege: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!currentPrivilege?.nama_privilege) {
+									editErrors.nama_privilege = 'Nama Privilege tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (!currentPrivilege?.catatan) {
+									editErrors.catatan = 'Catatan Privilege tidak boleh kosong';
+									isValid = false;
+								}
+
+								if (isValid) {
+									console.log('Validation passed, opening confirm modal');
+									isModalKonfirmEditOpen = true;
+								} else {
+									console.log('Validation failed:', editErrors);
+								}
 							}}>KONFIRMASI</button
 						>
+						<button type="submit" id="hiddenSubmitEditPrivilege" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -257,9 +454,13 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						<Detail label="ID Privilege" value="ID Privilege" />
-						<Detail label="Nama Privilege" value="Nama Privilege" />
-						<Detail label="Catatan Privilege" value="Catatan Privilege" />
+						{#if currentDetailPrivilege}
+							<Detail label="ID Privilege" value={currentDetailPrivilege.id_privilege || '-'} />
+							<Detail label="Nama Privilege" value={currentDetailPrivilege.nama_privilege || '-'} />
+							<Detail label="Catatan Privilege" value={currentDetailPrivilege.catatan || '-'} />
+						{:else}
+							<p>Memuat data...</p>
+						{/if}
 					</div>
 				</form>
 			</div>
@@ -267,21 +468,68 @@
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={() => {
+			console.log('Confirming input submission');
+			document.getElementById('hiddenSubmitPrivilege')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
+		on:confirm={() => {
+			console.log('Confirming edit submission');
+			document.getElementById('hiddenSubmitEditPrivilege')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->
 	<AlasanDeletePrivillegeKaryawan
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:privilegeId={currentDeletePrivilegeId}
+		bind:alasanValue={alasanDeletePrivilege}
+		on:reason={(e) => {
+			alasanDeletePrivilege = e.detail;
+		}}
 	/>
 	<KonfirmDeletePrivillegeKaryawan
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
+		privilegeId={currentDeletePrivilegeId}
+		alasanDelete={alasanDeletePrivilege}
+		on:confirm={() => {
+			currentDeletePrivilegeId = '';
+			alasanDeletePrivilege = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
 	/>
+	{#if deleteError}
+		<div class="fixed inset-0 z-[10000] flex items-center justify-center" on:click|stopPropagation>
+			<div class="w-80 rounded-md bg-red-100 p-4 text-center text-sm text-red-700">
+				{deleteError}
+				<button
+					class="mt-2 rounded-md bg-red-500 px-4 py-2 text-white"
+					on:click={() => (deleteError = '')}
+				>
+					Tutup
+				</button>
+			</div>
+		</div>
+	{/if}
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>

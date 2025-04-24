@@ -3,7 +3,7 @@
 
 	export let isOpen = false;
 	export let width = 'w-[800px]';
-	export let isKonfirmTerimaPembelianOpen = false;
+	export let isKonfirmDeleteOpen = false;
 </script>
 
 {#if isOpen}
@@ -16,7 +16,7 @@
 	>
 		<div class="my-auto {width} rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 			<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-				<div class="font-montserrat text-[26px] text-white">Catatan Pembelian Barang</div>
+				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data Customer</div>
 				<button
 					class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
 					on:click={() => (isOpen = false)}
@@ -31,14 +31,14 @@
 			</div>
 			<form class="mb-4 mt-6 px-8 pb-3">
 				<div class="mt-2 flex flex-col gap-2">
-					<TextArea id="alasan_terima" label="Apakah ada Catatan untuk Pembelian Barang ini?" placeholder="Catatan" />
+					<TextArea id="alasan" label="Alasan Data Customer ini Dihapus" placeholder="Alasan" />
 				</div>
 				<div class="mt-2 flex justify-end">
 					<button
-						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
+						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white shadow-xl"
 						on:click={() => {
 							isOpen = false;
-							isKonfirmTerimaPembelianOpen = true;
+							isKonfirmDeleteOpen = true;
 						}}>KONFIRMASI</button
 					>
 				</div>
