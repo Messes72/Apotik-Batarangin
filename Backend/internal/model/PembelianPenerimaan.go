@@ -18,6 +18,19 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 	}
 
+	var totalharga float64
+	for _, obat := range listobat {
+		var hargajual float64
+		queryhargajual := `SELECT harga_jual from obat_jadi WHERE id_obat = ?`
+		err := tx.QueryRowContext(ctx, queryhargajual, obat.IDKartuStok).Scan(&hargajual)
+		if err != nil {
+			tx.Rollback()
+			log.Println("error saat mengambil data harga jual ", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung total harga barang"}, err
+		}
+		totalharga += hargajual * float64(obat.JumlahDipesan)
+	}
+
 	var counter int
 	queryCounter := `SELECT count FROM pembelian_penerimaancounter FOR UPDATE`
 	err = tx.QueryRowContext(ctx, queryCounter).Scan(&counter)
@@ -42,7 +55,7 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 
 	query := `INSERT INTO pembelian_penerimaan (id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan,tanggal_pembayaran, pemesan , created_at, created_by)
 	VALUES (?,?,?,?,?,?,?,NOW(),?)`
-	_, err = tx.ExecContext(ctx, query, newidpembelianpenerimaan, pembelian.IDSupplier, pembelian.TotalHarga, pembelian.Keterangan, pembelian.TanggalPembelian, pembelian.TanggalPembayaran, pembelian.CreatedBy, pembelian.CreatedBy)
+	_, err = tx.ExecContext(ctx, query, newidpembelianpenerimaan, pembelian.IDSupplier, totalharga, pembelian.Keterangan, pembelian.TanggalPembelian, pembelian.TanggalPembayaran, pembelian.CreatedBy, pembelian.CreatedBy)
 	if err != nil {
 		tx.Rollback()
 		log.Println("gagal membuat record pembelian_penerimaan", err)
