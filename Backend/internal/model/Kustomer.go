@@ -117,7 +117,7 @@ func UpdateKustomer(ctx context.Context, idupdate string, kustomer class.Kustome
 	return class.Response{Status: http.StatusOK, Message: "data kustomer berhasil diupdate", Data: nil}, nil
 }
 
-func DeleteKustomer(ctx context.Context, iddelete string) (class.Response, error) {
+func DeleteKustomer(ctx context.Context, iddelete, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -141,8 +141,8 @@ func DeleteKustomer(ctx context.Context, iddelete string) (class.Response, error
 
 	}
 
-	querydelete := `UPDATE Kustomer SET updated_at = NOW(), deleted_at=NOw() WHERE id_kustomer = ? `
-	_, err = tx.ExecContext(ctx, querydelete, iddelete)
+	querydelete := `UPDATE Kustomer SET updated_at = NOW(), deleted_at=NOw(), alasandelete = ? WHERE id_kustomer = ? `
+	_, err = tx.ExecContext(ctx, querydelete, alasan, iddelete)
 	if err != nil {
 		log.Println("Failed to soft delete kustomer: ", err)
 		tx.Rollback()

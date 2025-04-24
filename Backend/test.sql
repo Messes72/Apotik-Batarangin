@@ -91,7 +91,8 @@ CREATE TABLE Kustomer (
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME,
-    catatan VARCHAR(255)
+    catatan VARCHAR(255),
+    alasandelete VARCHAR(255)
 );
 
 

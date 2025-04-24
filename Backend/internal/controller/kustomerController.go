@@ -54,8 +54,8 @@ func UpdateKustomer(c echo.Context) error {
 
 func DeleteKustomer(c echo.Context) error {
 	idparam := c.Param("id_kustomer")
-
-	result, err := model.DeleteKustomer(c.Request().Context(), idparam)
+	alasan := c.FormValue("alasandelete")
+	result, err := model.DeleteKustomer(c.Request().Context(), idparam, alasan)
 
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
