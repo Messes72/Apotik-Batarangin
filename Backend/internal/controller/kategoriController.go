@@ -78,6 +78,8 @@ func DeleteKategori(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
 	}
 
+	alasan := c.FormValue("alasandelete")
+
 	idkategori := c.Param("id_kategori")
 	var requestBody class.Kategori
 	if err := c.Bind(&requestBody); err != nil {
@@ -85,7 +87,7 @@ func DeleteKategori(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request body"})
 
 	}
-	result, err := model.DeleteKategori(c.Request().Context(), idkaryawan.(string), idkategori)
+	result, err := model.DeleteKategori(c.Request().Context(), idkaryawan.(string), idkategori, alasan)
 	if err != nil {
 		return c.JSON(result.Status, map[string]string{"message": result.Message})
 	}

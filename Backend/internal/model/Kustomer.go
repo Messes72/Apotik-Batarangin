@@ -79,7 +79,7 @@ func AddKustomer(ctx context.Context, kustomer class.Kustomer) (class.Response, 
 func GetKustomer(ctx context.Context, idkustomer string, page, pagesize int) (class.Response, error) {
 	con := db.GetDBCon()
 
-	if page <= 0 {
+	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
 		page = 1
 	}
 	if pagesize <= 0 {

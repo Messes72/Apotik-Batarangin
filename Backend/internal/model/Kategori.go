@@ -153,7 +153,7 @@ func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan str
 	return class.Response{Status: http.StatusOK, Message: "Berhasil mengupdate data Kategori"}, nil
 }
 
-func DeleteKategori(ctx context.Context, idkaryawan string, iddelete string) (class.Response, error) {
+func DeleteKategori(ctx context.Context, idkaryawan string, iddelete, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -163,9 +163,10 @@ func DeleteKategori(ctx context.Context, idkaryawan string, iddelete string) (cl
 	}
 
 	var exists bool //cek apakah ada id yg mau did delte itu
-	err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROm Kategori WHere id_kategori=? )`, iddelete).Scan(&exists)
+	err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROm Kategori WHere id_kategori=? AND deleted_at IS NULL )`, iddelete).Scan(&exists)
 	if err != nil {
 		tx.Rollback()
+		log.Println("error saat cek exist kategori", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error checking Kategori existence"}, err
 
 	}
@@ -175,8 +176,8 @@ func DeleteKategori(ctx context.Context, idkaryawan string, iddelete string) (cl
 
 	}
 
-	statementdelete := `UPDATE Kategori SET deleted_at = NOW(), deleted_by = ? WHERE id_kategori = ?`
-	_, err = tx.ExecContext(ctx, statementdelete, idkaryawan, iddelete)
+	statementdelete := `UPDATE Kategori SET deleted_at = NOW(), deleted_by = ?, alasandelete = ? WHERE id_kategori = ? `
+	_, err = tx.ExecContext(ctx, statementdelete, idkaryawan, alasan, iddelete)
 	if err != nil {
 		tx.Rollback()
 		log.Println("error in delete:", err)

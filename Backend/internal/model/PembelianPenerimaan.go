@@ -264,5 +264,22 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 	}
 
 	tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
 	return class.Response{Status: http.StatusOK, Message: "Berhasil Menyimpan Data Penerimaan Barang.", Data: nil}, err
 }
+
+// func GetPembelian(ctx context.Context, idpembelian string, page, pagesize int) (class.Response, error) {
+// 	con := db.GetDBCon()
+
+// 	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
+// 		page = 1
+// 	}
+// 	if pagesize <= 0 {
+// 		pagesize = 10
+// 	}
+// 	offset := (page - 1) * pagesize
+
+// }

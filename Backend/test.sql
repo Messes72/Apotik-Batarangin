@@ -183,6 +183,7 @@ CREATE TABLE Kategori (
     deleted_at DATETIME Null,               -- 0: Optional (NULL allowed)
     deleted_by VARCHAR(10) NULL,     -- NN: Not Null constraint
     catatan VARCHAR(255),                     -- 0: Optional (NULL allowed)
+    alasandelete VARCHAR(255),
     FOREIGN KEY (id_depo) REFERENCES Depo(id_depo) -- Define the Foreign Key
 );
 
