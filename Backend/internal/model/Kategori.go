@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,9 +33,8 @@ func GetKategori(ctx context.Context) (class.Response, error) {
 
 	for rows.Next() {
 		var kategori class.Kategori
-		var catatan sql.NullString
 
-		err := rows.Scan(&kategori.IDDepo, &kategori.IDKategori, &kategori.Nama, &kategori.CreatedAt, &kategori.UpdatedAt, &catatan)
+		err := rows.Scan(&kategori.IDDepo, &kategori.IDKategori, &kategori.Nama, &kategori.CreatedAt, &kategori.UpdatedAt, &kategori.Catatan)
 		if err != nil {
 			log.Println("failed to get individual kategori ", err)
 			tx.Rollback()
