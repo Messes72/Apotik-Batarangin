@@ -76,6 +76,71 @@ func AddKustomer(ctx context.Context, kustomer class.Kustomer) (class.Response, 
 	return class.Response{Status: http.StatusCreated, Message: "berhasil menambahkan kustomer baru", Data: nil}, nil
 }
 
+func GetKustomer(ctx context.Context, idkustomer string, page, pagesize int) (class.Response, error) {
+	con := db.GetDBCon()
+
+	if page <= 0 {
+		page = 1
+	}
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	offset := (page - 1) * pagesize
+
+	if idkustomer != "" {
+		var kustomer class.Kustomer
+
+		queryget := `SELECT id_kustomer, nama, alamat, no_telp, created_at, catatan FROM Kustomer WHERE id_kustomer = ? AND deleted_at IS NULL`
+
+		err := con.QueryRowContext(ctx, queryget, idkustomer).Scan(&kustomer.IDKustomer, &kustomer.Nama, &kustomer.Alamat, &kustomer.NoTelp, &kustomer.CreatedAt, &kustomer.Catatan)
+		if err == sql.ErrNoRows {
+			return class.Response{Status: http.StatusNotFound, Message: "Data kustomer tidak ditemukan", Data: nil}, nil
+		} else if err != nil {
+			log.Println("gagal mengambil data untuk kustomer dengan id :", idkustomer, err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "gagal mengambil data kustomer", Data: nil}, nil
+		}
+		return class.Response{Status: http.StatusOK, Message: "Berhasil mengambil data kustomer", Data: kustomer}, nil
+	} else {
+		querygetpagination := `SELECT id_kustomer, nama, alamat, no_telp, created_at, catatan FROM Kustomer WHERE deleted_at IS NULL ORDER BY id_kustomer DESC LIMIT ? OFFSET ? `
+
+		rows, err := con.QueryContext(ctx, querygetpagination, pagesize, offset)
+		if err != nil {
+			log.Println("error di query get kustomer with pagination", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data kustomer", Data: nil}, err
+		}
+		defer rows.Close()
+		var listkustomer []class.Kustomer
+
+		for rows.Next() {
+			var kustomer class.Kustomer
+
+			err = rows.Scan(&kustomer.IDKustomer, &kustomer.Nama, &kustomer.Alamat, &kustomer.NoTelp, &kustomer.CreatedAt, &kustomer.Catatan)
+			if err != nil {
+				log.Println("Error saat mengambil list kustomer", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data kustomer"}, err
+
+			}
+			listkustomer = append(listkustomer, kustomer)
+		}
+
+		var totalrecord int
+		err = con.QueryRowContext(ctx, `SELECT COUNT(*) FROM Kustomer WHERE deleted_at IS NULL`).Scan(&totalrecord)
+		if err != nil {
+			log.Printf("GetKustomer count error: %v\n", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to count kustomer"}, err
+		}
+		totalpage := (totalrecord + pagesize - 1) / pagesize
+		metadata := class.Metadata{
+			CurrentPage:  page,
+			PageSize:     pagesize,
+			TotalPages:   totalpage,
+			TotalRecords: totalrecord,
+		}
+
+		return class.Response{Status: http.StatusOK, Message: "Success", Data: listkustomer, Metadata: metadata}, nil
+	}
+}
+
 func UpdateKustomer(ctx context.Context, idupdate string, kustomer class.Kustomer) (class.Response, error) {
 	con := db.GetDBCon()
 

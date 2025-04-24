@@ -52,6 +52,7 @@ func Init() *echo.Echo {
 	routeKustomer := e.Group("/kustomer")
 	routeKustomer.Use(middleware.CheckAPIKey)
 	routeKustomer.Use(middleware.JWTMiddleware)
+	routeKustomer.GET("", controller.GetKustomer)
 	routeKustomer.POST("/create", controller.AddKustomer)
 	routeKustomer.PUT("/:id_kustomer/edit", controller.UpdateKustomer)
 	routeKustomer.PUT("/:id_kustomer/delete", controller.DeleteKustomer)

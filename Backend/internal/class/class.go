@@ -78,7 +78,7 @@ type Kustomer struct {
 	CreatedAt  time.Time  `json:"created_at"`
 	UpdatedAt  time.Time  `json:"updated_at"`
 	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
-	Catatan    string     `json:"catatan,omitempty"`
+	Catatan    *string    `json:"catatan,omitempty"`
 }
 
 type Depo struct {
