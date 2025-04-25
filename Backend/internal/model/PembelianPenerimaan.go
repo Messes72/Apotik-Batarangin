@@ -307,7 +307,7 @@ func GetAllPembelian(ctx context.Context, page, pagesize int) (class.Response, e
 	offset := (page - 1) * pagesize
 
 	querypembelianpenerimaan := `SELECT id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan, tanggal_penerimaan,
-		tanggal_pembayaran, pemesan, penerima FROM pembelian_penerimaan WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ? `
+		tanggal_pembayaran, pemesan, penerima,created_at,created_by,updated_at,updated_by FROM pembelian_penerimaan WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ? `
 
 	rows, err := con.QueryContext(ctx, querypembelianpenerimaan, pagesize, offset)
 	if err != nil {
@@ -323,7 +323,7 @@ func GetAllPembelian(ctx context.Context, page, pagesize int) (class.Response, e
 		var tpembelian, tpembayaran, tpenerimaan sql.NullTime
 
 		err := rows.Scan(&pembelian.IDPembelianPenerimaanObat, &pembelian.IDSupplier, &pembelian.TotalHarga, &pembelian.Keterangan, &tpembelian, &tpenerimaan,
-			&tpembayaran, &pembelian.Pemesan, &pembelian.Penerima)
+			&tpembayaran, &pembelian.Pemesan, &pembelian.Penerima, &pembelian.CreatedAt, &pembelian.CreatedBy, &pembelian.UpdatedAt, &pembelian.UpdatedBy)
 
 		if err != nil {
 			log.Println("Error saata scan data dari rows ", err)
