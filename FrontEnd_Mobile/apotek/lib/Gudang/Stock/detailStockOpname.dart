@@ -1,31 +1,24 @@
 import 'package:apotek/Gudang/Stock/DataStockOpname.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
+import 'package:apotek/main.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:apotek/global.dart' as global;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:apotek/global.dart' as global;
 
-class TransaksiApotek extends StatefulWidget {
+class Detailstockopname extends StatefulWidget {
   final VoidCallback toggleSidebar;
   final bool isExpanded;
-  const TransaksiApotek(
+  const Detailstockopname(
       {super.key, required this.isExpanded, required this.toggleSidebar});
 
   @override
-  State<TransaksiApotek> createState() => _TransaksiApotek();
+  State<Detailstockopname> createState() => detailStock();
 }
 
-class _TransaksiApotek extends State<TransaksiApotek> {
-  var nomorRekapMedis = TextEditingController();
-  var umurKustomer = TextEditingController();
-  var namaObat = TextEditingController();
-  var satuanObat = TextEditingController();
-  var jumlahObat = TextEditingController();
-  var hargaSatuaan = TextEditingController();
-  var hargaTotal = TextEditingController();
-  // var stokBarang_text = TextEditingController();
-  // var satuan_text = TextEditingController();
+class detailStock extends State<Detailstockopname> {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
 
   void onMenuPressed() {
@@ -37,18 +30,18 @@ class _TransaksiApotek extends State<TransaksiApotek> {
   final List<String> rowKategori = ["Obat Panas", "Obat Batuk", "Obat Flu"];
   final List<String> rowSatuan = ["Strip", "Botol", "Pcs"];
 
-  final List<String> genderItems = ['Laki-laki', 'Perempuan'];
-  final List<String> metodePembayaranItems = ['Tunai', 'Gopay', 'Qris'];
-
-  String? _selectedStatus;
-  String? _selectedMetode;
-
   String? _selectedKategori;
   String? _selectedSatuan;
   String? _selectedKategoriEdit;
   String? _selectedSatuanEdit;
   var text = TextEditingController();
   var text2 = TextEditingController();
+
+  var jumlahBarang = TextEditingController();
+  var nomorOpname = TextEditingController();
+  var tanggalOpname = TextEditingController();
+  var jumlahUpdate = TextEditingController();
+
   List<StokOpnameData> filterData = [];
   final List<int> rowItems = [10, 25, 50, 100];
 
@@ -80,8 +73,8 @@ class _TransaksiApotek extends State<TransaksiApotek> {
   final List<StokOpnameData> _data = List.generate(
       30,
       (index) => StokOpnameData(
-            nama: '12 Januari 2025',
-            kategori: 'Joy',
+            nama: 'Barang $index',
+            kategori: 'Kategori ${index % 5}',
             kode: 'KODE$index',
             harga: (index + 1) * 1000.0,
             kadaluarsa: DateTime.now().add(Duration(days: index * 30)),
@@ -90,9 +83,9 @@ class _TransaksiApotek extends State<TransaksiApotek> {
             keluar: (index + 1) * 3,
             hargaJual: (index + 1) * 1200.0,
             hargaBeli: (index + 1) * 900.0,
-            satuan: 'Alexander',
+            satuan: 'Unit',
             uprate: (index % 3) * 1.1,
-            noKartu: '$index',
+            noKartu: 'KARTU$index',
             noBatch: 'BATCH$index',
             catatan: 'Catatan untuk Barang $index',
           ));
@@ -109,7 +102,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
               ),
               child: Container(
                 width:
-                    constraints.maxWidth * 0.7, // Sesuaikan dengan ukuran layar
+                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
                     0.9, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
@@ -135,10 +128,10 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Data Transaksi",
-                            style: TextStyle(
+                            "Informasi Stock Opname",
+                            style: GoogleFonts.montserrat(
                               fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
@@ -161,237 +154,32 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                           spacing: 16,
                           runSpacing: 16,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 33, right: 40, left: 40, bottom: 33),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "Data Resep Obat",
-                                        style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        "dr. [Nama Dokter]",
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        "John Dave",
-                                        style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        "01 Januari 2025",
-                                        style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text("Nomor Rekap Medis: "),
-                                      detailIsiTransaksi("0000000000"),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 25)),
-                                      Text("Gender: "),
-                                      detailIsiTransaksi("0000000000"),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 25)),
-                                      Text("Umur: "),
-                                      detailIsiTransaksi("0000000000"),
-                                    ],
-                                  ),
-                                  Divider(),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Nama Obat", namaObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Jumlah", jumlahObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                          child: buildTextField(
-                                              "Satuan", satuanObat)),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Harga Satuan", hargaSatuaan),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Harga Total", hargaTotal),
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Nama Racikan", namaObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Kemasan", jumlahObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                          child: buildTextField(
-                                              "Jumlah", satuanObat)),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Instruksi Pemakaian",
-                                            hargaSatuaan),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Harga Total", hargaTotal),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(padding: EdgeInsets.only(top: 20)),
-                                  Text(
-                                    "KOMPOSISI",
-                                    style: TextStyle(
-                                        decoration: TextDecoration.underline,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Padding(padding: EdgeInsets.only(top: 15.5)),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Nama Obaat", namaObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child:
-                                            buildTextField("Dosis", jumlahObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                          child: buildTextField(
-                                              "Satuan", satuanObat)),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Harga Satuan", hargaSatuaan),
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(padding: EdgeInsets.only(bottom: 20)),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Nama Obaat", namaObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child:
-                                            buildTextField("Dosis", jumlahObat),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                          child: buildTextField(
-                                              "Satuan", satuanObat)),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 35)),
-                                      Expanded(
-                                        child: buildTextField(
-                                            "Harga Satuan", hargaSatuaan),
-                                      ),
-                                    ],
-                                  ),
-                                  Divider(),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Column(
-                                        children: [
-                                          Text(
-                                            "Total Harga",
-                                            style: TextStyle(fontSize: 18),
-                                          ),
-                                          Text(
-                                            "Rp. 0,00",
-                                            style: TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold),
-                                          )
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  Padding(padding: EdgeInsets.only(bottom: 18)),
-                                  Divider(),
-                                  Padding(padding: EdgeInsets.only(bottom: 27)),
-                                  Text(
-                                    "Metode Pembayaran",
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: ColorStyle.fill_stroke),
-                                      color: ColorStyle.fill_form,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 8, bottom: 8, top: 8),
-                                      child: Text(
-                                        "Qris",
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Column(
+                              children: [
+                                detailField("Nomor Kartu", item.noKartu),
+                                detailField("Nomor Batch", item.noBatch),
+                                detailField("Kode Obat", item.kode),
+                                detailField("Kategori Obat", item.kategori),
+                                detailField("Nama Obat", item.kategori),
+                                detailField(
+                                    "Kadarluarsa",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa)),
+                                detailField("Satuan", item.satuan),
+                                detailField(
+                                    "Stock Barang", item.stok.toString()),
+                                detailField(
+                                    "Barang Masuk", item.masuk.toString()),
+                                detailField(
+                                    "Barang Keluar", item.keluar.toString()),
+                                detailField(
+                                    "Harga Jual", item.hargaJual.toString()),
+                                detailField(
+                                    "Harga Beli", item.hargaBeli.toString()),
+                                detailField("Uprate", item.uprate.toString()),
+                                buildFormCaraPemakaian(
+                                    "Cara Pemakaian", item.catatan)
+                              ],
                             )
                           ],
                         ),
@@ -532,16 +320,18 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                       style: ElevatedButton.styleFrom(
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 6),
-                                        backgroundColor:
-                                            ColorStyle.button_green,
+                                        backgroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(8),
+                                          side: const BorderSide(
+                                              color: ColorStyle.button_green,
+                                              width: 1),
                                         ),
                                       ),
                                       child: const Text("KONFIRMASI",
                                           style: TextStyle(
-                                              color: Colors.white,
+                                              color: ColorStyle.button_green,
                                               fontSize: 11,
                                               fontWeight: FontWeight.bold)),
                                     ),
@@ -781,16 +571,20 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                           style: ElevatedButton.styleFrom(
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 6),
-                                            backgroundColor:
-                                                ColorStyle.button_green,
+                                            backgroundColor: Colors.white,
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
                                                   BorderRadius.circular(8),
+                                              side: const BorderSide(
+                                                  color:
+                                                      ColorStyle.button_green,
+                                                  width: 1),
                                             ),
                                           ),
                                           child: const Text("SIMPAN",
                                               style: TextStyle(
-                                                  color: Colors.white,
+                                                  color:
+                                                      ColorStyle.button_green,
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold)),
                                         ),
@@ -816,7 +610,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
     );
   }
 
-  void _modalKosongkanTransaksi(StokOpnameData item) {
+  void _modalKosongkanObat(StokOpnameData item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -855,10 +649,10 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Alasan Menghapus Data Transaksi",
-                              style: TextStyle(
+                              "Alasan Kosongkan Obat",
+                              style: GoogleFonts.montserrat(
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
@@ -873,7 +667,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    SizedBox(height: 47),
 
                     Expanded(
                       child: SingleChildScrollView(
@@ -883,17 +677,18 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                           children: [
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
-                              child: Text("Alasan Data Transaksi ini Dihapus :",
+                                  const EdgeInsets.only(left: 42, right: 42),
+                              child: Text(
+                                  "Alasan \"${item.nama}\" Kosongkan Obat",
                                   style:
                                       TextStyle(fontWeight: FontWeight.bold)),
                             ),
                             const SizedBox(height: 8),
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
+                                  const EdgeInsets.only(left: 42, right: 42),
                               child: Container(
-                                height: 225,
+                                height: 150,
                                 // decoration: BoxDecoration(
                                 //   color: ColorStyle.fill_form,
                                 //   border:
@@ -903,7 +698,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                 // padding:
                                 //     const EdgeInsets.symmetric(horizontal: 12),
                                 alignment: Alignment.topLeft,
-                                child: TextField(
+                                child: TextFormField(
                                   controller: text2,
                                   style: TextStyle(fontSize: 13),
                                   decoration: InputDecoration(
@@ -975,11 +770,11 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                               width: 1),
                                         ),
                                       ),
-                                      child: const Text("KONFIRMASI",
-                                          style: TextStyle(
+                                      child: Text("KONFIRMASI",
+                                          style: GoogleFonts.inter(
                                               color: ColorStyle.primary,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.w600)),
                                     ),
                                   ),
                                 ],
@@ -1053,7 +848,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _modalKosongkanTransaksi(item);
+                                  _modalKosongkanObat(item);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: ColorStyle.fill_stroke,
@@ -1317,7 +1112,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
       appBar: NavbarTop(
-          title: "TRANSAKSI",
+          title: "INFORMASI DATA STOCK OPNAME",
           onMenuPressed: widget.toggleSidebar,
           isExpanded: widget.isExpanded,
           animationTrigger: onMenuPressed,
@@ -1330,94 +1125,83 @@ class _TransaksiApotek extends State<TransaksiApotek> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    height: 40,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          global.selectedIndex = 2;
-                          global.selectedScreen = 0;
-                        });
-                      },
-                      icon: Transform.translate(
-                        offset: Offset(1, 0), // Geser ikon lebih dekat ke teks
-                        child: Icon(Icons.add, color: Colors.white, size: 22),
-                      ),
-                      label: Transform.translate(
-                        offset: Offset(-3, 0),
-                        child: const Text("Input Transaksi",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 16)),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorStyle.hover.withOpacity(0.7),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                      ),
-                    ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    global.selectedIndex = 1;
+                    global.selectedScreen = 1;
+                  });
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => MyHomePage()));
+                },
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                label: const Text("Kembali",
+                    style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
                   ),
-                  Padding(padding: EdgeInsets.only(right: 8)),
-                  Expanded(
-                    child: Container(
-                      height: 40,
-                      // width: 242,
-                      // decoration: BoxDecoration(
-                      //   border:
-                      //       Border.all(color: ColorStyle.fill_stroke, width: 1),
-                      //   color: ColorStyle.fill_form,
-                      //   borderRadius: BorderRadius.circular(4),
-                      // ),
-
-                      child: TextField(
-                        controller: text,
-                        onChanged: filtering,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: ColorStyle.fill_form,
-
-                          // Menambahkan ikon di dalam TextField
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.only(left: 8, right: 8),
-                            child: Icon(
-                              Icons.search_outlined,
-                              color: Color(0XFF1B1442),
-                              size: 30, // Sesuaikan ukuran ikon
-                            ),
-                          ),
-
-                          hintText: "Search",
-                          contentPadding:
-                              EdgeInsets.only(left: 8, bottom: 12.5),
-
-                          hintStyle: TextStyle(
-                            color: ColorStyle.text_hint,
-                            fontSize: 16,
-                          ),
-
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: ColorStyle.fill_stroke, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Colors.black, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                ),
               ),
-              const SizedBox(height: 30),
+              Padding(padding: EdgeInsets.only(top: 25)),
+              InputForm("Nomor Opname", "0977656", "Tanggal Stock Opname",
+                  "21/01/2025", nomorOpname, tanggalOpname),
+              InputForm("Jumlah Barang", "10", "Jumlah Update Stock", "10",
+                  jumlahBarang, jumlahUpdate),
+              Divider(),
+              Container(
+                height: 40,
+                // width: 242,
+                // decoration: BoxDecoration(
+                //   border:
+                //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+                //   color: ColorStyle.fill_form,
+                //   borderRadius: BorderRadius.circular(4),
+                // ),
+
+                child: TextFormField(
+                  controller: text,
+                  onChanged: filtering,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
+
+                    // Menambahkan ikon di dalam TextField
+                    prefixIcon: Padding(
+                      padding: EdgeInsets.only(left: 8, right: 8),
+                      child: Icon(
+                        Icons.search_outlined,
+                        color: Color(0XFF1B1442),
+                        size: 30, // Sesuaikan ukuran ikon
+                      ),
+                    ),
+
+                    hintText: "Search",
+                    contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+
+                    hintStyle: TextStyle(
+                      color: ColorStyle.text_hint,
+                      fontSize: 16,
+                    ),
+
+                    enabledBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: ColorStyle.fill_stroke, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ),
+              Padding(padding: EdgeInsets.only(top: 25)),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -1457,24 +1241,24 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                         60, // Menambah tinggi minimum baris
                                     dataRowMaxHeight:
                                         60, // Menambah tinggi maksimum baris
-                                    columns: const [
+                                    columns: [
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('ID Transaksi',
+                                          child: Text('Nomor',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold)),
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Tanggal Transaksi',
+                                            'Nomer Obat',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       )),
@@ -1482,31 +1266,29 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Nama Pelanggan',
+                                            'Jumlah Stock',
                                             textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.inter(
+                                                fontWeight: FontWeight.w600),
                                           ),
                                         ),
                                       )),
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Nama Kasir',
+                                          child: Text('Jumlah Barang Asli',
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold)),
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text(
-                                            textAlign: TextAlign.center,
-                                            'Actions',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
+                                          child: Text('Keterangan',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                     ],
@@ -1518,8 +1300,8 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                           DataCell(Center(
                                             child: Text(item.noKartu,
                                                 textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
+                                                style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w700,
                                                   color:
                                                       ColorStyle.text_secondary,
                                                   fontSize: 14,
@@ -1529,66 +1311,78 @@ class _TransaksiApotek extends State<TransaksiApotek> {
                                             child: Text(
                                               item.nama,
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
+                                              style: GoogleFonts.inter(
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
                                             ),
                                           )),
                                           DataCell(Center(
                                             child: Text(
                                               item.kategori,
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
-                                              ),
+                                              style: GoogleFonts.inter(
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
                                             ),
                                           )),
                                           DataCell(Center(
-                                            child: Text(
-                                              item.satuan,
+                                              child: SizedBox(
+                                            width: 100,
+                                            height: 35,
+                                            child: TextFormField(
+                                              initialValue:
+                                                  item.stok.toString(),
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 8),
+                                                border: OutlineInputBorder(),
                                               ),
                                             ),
-                                          )),
+                                          )
+                                              // child: Text(
+                                              //   item.stok.toString(),
+                                              //   textAlign: TextAlign.center,
+                                              //   style: GoogleFonts.inter(
+                                              //     color:
+                                              //         ColorStyle.text_secondary,
+                                              //     fontSize: 14,fontWeight: FontWeight.w400
+                                              //   ),
+                                              // ),
+                                              )),
                                           DataCell(Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                IconButton(
-                                                    icon: Icon(
-                                                      Icons
-                                                          .open_in_new_outlined,
-                                                      color: ColorStyle
-                                                          .text_secondary,
-                                                      size: 24,
-                                                    ),
-                                                    onPressed: () {
-                                                      _viewDetails(item);
-                                                    }),
-                                                IconButton(
-                                                    icon: Icon(
-                                                      Icons
-                                                          .delete_outline_outlined,
-                                                      color: ColorStyle
-                                                          .text_secondary,
-                                                      size: 24,
-                                                    ),
-                                                    onPressed: () {
-                                                      _modalKosongkanTransaksi(
-                                                          item);
-                                                    }),
-                                              ],
+                                              child: SizedBox(
+                                            width: 250,
+                                            height: 35,
+                                            child: TextFormField(
+                                              initialValue:
+                                                  item.catatan.toString(),
+                                              textAlign: TextAlign.center,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 8),
+                                                border: OutlineInputBorder(),
+                                              ),
                                             ),
-                                          ))
+                                          )
+                                              // child: Text(
+                                              //   item.stok.toString(),
+                                              //   textAlign: TextAlign.center,
+                                              //   style: GoogleFonts.inter(
+                                              //     color:
+                                              //         ColorStyle.text_secondary,
+                                              //     fontSize: 14,fontWeight: FontWeight.w400
+                                              //   ),
+                                              // ),
+                                              )),
                                         ],
                                       );
                                     }).toList(),
@@ -1733,7 +1527,7 @@ class _TransaksiApotek extends State<TransaksiApotek> {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
           ),
           SizedBox(height: 4),
           Container(
@@ -1748,7 +1542,8 @@ class _TransaksiApotek extends State<TransaksiApotek> {
               padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
               child: Text(
                 value,
-                style: TextStyle(fontSize: 12),
+                style: GoogleFonts.inter(
+                    fontSize: 13, fontWeight: FontWeight.w400),
               ),
             ),
           )
@@ -2543,257 +2338,179 @@ class _TransaksiApotek extends State<TransaksiApotek> {
     );
   }
 
-  Widget detailIsiTransaksi(String isi) {
-    return Container(
-      width: 105,
-      height: 35,
-      decoration: BoxDecoration(
-        border: Border.all(color: ColorStyle.fill_stroke),
-        color: ColorStyle.fill_form,
-        borderRadius: BorderRadius.circular(8),
-      ),
+  Widget InputForm(String label1, String hint1, String label2, String hint2,
+      TextEditingController edit, TextEditingController edit2) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 15),
       child: Padding(
-        padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
-        child: Text(
-          isi,
-          style: TextStyle(fontSize: 12),
-        ),
-      ),
-    );
-  }
+        padding: const EdgeInsets.symmetric(horizontal: 0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        label1,
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        " *",
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ColorStyle.button_red),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Container(
+                    height: 35,
+                    // decoration: BoxDecoration(
+                    //   border: Border.all(color: ColorStyle.fill_stroke),
+                    //   color: ColorStyle.fill_form,
+                    //   borderRadius: BorderRadius.circular(8),
+                    // ),
+                    child: TextField(
+                      onChanged: (value) {
+                        // print(isi[0].text);
+                      },
+                      controller: edit,
+                      style: TextStyle(
+                        color: ColorStyle.tulisan_form,
+                        fontSize: 12,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: ColorStyle.fill_form,
+                        hintText: "Nama Obat",
+                        contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                        hintStyle: TextStyle(
+                          color: ColorStyle.tulisan_form,
+                          fontSize: 12,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: ColorStyle.fill_stroke,
+                              width: 1), // Warna abu-abu
+                          borderRadius: BorderRadius.circular(8),
+                        ),
 
-  Widget inputFieldDetail(String isi, TextEditingController edit) {
-    return Center(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 8),
-          Container(
-            width: 200,
-            height: 30,
-            // decoration: BoxDecoration(
-            //   border: Border.all(color: ColorStyle.fill_stroke),
-            //   color: ColorStyle.fill_form,
-            //   borderRadius: BorderRadius.circular(8),
-            // ),
-            child: TextField(
-              controller: edit,
-              style: TextStyle(
-                color: ColorStyle.tulisan_form,
-                fontSize: 12,
-              ),
-              decoration: InputDecoration(
-                hintText: isi,
-                filled: true,
-                fillColor: ColorStyle.fill_form,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-                hintStyle: TextStyle(
-                  color: ColorStyle.tulisan_form,
-                  fontSize: 12,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                        // Border saat ditekan (fokus)
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: Colors.black,
+                              width: 1), // Warna biru saat fokus
+                          borderRadius: BorderRadius.circular(8),
+                        ),
 
-                // Border saat ditekan (fokus)
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black, width: 1), // Warna biru saat fokus
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat error
-                errorBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.button_red,
-                      width: 1), // Warna merah jika error
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dropdownMetodePembayaran() {
-    return Center(
-      child: SizedBox(
-        width: double.infinity, // Sesuaikan lebar agar tidak terlalu besar
-        height: 28, // Tinggi dropdown agar sesuai dengan contoh gambar
-        child: DropdownButtonFormField2<String>(
-          isExpanded: false, // Jangan meluaskan dropdown ke full width
-          value: _selectedMetode,
-          hint: Text(
-            "Pilih Pembayaran",
-            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-          ),
-          items: metodePembayaranItems
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(
-                      e,
-                      style:
-                          TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                      overflow: TextOverflow.ellipsis,
+                        // Border saat error
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                              color: ColorStyle.button_red,
+                              width: 1), // Warna merah jika error
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedMetode = value!;
-            });
-          },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: ColorStyle.fill_form,
-            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            constraints: BoxConstraints(maxHeight: 30),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5), // Border radius halus
-              borderSide: BorderSide(color: ColorStyle.button_grey),
+                  ),
+                ],
+              ),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(
-                  color: ColorStyle
-                      .text_secondary), // Saat aktif, border lebih gelap
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        label2,
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        " *",
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: ColorStyle.button_red),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        // Gunakan Expanded agar TextField tidak menyebabkan infinite width error
+                        child: Container(
+                          height: 35,
+                          // decoration: BoxDecoration(
+                          //   border: Border.all(color: ColorStyle.fill_stroke),
+                          //   color: ColorStyle.fill_form,
+                          //   borderRadius: BorderRadius.circular(8),
+                          // ),
+                          child: TextField(
+                            controller: edit2,
+                            style: TextStyle(
+                              color: ColorStyle.tulisan_form,
+                              fontSize: 12,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: ColorStyle.fill_form,
+                              hintText: "Jumlah Barang yang Dipesan",
+                              contentPadding:
+                                  EdgeInsets.only(left: 8, bottom: 12.5),
+                              hintStyle: TextStyle(
+                                color: ColorStyle.tulisan_form,
+                                fontSize: 12,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorStyle.fill_stroke,
+                                    width: 1), // Warna abu-abu
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              // Border saat ditekan (fokus)
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: Colors.black,
+                                    width: 1), // Warna biru saat fokus
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              // Border saat error
+                              errorBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: ColorStyle.button_red,
+                                    width: 1), // Warna merah jika error
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // SizedBox(width: 10),
+                      // InkWell(
+                      //   onTap: () {
+                      //     onDelete;
+                      //   },
+                      //   child: Icon(Icons.delete_outline,
+                      //       color: ColorStyle.button_red, size: 25),
+                      // )
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-
-          // **Atur Tampilan Dropdown**
-          buttonStyleData: ButtonStyleData(
-            height: 25, // Tinggi tombol dropdown
-            padding:
-                EdgeInsets.symmetric(horizontal: 6), // Jarak dalam dropdown
-          ),
-
-          // **Atur Tampilan Dropdown yang Muncul**
-          dropdownStyleData: DropdownStyleData(
-            width: null, // Lebar dropdown harus sama dengan input
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              border: Border.all(color: Colors.grey),
-              color: ColorStyle.fill_form,
-            ),
-          ),
-
-          // **Atur Posisi Item Dropdown**
-          menuItemStyleData: const MenuItemStyleData(
-            padding: EdgeInsets.symmetric(
-                horizontal: 8), // Padding antar item dropdown
-          ),
-
-          // **Ganti Icon Dropdown**
-          iconStyleData: IconStyleData(
-            icon: Icon(Icons.keyboard_arrow_down_outlined,
-                size: 20, color: Colors.black),
-            openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                size: 20, color: Colors.black),
-          ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _dropdownGender() {
-    return Center(
-      child: SizedBox(
-        width: 200, // Sesuaikan lebar agar tidak terlalu besar
-        height: 30, // Tinggi dropdown agar sesuai dengan contoh gambar
-        child: DropdownButtonFormField2<String>(
-          isExpanded: false, // Jangan meluaskan dropdown ke full width
-          value: _selectedStatus,
-          hint: Text(
-            "Pilih Gender",
-            style: TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-          ),
-          items: genderItems
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(
-                      e,
-                      style:
-                          TextStyle(fontSize: 12, color: ColorStyle.text_hint),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedStatus = value!;
-            });
-          },
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: ColorStyle.fill_form,
-            contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            constraints: BoxConstraints(maxHeight: 30),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5), // Border radius halus
-              borderSide: BorderSide(color: ColorStyle.button_grey),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(
-                  color: ColorStyle
-                      .text_secondary), // Saat aktif, border lebih gelap
-            ),
-          ),
-
-          // **Atur Tampilan Dropdown**
-          buttonStyleData: ButtonStyleData(
-            height: 25, // Tinggi tombol dropdown
-            padding:
-                EdgeInsets.symmetric(horizontal: 6), // Jarak dalam dropdown
-          ),
-
-          // **Atur Tampilan Dropdown yang Muncul**
-          dropdownStyleData: DropdownStyleData(
-            width: 200, // Lebar dropdown harus sama dengan input
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              border: Border.all(color: Colors.grey),
-              color: ColorStyle.fill_form,
-            ),
-          ),
-
-          // **Atur Posisi Item Dropdown**
-          menuItemStyleData: const MenuItemStyleData(
-            padding: EdgeInsets.symmetric(
-                horizontal: 8), // Padding antar item dropdown
-          ),
-
-          // **Ganti Icon Dropdown**
-          iconStyleData: IconStyleData(
-            icon: Icon(Icons.keyboard_arrow_down_outlined,
-                size: 20, color: Colors.black),
-            openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                size: 20, color: Colors.black),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildTextField(String data, TextEditingController isi) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          data,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-        ),
-        TextField(
-          controller: isi,
-          decoration: InputDecoration(
-            border: const UnderlineInputBorder(),
-          ),
-        ),
-      ],
     );
   }
 }

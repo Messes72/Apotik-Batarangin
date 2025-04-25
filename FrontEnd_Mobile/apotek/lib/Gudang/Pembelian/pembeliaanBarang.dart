@@ -549,10 +549,10 @@ class pagePembelian extends State<Pembeliaanbarang>
                                       Padding(
                                           padding: EdgeInsets.only(left: 16)),
                                       Text("Daftar Barang",
-                                          style: TextStyle(
+                                          style: GoogleFonts.montserrat(
                                               fontSize: 18,
                                               color: ColorStyle.tulisan_form,
-                                              fontWeight: FontWeight.bold)),
+                                              fontWeight: FontWeight.w600)),
                                       Spacer(),
                                       SizedBox(
                                         width: 120,
@@ -1346,9 +1346,9 @@ class pagePembelian extends State<Pembeliaanbarang>
                                   child: Icon(Icons.add,
                                       color: Colors.white, size: 22),
                                 ),
-                                label: const Text("Input Pembelian",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16)),
+                                label:  Text("Input Pembelian",
+                                    style: GoogleFonts.inter(
+                                        color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor:
                                       ColorStyle.hover.withOpacity(0.7),

@@ -1,11 +1,11 @@
 import 'package:apotek/Gudang/Stock/DataStockOpname.dart';
-import 'package:apotek/Gudang/Stock/cobaaa.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:apotek/global.dart' as global;
 
 class stokopname extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -763,7 +763,7 @@ class stokPage extends State<stokopname> {
                                               width: 1),
                                         ),
                                       ),
-                                      child:  Text("KONFIRMASI",
+                                      child: Text("KONFIRMASI",
                                           style: GoogleFonts.inter(
                                               color: ColorStyle.primary,
                                               fontSize: 11,
@@ -1105,7 +1105,7 @@ class stokPage extends State<stokopname> {
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
       appBar: NavbarTop(
-          title: "STOK OPNAME",
+          title: "STOCK OPNAME",
           onMenuPressed: widget.toggleSidebar,
           isExpanded: widget.isExpanded,
           animationTrigger: onMenuPressed,
@@ -1124,12 +1124,20 @@ class stokPage extends State<stokopname> {
                     height: 40,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        _inputStockOpname();
+                        setState(() {
+                          global.selectedIndex =
+                              3; // ini halaman yang ditampilkan
+                          global.selectedScreen = 1; // ini di sidebarnya
+                        });
+                        // _inputStockOpname();
                       },
                       icon:
                           const Icon(Icons.add, color: Colors.white, size: 22),
-                      label:  Text("Input Stock Opname",
-                          style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                      label: Text("Input Stock Opname",
+                          style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorStyle.hover.withOpacity(0.7),
                         shape: RoundedRectangleBorder(
@@ -1236,7 +1244,7 @@ class stokPage extends State<stokopname> {
                                         60, // Menambah tinggi minimum baris
                                     dataRowMaxHeight:
                                         60, // Menambah tinggi maksimum baris
-                                    columns:  [
+                                    columns: [
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
@@ -1277,7 +1285,7 @@ class stokPage extends State<stokopname> {
                                                   fontWeight: FontWeight.w600)),
                                         ),
                                       )),
-                                       DataColumn(
+                                      DataColumn(
                                           label: Expanded(
                                         child: Center(
                                           child: Text('Jumlah Update Stock',
@@ -1318,10 +1326,10 @@ class stokPage extends State<stokopname> {
                                               item.nama,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,fontWeight: FontWeight.w500
-                                              ),
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500),
                                             ),
                                           )),
                                           DataCell(Center(
@@ -1329,10 +1337,10 @@ class stokPage extends State<stokopname> {
                                               item.kategori,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,fontWeight: FontWeight.w400
-                                              ),
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
                                             ),
                                           )),
                                           DataCell(Center(
@@ -1340,10 +1348,10 @@ class stokPage extends State<stokopname> {
                                               item.stok.toString(),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,fontWeight: FontWeight.w400
-                                              ),
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
                                             ),
                                           )),
                                           DataCell(Center(
@@ -1351,10 +1359,10 @@ class stokPage extends State<stokopname> {
                                               item.stok.toString(),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
-                                                color:
-                                                    ColorStyle.text_secondary,
-                                                fontSize: 14,fontWeight: FontWeight.w400
-                                              ),
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
                                             ),
                                           )),
                                           DataCell(Center(
@@ -1371,7 +1379,13 @@ class stokPage extends State<stokopname> {
                                                       size: 24,
                                                     ),
                                                     onPressed: () {
-                                                      _viewDetails(item);
+                                                      setState(() {
+                                                        global.selectedIndex =
+                                                            5; // ini halaman yang ditampilkan
+                                                        global.selectedScreen =
+                                                            1; // ini di sidebarnya
+                                                      });
+                                                      // _viewDetails(item);
                                                     }),
                                                 IconButton(
                                                     icon: Icon(
@@ -1381,7 +1395,13 @@ class stokPage extends State<stokopname> {
                                                       size: 24,
                                                     ),
                                                     onPressed: () {
-                                                      _editStockOpname(item);
+                                                      setState(() {
+                                                        global.selectedIndex =
+                                                            6; // ini halaman yang ditampilkan
+                                                        global.selectedScreen =
+                                                            1; // ini di sidebarnya
+                                                      });
+                                                      // _editStockOpname(item);
                                                     }),
                                                 IconButton(
                                                     icon: Icon(
@@ -1556,7 +1576,8 @@ class stokPage extends State<stokopname> {
               padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
               child: Text(
                 value,
-                style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400),
+                style: GoogleFonts.inter(
+                    fontSize: 13, fontWeight: FontWeight.w400),
               ),
             ),
           )

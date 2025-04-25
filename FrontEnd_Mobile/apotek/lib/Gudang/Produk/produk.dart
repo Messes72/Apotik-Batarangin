@@ -6,6 +6,7 @@ import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/main.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/global.dart' as global;
 import 'package:google_fonts/google_fonts.dart';
@@ -127,6 +128,8 @@ class _PageProduk extends State<PageProduk> {
   Future<void> getDataKategori() async {
     try {
       listKategori = await KategoriObat.getDataKategori();
+      print("pppppppppppppp");
+      print(listKategori.length);
       // print();
       setState(() {});
     } catch (e) {
@@ -141,10 +144,25 @@ class _PageProduk extends State<PageProduk> {
             (item) => item.idKategori == idKategori,
           )
           .nama;
+
     } catch (e) {
       return null; // jika tidak ditemukan
     }
   }
+
+  KategoriObat? getNamaKategori2(String idKategori) {
+    try {
+      return listKategori
+          .firstWhere(
+            (item) => item.idKategori == idKategori,
+          )
+          ;
+
+    } catch (e) {
+      return null; // jika tidak ditemukan
+    }
+  }
+
 
   String? getNamaSatuan(String idSatuan) {
     try {
@@ -413,6 +431,10 @@ class _PageProduk extends State<PageProduk> {
   }
 
   void _editProduk(Products item) {
+    setState(() {
+      _selectedKategoriEdit = getNamaKategori2(item.idKategori);
+      print(_selectedKategoriEdit!.idKategori);
+    });
     // TextEditingController namaObatController =
     //     TextEditingController(text: item.namaObat);
     // TextEditingController hargaBeliController =

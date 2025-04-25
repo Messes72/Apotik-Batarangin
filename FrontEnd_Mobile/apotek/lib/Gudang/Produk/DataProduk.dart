@@ -192,6 +192,7 @@ class KategoriObat {
   final String nama;
   final String createdAt;
   final String updatedAt;
+  final String catatan;
 
   KategoriObat({
     required this.id,
@@ -200,6 +201,7 @@ class KategoriObat {
     required this.nama,
     required this.createdAt,
     required this.updatedAt,
+    required this.catatan
   });
 
   factory KategoriObat.fromJson(Map<String, dynamic> json) {
@@ -209,7 +211,8 @@ class KategoriObat {
       idKategori: json['id_kategori'],
       nama: json['nama'],
       createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      updatedAt: json['updated_at'] ?? "",
+      catatan: json['catatan'],
     );
   }
 
@@ -220,6 +223,7 @@ class KategoriObat {
         'nama': nama,
         'created_at': createdAt,
         'updated_at': updatedAt,
+        'catatan':catatan
       };
 
   static Future<List<KategoriObat>> getDataKategori() async {
@@ -229,9 +233,11 @@ class KategoriObat {
 
     if (response.statusCode == 200) {
       var jsonList = jsonDecode(response.body);
+      print(jsonList);
       List<KategoriObat> kategoriList = jsonList
           .map<KategoriObat>((json) => KategoriObat.fromJson(json))
           .toList();
+          print("ppppppppppppppppppppppp");
       return kategoriList;
     } else {
       throw Exception("Gagal Load Data Kategori");

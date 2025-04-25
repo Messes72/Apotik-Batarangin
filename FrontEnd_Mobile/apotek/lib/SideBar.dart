@@ -1,13 +1,13 @@
-import 'dart:math';
-
 import 'package:apotek/Gudang/Pembelian/pembeliaanBarang.dart';
-import 'package:apotek/Gudang/Produk/inputproduk.dart';
+import 'package:apotek/Gudang/Stock/detailStockOpname.dart';
+import 'package:apotek/Gudang/Stock/editStockOpname.dart';
+import 'package:apotek/Gudang/Stock/inputStockOpname.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/login.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/Gudang/Penerimaan/penerimaanBarang.dart';
 import 'package:apotek/Gudang/Produk/produk.dart';
-import 'package:apotek/Gudang/Stock/stokopname.dart';
+import 'package:apotek/Gudang/Stock/stockOpname.dart';
 import 'package:apotek/global.dart' as global;
 import 'package:google_fonts/google_fonts.dart';
 
@@ -40,8 +40,10 @@ class _SideBarPage extends State<Sidebarcoba2> {
       stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
       PenerimaanBarang(
           isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2
-      Inputproduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //3
-      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar) //4
+      Inputstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //3
+      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //4
+      Detailstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 5
+      Editstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 6
     ];
   }
 
@@ -96,7 +98,7 @@ class _SideBarPage extends State<Sidebarcoba2> {
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.montserrat(
                                   color: Colors.white,
-                                  fontSize: 18,
+                                  fontSize: 16.5,
                                   fontWeight: FontWeight.w600,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -141,7 +143,7 @@ class _SideBarPage extends State<Sidebarcoba2> {
       onExit: (_) => setState(() => hoveredIndex = -1),
       child: InkWell(
         onTap: () {
-          if (index == 3) {
+          if (index == 3 ) {
             setState(() {
               global.selectedIndex = 0; // Reset ke halaman Product
             });
@@ -249,7 +251,7 @@ class _SideBarPage extends State<Sidebarcoba2> {
                     padding: const EdgeInsets.only(left: 8),
                     child: Text(
                       title,
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: GoogleFonts.montserrat(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
                     ),
@@ -261,4 +263,4 @@ class _SideBarPage extends State<Sidebarcoba2> {
       ),
     );
   }
-}
+} 

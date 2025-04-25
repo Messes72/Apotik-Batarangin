@@ -10,7 +10,7 @@ import 'package:apotek/login.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/Gudang/Penerimaan/penerimaanBarang.dart';
 import 'package:apotek/Gudang/Produk/produk.dart';
-import 'package:apotek/Gudang/Stock/stokopname.dart';
+import 'package:apotek/Gudang/Stock/stockOpname.dart';
 import 'package:apotek/global.dart' as global;
 
 class Sidebarapotek extends StatefulWidget {
