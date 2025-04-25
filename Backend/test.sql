@@ -299,12 +299,31 @@ CREATE TABLE detail_kartustok (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME,
     deleted_at DATETIME,
-    CONSTRAINT fk_detail_kartustok__kartu_stok
+    CONSTRAINT fk_detail_kartustok_kartu_stok
         FOREIGN KEY (id_kartustok)
-        REFERENCES kartu_stok (id_kartustok)
+        REFERENCES kartu_stok(id_kartustok)
         ON UPDATE CASCADE
         ON DELETE RESTRICT 
 );
+
+
+CREATE TABLE IF NOT EXISTS `detail_kartustok` (
+  `id` int(11) PRIMARY KEY AUTO_INCREMENT,
+  `id_detail_kartu_stok` varchar(100) UNIQUE NOT NULL,
+  `id_kartustok` varchar(100) NOT NULL,
+  `id_transaksi` varchar(100) DEFAULT NULL,
+  `id_distribusi` varchar(100) DEFAULT NULL,
+  `id_batch_penerimaan` varchar(100) DEFAULT NULL,
+  `id_nomor_batch` varchar(100) DEFAULT NULL,
+  `masuk` int(11) NOT NULL DEFAULT 0,
+  `keluar` int(11) NOT NULL DEFAULT 0,
+  `sisa` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  KEY `fk_detail_kartustok__kartu_stok` (`id_kartustok`),
+  CONSTRAINT `fk_detail_kartustok__kartu_stok` FOREIGN KEY (`id_kartustok`) REFERENCES `kartu_stok` (`id_kartustok`) ON UPDATE CASCADE
+)
 
 CREATE TABLE obat_jadi (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -375,11 +394,15 @@ CREATE TABLE detail_pembelian_penerimaan(
     jumlah_dipesan INT UNSIGNED NOT NULL,
     jumlah_diterima INT UNSIGNED NOT NULL,
     created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
+    created_by VARCHAR (10) NOT NULL, 
+    updated_by VARCHAR(10) NULL,
     constraint fk_pembelian_penerimaan_obat FOREIGN KEY (id_pembelian_penerimaan_obat) REFERENCES pembelian_penerimaan(id_pembelian_penerimaan_obat),
     constraint fk_kartu_stok FOREIGN KEY (id_kartustok, id_depo) REFERENCES kartu_stok(id_kartustok, id_depo),
     constraint fk_status FOREIGN KEY (id_status) REFERENCES status(id_status)
 
-)
+) 
+// jangan lupa ini created_by di heidi masih null, harus diganti ke not null
 
 CREATE TABLE status(
     id INT AUTO_INCREMENT PRIMARY KEY,

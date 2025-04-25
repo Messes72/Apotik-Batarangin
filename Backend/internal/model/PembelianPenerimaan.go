@@ -104,7 +104,7 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 		querydetail := `INSERT INTO detail_pembelian_penerimaan (id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status,nama_obat, jumlah_dipesan, jumlah_diterima, created_at)
 			VALUES (?,?,?,?,?,?,?,?,NOW())`
 
-		_, err := tx.ExecContext(ctx, querydetail, newidpembelianpenerimaan, newiddetailpembelianpenerimaan, obat.IDKartuStok, idDepo, obat.IDStatus, obat.NamaObat, obat.JumlahDipesan, obat.JumlahDiterima)
+		_, err := tx.ExecContext(ctx, querydetail, newidpembelianpenerimaan, newiddetailpembelianpenerimaan, obat.IDKartuStok, idDepo, "0", obat.NamaObat, obat.JumlahDipesan, obat.JumlahDiterima)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Gagal insert detail pembelian obat", err)
@@ -297,7 +297,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 	return class.Response{Status: http.StatusOK, Message: "Berhasil Menyimpan Data Penerimaan Barang.", Data: nil}, err
 }
 
-func GetAllPembelian(ctx context.Context, idpembelian string, page, pagesize int) (class.Response, error) {
+func GetAllPembelian(ctx context.Context, page, pagesize int) (class.Response, error) {
 	con := db.GetDBCon()
 
 	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
@@ -309,7 +309,7 @@ func GetAllPembelian(ctx context.Context, idpembelian string, page, pagesize int
 	offset := (page - 1) * pagesize
 
 	querypembelianpenerimaan := `SELECT id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan, tanggal_penerimaan,
-		tanggal_pembayaran, pemesan, penerima FROM pembelian_penerimaan WHERE deleted_at IS NULL ORDER BY id_pembelian_penerimaan_obat DESC LIMIT ? OFFSET ? `
+		tanggal_pembayaran, pemesan, penerima FROM pembelian_penerimaan WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ? `
 
 	rows, err := con.QueryContext(ctx, querypembelianpenerimaan, pagesize, offset)
 	if err != nil {
@@ -367,8 +367,60 @@ func GetAllPembelian(ctx context.Context, idpembelian string, page, pagesize int
 
 }
 
-// func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response, error) {
-// 	con := db.GetDBCon()
+func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response, error) {
+	con := db.GetDBCon()
 
-// 	query
-// }
+	query := `SELECT id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan, tanggal_penerimaan,
+		tanggal_pembayaran, pemesan, penerima, created_at, created_by, updated_at, updated_by FROM pembelian_penerimaan WHERE id_pembelian_penerimaan_obat = ? AND deleted_at IS NULL`
+
+	var pembelian class.PembelianPenerimaan
+	var tpembelian, tpembayaran, tpenerimaan sql.NullTime
+
+	err := con.QueryRowContext(ctx, query, idpembelian).Scan(&pembelian.IDPembelianPenerimaanObat, &pembelian.IDSupplier, &pembelian.TotalHarga, &pembelian.Keterangan, &tpembelian, &tpenerimaan,
+		&tpembayaran, &pembelian.Pemesan, &pembelian.Penerima, &pembelian.CreatedAt, &pembelian.CreatedBy, &pembelian.UpdatedAt, &pembelian.UpdatedBy)
+
+	if err != nil {
+		log.Println("Error saata scan data dari rows ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pembelian obat", Data: nil}, err
+	}
+
+	if tpembelian.Valid { //format string ke date
+		pembelian.TanggalPembelianInput = tpembelian.Time.Format("2006-01-02")
+	}
+	if tpembayaran.Valid {
+		pembelian.TanggalPembelianInput = tpembayaran.Time.Format("2006-01-02")
+	}
+	if tpenerimaan.Valid {
+		pembelian.TanggalPembelianInput = tpenerimaan.Time.Format("2006-01-02")
+	}
+
+	querysupplier := `SELECT nama FROM supplier WHERE id_supplier = ? AND deleted_at IS NULL`
+	err = con.QueryRowContext(ctx, querysupplier, pembelian.IDSupplier).Scan(&pembelian.NamaSupplier)
+	if err != nil {
+		log.Println("Error saat mengambil nama supplier", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil nama supplier", Data: nil}, err
+	}
+
+	querydetailpembelianpenerimaan := `SELECT id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status, nama_obat, jumlah_dipesan,
+	jumlah_diterima, created_at, updated_at, created_by, updated_by FROM detail_pembelian_penerimaan WHERE id_pembelian_penerimaan_obat = ?`
+
+	rows, err := con.QueryContext(ctx, querydetailpembelianpenerimaan, idpembelian)
+	if err != nil {
+		log.Println("Error saat mengambil data detail pembelian penerimaan obat", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data detail pembelian penerimaan obat", Data: nil}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var detail class.DetailPembelianPenerimaan
+		err := rows.Scan(&detail.IDDetailPembelianPenerimaan, &detail.IDKartuStok, &detail.IDDepo, &detail.IDStatus, &detail.NamaObat, &detail.JumlahDipesan, &detail.JumlahDiterima,
+			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy)
+
+		if err != nil {
+			log.Println("Error saat scan data detail pembelian penerimaan obat", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data detail pembelian penerimaan obat", Data: nil}, err
+
+		}
+		pembelian.ObatList = append(pembelian.ObatList, detail)
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: pembelian}, nil
+}

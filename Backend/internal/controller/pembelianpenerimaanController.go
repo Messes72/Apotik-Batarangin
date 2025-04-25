@@ -5,6 +5,7 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	model "proyekApotik/internal/model"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -67,7 +68,13 @@ func CreatePenerimaan(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
 	}
 
-	requestBody.Penerima = idKaryawan.(string)
+	if idVal, ok := idKaryawan.(string); ok {
+		requestBody.Penerima = &idVal
+	} else {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "Invalid karyawan ID in token",
+		})
+	}
 
 	const layoutdate = "2006-01-02"
 	tanggalpenerimaan, err := time.Parse(layoutdate, requestBody.TanggalPenerimaanInput)
@@ -99,6 +106,32 @@ func CreatePenerimaan(c echo.Context) error {
 	}
 
 	return c.JSON(result.Status, result)
+}
+
+func GetAllPembelian(c echo.Context) error {
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+	result, _ := model.GetAllPembelian(c.Request().Context(), page, pageSize)
+	// result, err := model.GetAllPembelian(c.Request().Context(), page, pageSize)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, map[string]string{"message": "Error saat mengambil semua data pembelian"})
+	// }
+	return c.JSON(result.Status, result)
+
 }
 
 // func UpdatePenerimaan(c echo.Context) error {

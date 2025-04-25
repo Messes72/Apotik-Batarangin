@@ -164,6 +164,7 @@ type PembelianPenerimaan struct {
 	ID                        uint                        `json:"id"`
 	IDPembelianPenerimaanObat string                      `json:"id_pembelian_penerimaan_obat"`
 	IDSupplier                string                      `json:"id_supplier"`
+	NamaSupplier              string                      `json:"nama_supplier,omitempty"`
 	TanggalPembelian          time.Time                   `json:"-"`
 	TanggalPenerimaan         *time.Time                  `json:"-"`
 	TanggalPembayaran         *time.Time                  `json:"-"`
@@ -171,7 +172,7 @@ type PembelianPenerimaan struct {
 	TanggalPembayaranInput    string                      `json:"tanggal_pembayaran,omitempty"`
 	TanggalPenerimaanInput    string                      `json:"tanggal_penerimaan"`
 	Pemesan                   string                      `json:"pemesan,omitempty"`
-	Penerima                  string                      `json:"penerima,omitempty"`
+	Penerima                  *string                     `json:"penerima,omitempty"`
 	TotalHarga                float64                     `json:"total_harga"`
 	Keterangan                *string                     `json:"keterangan,omitempty"`
 	CreatedAt                 time.Time                   `json:"created_at"`
@@ -197,6 +198,8 @@ type DetailPembelianPenerimaan struct {
 	Kadaluarsa                  time.Time  `json:"-"`
 	KadaluarsaInput             string     `json:"kadaluarsa"`
 	CreatedAt                   time.Time  `json:"created_at"`
-	UpdatedAt                   time.Time  `json:"updated_at"`
+	UpdatedAt                   *time.Time `json:"updated_at"`
+	CreatedBy                   time.Time  `json:"created_by"`
+	UpdatedBy                   *time.Time `json:"updated_by"`
 	DeletedAt                   *time.Time `json:"deleted_at,omitempty"`
 }
