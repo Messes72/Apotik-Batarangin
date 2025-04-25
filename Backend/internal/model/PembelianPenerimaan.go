@@ -101,10 +101,10 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 
 		idDepo := "10"
 
-		querydetail := `INSERT INTO detail_pembelian_penerimaan (id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status,nama_obat, jumlah_dipesan, jumlah_diterima, created_at)
-			VALUES (?,?,?,?,?,?,?,?,NOW())`
+		querydetail := `INSERT INTO detail_pembelian_penerimaan (id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status,nama_obat, jumlah_dipesan, jumlah_diterima, created_at, created_by)
+			VALUES (?,?,?,?,?,?,?,?,NOW(),?)`
 
-		_, err := tx.ExecContext(ctx, querydetail, newidpembelianpenerimaan, newiddetailpembelianpenerimaan, obat.IDKartuStok, idDepo, "0", obat.NamaObat, obat.JumlahDipesan, obat.JumlahDiterima)
+		_, err := tx.ExecContext(ctx, querydetail, newidpembelianpenerimaan, newiddetailpembelianpenerimaan, obat.IDKartuStok, idDepo, "0", obat.NamaObat, obat.JumlahDipesan, obat.JumlahDiterima, pembelian.CreatedBy)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Gagal insert detail pembelian obat", err)
