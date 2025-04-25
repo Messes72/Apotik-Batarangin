@@ -21,7 +21,7 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 	var totalharga float64
 	for _, obat := range listobat {
 		var hargajual float64
-		queryhargajual := `SELECT harga_jual from obat_jadi WHERE id_obat = ?`
+		queryhargajual := `SELECT harga_beli from obat_jadi WHERE id_obat = ?`
 		err := tx.QueryRowContext(ctx, queryhargajual, obat.IDKartuStok).Scan(&hargajual)
 		if err != nil {
 			tx.Rollback()
