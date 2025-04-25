@@ -226,7 +226,8 @@ func UpdateObat(c echo.Context) error {
 	if idKaryawan == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
 	}
-
+	log.Println("id obat", idObat)
+	log.Println("req gambar", imgupdate)
 	// Convert numeric values.
 	hargaJual, err := strconv.ParseFloat(hargaJualStr, 64)
 	if err != nil {

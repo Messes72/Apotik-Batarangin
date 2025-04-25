@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -20,16 +21,26 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 
 	var totalharga float64
 	for _, obat := range listobat {
-		var hargajual float64
-		queryhargajual := `SELECT harga_beli from obat_jadi WHERE id_obat = ?`
-		err := tx.QueryRowContext(ctx, queryhargajual, obat.IDKartuStok).Scan(&hargajual)
-		if err != nil {
+		var hargabeli float64
+		queryhargabeli := `SELECT harga_beli from obat_jadi WHERE id_obat = ?`
+		err := tx.QueryRowContext(ctx, queryhargabeli, obat.IDKartuStok).Scan(&hargabeli)
+		if err == sql.ErrNoRows {
+			log.Printf("No harga_beli found for id_obat %s", obat.IDKartuStok)
 			tx.Rollback()
-			log.Println("error saat mengambil data harga jual ", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung total harga barang"}, err
+			return class.Response{Status: http.StatusNotFound, Message: fmt.Sprintf("Obat %s tidak ditemukan di database", obat.IDKartuStok)}, nil
+		} else if err != nil {
+			tx.Rollback()
+			log.Println("Unexpected DB error:", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Database error saat ambil harga beli"}, err
 		}
-		totalharga += hargajual * float64(obat.JumlahDipesan)
+		log.Printf("Obat ID: %s, Harga Beli: %.2f, Jumlah Dipesan: %d, Total Harga: %.2f",
+			obat.IDKartuStok, hargabeli, obat.JumlahDipesan, hargabeli*float64(obat.JumlahDipesan))
+
+		log.Printf("Harga beli obat %s = %.2f, jumlah = %d", obat.IDKartuStok, hargabeli, obat.JumlahDipesan)
+		totalharga += hargabeli * float64(obat.JumlahDipesan)
+
 	}
+	fmt.Printf("Total Harga: %.2f\n", totalharga)
 
 	var counter int
 	queryCounter := `SELECT count FROM pembelian_penerimaancounter FOR UPDATE`
@@ -53,8 +64,10 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 	}
 
+	log.Println("slm query")
+
 	query := `INSERT INTO pembelian_penerimaan (id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan,tanggal_pembayaran, pemesan , created_at, created_by)
-	VALUES (?,?,?,?,?,?,?,NOW(),?)`
+		VALUES (?,?,?,?,?,?,?,NOW(),?)`
 	_, err = tx.ExecContext(ctx, query, newidpembelianpenerimaan, pembelian.IDSupplier, totalharga, pembelian.Keterangan, pembelian.TanggalPembelian, pembelian.TanggalPembayaran, pembelian.CreatedBy, pembelian.CreatedBy)
 	if err != nil {
 		tx.Rollback()
@@ -89,7 +102,7 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 		idDepo := "10"
 
 		querydetail := `INSERT INTO detail_pembelian_penerimaan (id_pembelian_penerimaan_obat, id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status,nama_obat, jumlah_dipesan, jumlah_diterima, created_at)
-		VALUES (?,?,?,?,?,?,?,?,NOW())`
+			VALUES (?,?,?,?,?,?,?,?,NOW())`
 
 		_, err := tx.ExecContext(ctx, querydetail, newidpembelianpenerimaan, newiddetailpembelianpenerimaan, obat.IDKartuStok, idDepo, obat.IDStatus, obat.NamaObat, obat.JumlahDipesan, obat.JumlahDiterima)
 		if err != nil {
@@ -180,7 +193,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 		}
 
 		querybatchpenerimaan := `INSERT INTO batch_penerimaan (id_batch_penerimaan, id_detail_pembelian_penerimaan, id_nomor_batch, jumlah_diterima, created_at) 
-		VALUEs (?,?,?,?,NOW())`
+			VALUEs (?,?,?,?,NOW())`
 
 		_, err = tx.ExecContext(ctx, querybatchpenerimaan, newidbatchpenerimaan, obat.IDDetailPembelianPenerimaan, newidbatch, obat.JumlahDiterima)
 		if err != nil {
@@ -246,7 +259,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 		}
 
 		querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_batch_penerimaan , id_nomor_batch, masuk, keluar, sisa, created_at)
-		VALUES (?,?,?,?,?,0,?,NOW())`
+			VALUES (?,?,?,?,?,0,?,NOW())`
 
 		var stoklama int
 		querystoklama := `SELECT stok_barang FROM kartu_stok WHERE id_kartustok= ?`
@@ -284,15 +297,78 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 	return class.Response{Status: http.StatusOK, Message: "Berhasil Menyimpan Data Penerimaan Barang.", Data: nil}, err
 }
 
-// func GetPembelian(ctx context.Context, idpembelian string, page, pagesize int) (class.Response, error) {
+func GetAllPembelian(ctx context.Context, idpembelian string, page, pagesize int) (class.Response, error) {
+	con := db.GetDBCon()
+
+	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
+		page = 1
+	}
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	offset := (page - 1) * pagesize
+
+	querypembelianpenerimaan := `SELECT id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan, tanggal_penerimaan,
+		tanggal_pembayaran, pemesan, penerima FROM pembelian_penerimaan WHERE deleted_at IS NULL ORDER BY id_pembelian_penerimaan_obat DESC LIMIT ? OFFSET ? `
+
+	rows, err := con.QueryContext(ctx, querypembelianpenerimaan, pagesize, offset)
+	if err != nil {
+		log.Println("Error saat mengambil data pemebelian penerimaan obat", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pembelian obat", Data: nil}, err
+	}
+	defer rows.Close()
+
+	var listpembelian []class.PembelianPenerimaan
+	for rows.Next() {
+
+		var pembelian class.PembelianPenerimaan
+		var tpembelian, tpembayaran, tpenerimaan sql.NullTime
+
+		err := rows.Scan(&pembelian.IDPembelianPenerimaanObat, &pembelian.IDSupplier, &pembelian.TotalHarga, &pembelian.Keterangan, &tpembelian, &tpenerimaan,
+			&tpembayaran, &pembelian.Pemesan, &pembelian.Penerima)
+
+		if err != nil {
+			log.Println("Error saata scan data dari rows ", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pembelian obat", Data: nil}, err
+		}
+
+		if tpembelian.Valid {
+			pembelian.TanggalPembelianInput = tpembelian.Time.Format("2006-01-02")
+		}
+		if tpembayaran.Valid {
+			pembelian.TanggalPembelianInput = tpembayaran.Time.Format("2006-01-02")
+		}
+		if tpenerimaan.Valid {
+			pembelian.TanggalPembelianInput = tpenerimaan.Time.Format("2006-01-02")
+		}
+
+		listpembelian = append(listpembelian, pembelian)
+
+	}
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM pembelian_penerimaan WHERE deleted_at IS NULL`
+	err = con.QueryRowContext(ctx, countrecordquery).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("gagal menghitung jumlah entry table obat , pada query di model obat")
+		return class.Response{Status: http.StatusInternalServerError, Message: "gagal menghitung jumlah obat"}, nil
+	}
+
+	totalpage := (totalrecord + pagesize - 1) / pagesize //bisa juga pakai total/pagesize tp kan nanti perlu di bulatkan keatas pakai package math dimana dia perlu type floating point yg membuat performa hitung lebih lambat
+
+	metadata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pagesize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: listpembelian, Metadata: metadata}, err
+
+}
+
+// func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response, error) {
 // 	con := db.GetDBCon()
 
-// 	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
-// 		page = 1
-// 	}
-// 	if pagesize <= 0 {
-// 		pagesize = 10
-// 	}
-// 	offset := (page - 1) * pagesize
-
+// 	query
 // }

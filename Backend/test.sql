@@ -345,7 +345,7 @@ CREATE TABLE pembelian_penerimaan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_pembelian_penerimaan_obat VARCHAR(50) NOT NULL UNIQUE,
     id_supplier VARCHAR(50) NOT NULL,
-    total_harga FLOAT UNSIGNED NOT NULL,
+    total_harga DECIMAL(15,3) UNSIGNED NOT NULL,
     keterangan VARCHAR(255) NULL,
     tanggal_pemesanan DATE NOT NULL,
     tanggal_penerimaan DATE NULL,
