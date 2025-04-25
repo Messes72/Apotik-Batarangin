@@ -199,7 +199,7 @@ type DetailPembelianPenerimaan struct {
 	KadaluarsaInput             string     `json:"kadaluarsa"`
 	CreatedAt                   time.Time  `json:"created_at"`
 	UpdatedAt                   *time.Time `json:"updated_at"`
-	CreatedBy                   time.Time  `json:"created_by"`
-	UpdatedBy                   *time.Time `json:"updated_by"`
+	CreatedBy                   *string    `json:"created_by"`
+	UpdatedBy                   *string    `json:"updated_by"`
 	DeletedAt                   *time.Time `json:"deleted_at,omitempty"`
 }

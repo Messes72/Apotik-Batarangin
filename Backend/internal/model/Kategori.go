@@ -133,7 +133,7 @@ func UpdateKategori(ctx context.Context, kategori class.Kategori, idkaryawan str
 
 	}
 
-	statementupdate := `UPDATE Kategori SET id_depo = ? , nama = ? , catatan=? , updated_at= NOW(), updated_by= ? WHERE id_kategori = ? WHERE deleted_at IS NULL`
+	statementupdate := `UPDATE Kategori SET id_depo = ? , nama = ? , catatan=? , updated_at= NOW(), updated_by= ? WHERE id_kategori = ? AND deleted_at IS NULL`
 	_, err = tx.ExecContext(ctx, statementupdate, kategori.IDDepo, kategori.Nama, kategori.Catatan, idkaryawan, idkategori)
 	if err != nil {
 		tx.Rollback()

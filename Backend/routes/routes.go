@@ -86,6 +86,7 @@ func Init() *echo.Echo {
 	routePembelianPenjualan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routePembelianPenjualan.POST("/create", controller.CreatePembelian)
 	routePembelianPenjualan.GET("", controller.GetAllPembelian)
+	routePembelianPenjualan.GET("/:id_pembelian_penerimaan_obat", controller.GetPembelianDetail)
 
 	routePenerimaanBarang := e.Group("/penerimaanbarang")
 	routePenerimaanBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)

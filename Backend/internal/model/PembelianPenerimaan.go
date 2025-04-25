@@ -386,10 +386,10 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 		pembelian.TanggalPembelianInput = tpembelian.Time.Format("2006-01-02")
 	}
 	if tpembayaran.Valid {
-		pembelian.TanggalPembelianInput = tpembayaran.Time.Format("2006-01-02")
+		pembelian.TanggalPembayaranInput = tpembayaran.Time.Format("2006-01-02")
 	}
 	if tpenerimaan.Valid {
-		pembelian.TanggalPembelianInput = tpenerimaan.Time.Format("2006-01-02")
+		pembelian.TanggalPenerimaanInput = tpenerimaan.Time.Format("2006-01-02")
 	}
 
 	querysupplier := `SELECT nama FROM supplier WHERE id_supplier = ? AND deleted_at IS NULL`

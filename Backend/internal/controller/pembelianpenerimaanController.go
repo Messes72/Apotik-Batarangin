@@ -134,6 +134,22 @@ func GetAllPembelian(c echo.Context) error {
 
 }
 
+func GetPembelianDetail(c echo.Context) error {
+	idpembelian := c.Param("id_pembelian_penerimaan_obat")
+	if idpembelian == "" {
+		log.Println("Error karena id pembelian di parameter kosong", idpembelian)
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Error saat mengambil data"})
+	}
+	result, _ := model.GetPembelianDetail(c.Request().Context(), idpembelian)
+	// // result, err = model.GetPembelianDetail(c.Request().Context(), idpembelian)
+	// if err!=nil{
+	// 	c.JSON(http.StatusInternalServerError, map[string]string{"message" : "Error saat mengambil data"})
+	// }
+
+	return c.JSON(result.Status, result)
+
+}
+
 // func UpdatePenerimaan(c echo.Context) error {
 
 // 	idKaryawan := c.Get("id_karyawan")
