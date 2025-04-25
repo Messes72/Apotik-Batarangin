@@ -64,8 +64,6 @@ func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPen
 		return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 	}
 
-	log.Println("slm query")
-
 	query := `INSERT INTO pembelian_penerimaan (id_pembelian_penerimaan_obat, id_supplier, total_harga, keterangan, tanggal_pemesanan,tanggal_pembayaran, pemesan , created_at, created_by)
 		VALUES (?,?,?,?,?,?,?,NOW(),?)`
 	_, err = tx.ExecContext(ctx, query, newidpembelianpenerimaan, pembelian.IDSupplier, totalharga, pembelian.Keterangan, pembelian.TanggalPembelian, pembelian.TanggalPembayaran, pembelian.CreatedBy, pembelian.CreatedBy)
@@ -336,10 +334,10 @@ func GetAllPembelian(ctx context.Context, page, pagesize int) (class.Response, e
 			pembelian.TanggalPembelianInput = tpembelian.Time.Format("2006-01-02")
 		}
 		if tpembayaran.Valid {
-			pembelian.TanggalPembelianInput = tpembayaran.Time.Format("2006-01-02")
+			pembelian.TanggalPembayaranInput = tpembayaran.Time.Format("2006-01-02")
 		}
 		if tpenerimaan.Valid {
-			pembelian.TanggalPembelianInput = tpenerimaan.Time.Format("2006-01-02")
+			pembelian.TanggalPenerimaanInput = tpenerimaan.Time.Format("2006-01-02")
 		}
 
 		listpembelian = append(listpembelian, pembelian)
