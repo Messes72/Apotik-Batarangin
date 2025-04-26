@@ -8,7 +8,6 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
-	"time"
 )
 
 func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPenerimaan, listobat []class.DetailPembelianPenerimaan) (class.Response, error) {
@@ -402,8 +401,8 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 
 	querydetailpembelianpenerimaan := `SELECT d.id_detail_pembelian_penerimaan_obat, d.id_kartustok, d.id_depo, d.id_status, d.nama_obat, d.jumlah_dipesan,
 	bp.jumlah_diterima, d.created_at, d.updated_at, d.created_by, d.updated_by, nb.no_batch, nb.kadaluarsa FROM detail_pembelian_penerimaan d 
-	JOIN batch_penerimaan bp ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat
-	JOIN nomor_batch nb ON nb.id_nomor_batch = bp.id_nomor_batch WHERE d.id_pembelian_penerimaan_obat = ?`
+	LEFT JOIN batch_penerimaan bp ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat
+	LEFT JOIN nomor_batch nb ON nb.id_nomor_batch = bp.id_nomor_batch WHERE d.id_pembelian_penerimaan_obat = ?`
 
 	rows, err := con.QueryContext(ctx, querydetailpembelianpenerimaan, idpembelian)
 	if err != nil {
@@ -413,19 +412,34 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 	defer rows.Close()
 	for rows.Next() {
 		var detail class.DetailPembelianPenerimaan
-		var kadaluarsa time.Time
-		err := rows.Scan(&detail.IDDetailPembelianPenerimaan, &detail.IDKartuStok, &detail.IDDepo, &detail.IDStatus, &detail.NamaObat, &detail.JumlahDipesan, &detail.JumlahDiterima,
-			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy, &detail.NomorBatch, &kadaluarsa)
+		var kadaluarsa sql.NullTime
+		var jumlah_diterima sql.NullInt64
+		var no_batch sql.NullString
+		err := rows.Scan(&detail.IDDetailPembelianPenerimaan, &detail.IDKartuStok, &detail.IDDepo, &detail.IDStatus, &detail.NamaObat, &detail.JumlahDipesan, &jumlah_diterima,
+			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy, &no_batch, &kadaluarsa)
 
 		if err != nil {
 			log.Println("Error saat scan data detail pembelian penerimaan obat", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data detail pembelian penerimaan obat", Data: nil}, err
 
 		}
-		detail.Kadaluarsa = kadaluarsa
-		detail.KadaluarsaInput = kadaluarsa.Format("2006-01-02") //supaya nanti outputnya tetep rapi dan gak dimarshal json jdi timestamp
-
+		if jumlah_diterima.Valid {
+			detail.JumlahDiterima = int(jumlah_diterima.Int64)
+		} else {
+			detail.JumlahDiterima = 0
+		}
+		if no_batch.Valid {
+			detail.NomorBatch = no_batch.String
+		}
+		if kadaluarsa.Valid {
+			detail.Kadaluarsa = kadaluarsa.Time
+			detail.KadaluarsaInput = kadaluarsa.Time.Format("2006-01-02")
+		}
 		pembelian.ObatList = append(pembelian.ObatList, detail)
 	}
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: pembelian}, nil
 }
+
+// func EditPenerimaan(ctx context.Context, idedit string) (class.Response, error) {
+
+// }
