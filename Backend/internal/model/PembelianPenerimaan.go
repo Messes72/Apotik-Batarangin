@@ -8,6 +8,7 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
+	"time"
 )
 
 func CreatePembelianPenerimaan(ctx context.Context, pembelian class.PembelianPenerimaan, listobat []class.DetailPembelianPenerimaan) (class.Response, error) {
@@ -399,8 +400,10 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil nama supplier", Data: nil}, err
 	}
 
-	querydetailpembelianpenerimaan := `SELECT id_detail_pembelian_penerimaan_obat, id_kartustok, id_depo, id_status, nama_obat, jumlah_dipesan,
-	jumlah_diterima, created_at, updated_at, created_by, updated_by FROM detail_pembelian_penerimaan WHERE id_pembelian_penerimaan_obat = ?`
+	querydetailpembelianpenerimaan := `SELECT d.id_detail_pembelian_penerimaan_obat, d.id_kartustok, d.id_depo, d.id_status, d.nama_obat, d.jumlah_dipesan,
+	bp.jumlah_diterima, d.created_at, d.updated_at, d.created_by, d.updated_by, nb.no_batch, nb.kadaluarsa FROM detail_pembelian_penerimaan d 
+	JOIN batch_penerimaan bp ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat
+	JOIN nomor_batch nb ON nb.id_nomor_batch = bp.id_nomor_batch WHERE d.id_pembelian_penerimaan_obat = ?`
 
 	rows, err := con.QueryContext(ctx, querydetailpembelianpenerimaan, idpembelian)
 	if err != nil {
@@ -410,14 +413,18 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 	defer rows.Close()
 	for rows.Next() {
 		var detail class.DetailPembelianPenerimaan
+		var kadaluarsa time.Time
 		err := rows.Scan(&detail.IDDetailPembelianPenerimaan, &detail.IDKartuStok, &detail.IDDepo, &detail.IDStatus, &detail.NamaObat, &detail.JumlahDipesan, &detail.JumlahDiterima,
-			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy)
+			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy, &detail.NomorBatch, &kadaluarsa)
 
 		if err != nil {
 			log.Println("Error saat scan data detail pembelian penerimaan obat", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data detail pembelian penerimaan obat", Data: nil}, err
 
 		}
+		detail.Kadaluarsa = kadaluarsa
+		detail.KadaluarsaInput = kadaluarsa.Format("2006-01-02") //supaya nanti outputnya tetep rapi dan gak dimarshal json jdi timestamp
+
 		pembelian.ObatList = append(pembelian.ObatList, detail)
 	}
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: pembelian}, nil
