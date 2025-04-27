@@ -150,11 +150,27 @@ func GetPembelianDetail(c echo.Context) error {
 
 }
 
-// func UpdatePenerimaan(c echo.Context) error {
+func EditPenerimaan(c echo.Context) error {
 
-// 	idKaryawan := c.Get("id_karyawan")
-// 	if idKaryawan == nil {
-// 		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
-// 	}
+	idKaryawan := c.Get("id_karyawan")
+	if idKaryawan == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
 
-// }
+	IDPembelianPenerimaanObat := c.Param("id_pembelian_penerimaan")
+	if IDPembelianPenerimaanObat == "" {
+		c.JSON(http.StatusBadRequest, map[string]string{"message": "Id tidak boleh kosong"})
+	}
+
+	var obatbatch []class.DetailPembelianPenerimaan
+	if err := c.Bind(&obatbatch); err != nil {
+		log.Println("Binding Error:", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Request"})
+	}
+
+	result, err := model.EditPenerimaan(c.Request().Context(), idKaryawan.(string), obatbatch, IDPembelianPenerimaanObat)
+	if err != nil {
+		log.Println("Error msg dari controller edit penerimaan : ", err)
+	}
+	return c.JSON(result.Status, result)
+}

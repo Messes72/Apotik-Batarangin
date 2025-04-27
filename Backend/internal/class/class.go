@@ -188,6 +188,8 @@ type DetailPembelianPenerimaan struct {
 	ID                          uint       `json:"id"`
 	IDPembelianPenerimaanObat   string     `json:"id_pembelian_penerimaan_obat"`
 	IDDetailPembelianPenerimaan string     `json:"id_detail_pembelian_penerimaan_obat"`
+	IdBatchPenerimaan           *string    `json:"id_batch_penerimaan,omitempty"`
+	IDNomorBatch                *string    `json:"id_nomor_batch,omitempty"`
 	NomorBatch                  string     `json:"nomor_batch"`
 	IDKartuStok                 string     `json:"id_kartustok"`
 	IDDepo                      string     `json:"id_depo"` //hardcode nanti ke gudang

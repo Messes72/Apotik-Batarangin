@@ -287,7 +287,7 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 
 	}
 
-	tx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		log.Printf("Failed to commit transaction: %v\n", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
@@ -400,7 +400,7 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 	}
 
 	querydetailpembelianpenerimaan := `SELECT d.id_detail_pembelian_penerimaan_obat, d.id_kartustok, d.id_depo, d.id_status, d.nama_obat, d.jumlah_dipesan,
-	bp.jumlah_diterima, d.created_at, d.updated_at, d.created_by, d.updated_by, nb.no_batch, nb.kadaluarsa FROM detail_pembelian_penerimaan d 
+	bp.jumlah_diterima, bp.id_batch_penerimaan, d.created_at, d.updated_at, d.created_by, d.updated_by, nb.no_batch, nb.kadaluarsa, nb.id_nomor_batch FROM detail_pembelian_penerimaan d 
 	LEFT JOIN batch_penerimaan bp ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat
 	LEFT JOIN nomor_batch nb ON nb.id_nomor_batch = bp.id_nomor_batch WHERE d.id_pembelian_penerimaan_obat = ?`
 
@@ -416,7 +416,7 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 		var jumlah_diterima sql.NullInt64
 		var no_batch sql.NullString
 		err := rows.Scan(&detail.IDDetailPembelianPenerimaan, &detail.IDKartuStok, &detail.IDDepo, &detail.IDStatus, &detail.NamaObat, &detail.JumlahDipesan, &jumlah_diterima,
-			&detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy, &no_batch, &kadaluarsa)
+			&detail.IdBatchPenerimaan, &detail.CreatedAt, &detail.UpdatedAt, &detail.CreatedBy, &detail.UpdatedBy, &no_batch, &kadaluarsa, &detail.IDNomorBatch)
 
 		if err != nil {
 			log.Println("Error saat scan data detail pembelian penerimaan obat", err)
@@ -440,6 +440,148 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: pembelian}, nil
 }
 
-// func EditPenerimaan(ctx context.Context, idedit string) (class.Response, error) {
+func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.DetailPembelianPenerimaan, idpembelianpenerimaanobat string) (class.Response, error) {
+	con := db.GetDBCon()
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
 
-// }
+	}
+
+	queryupdatebatchpenerimaan := `UPDATE batch_penerimaan bp JOIN detail_pembelian_penerimaan d ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat SET bp.jumlah_diterima = ? WHERE bp.id_batch_penerimaan = ? AND d.id_pembelian_penerimaan_obat = ?`
+
+	querygetlastinserteddatadetailkartustok := `SELECT sisa FROM detail_kartustok WHERE id_batch_penerimaan = ?
+	ORDER BY created_at DESC LIMIT 1`
+
+	querygetjumlahditerima := `SELECT jumlah_diterima FROM batch_penerimaan WHERE id_batch_penerimaan = ?`
+
+	queryinsertdetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok ,id_batch_penerimaan,id_nomor_batch, masuk, keluar, sisa,created_at,updated_at)
+	VALUES (?,?,?,?,?,?,?,NOW(),NOW())`
+
+	queryupdatenomorbatch := `UPDATE nomor_batch SET no_batch = ? ,kadaluarsa = ?, updated_at = NOW() WHERE id_nomor_batch = ?  `
+
+	querydetailpembelianpenerimaan := `UPDATE detail_pembelian_penerimaan SET jumlah_diterima = ?, id_status = ?, updated_by = ?, updated_at = NOW() WHERE id_detail_pembelian_penerimaan_obat = ?`
+
+	for _, batch := range obatbatch {
+
+		_, err := tx.ExecContext(ctx, queryupdatenomorbatch, batch.NomorBatch, batch.Kadaluarsa, batch.IDNomorBatch)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat update data di nomor batch", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		var oldjumlahditerima int
+
+		err = tx.QueryRowContext(ctx, querygetjumlahditerima, batch.IdBatchPenerimaan).Scan(&oldjumlahditerima) //get data jumlah diterima yang lama
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat mengambil jumlah diterima lama ", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		selisih := batch.JumlahDiterima - oldjumlahditerima
+		if selisih == 0 {
+			continue
+		}
+
+		_, err = tx.ExecContext(ctx, queryupdatebatchpenerimaan, batch.JumlahDiterima, batch.IdBatchPenerimaan, idpembelianpenerimaanobat) // update batch penerimaan
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat update batch penerimaan", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		//get last inserted data dari detail kartu stok untuk per id batch penerimaan
+		var lastsisa int
+		err = tx.QueryRowContext(ctx, querygetlastinserteddatadetailkartustok, batch.IdBatchPenerimaan).Scan(&lastsisa)
+		if err != nil && err != sql.ErrNoRows {
+			tx.Rollback()
+			log.Println("Error saat mengambil data detail kartu stok", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		var masuk, keluar, newisisa int
+		if selisih > 0 {
+			masuk = selisih
+			keluar = 0
+			newisisa = lastsisa + selisih
+		} else {
+			masuk = 0
+			keluar = -selisih             //karena selsih kan minus tp db terima angka positif , maka dicancel dengan -selisih
+			newisisa = lastsisa + selisih // ini di tambah karena selisih nya sendiri valuenya pasti negatif sehingga otomatis ngurangin lastsisa
+		}
+
+		var counter2 int
+		queryCounter2 := `SELECT count FROM detail_kartustokcounter FOR UPDATE`
+		err = tx.QueryRowContext(ctx, queryCounter2).Scan(&counter2)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Failed to fetch counter: %v\n", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to fetch obat counter", Data: nil}, err
+		}
+
+		newCounter2 := counter2 + 1
+		prefix2 := "DKS"
+		newiddetailkartustok := fmt.Sprintf("%s%d", prefix2, newCounter2)
+
+		updateCounter2 := `UPDATE detail_kartustokcounter SET count = ?`
+		_, err = tx.ExecContext(ctx, updateCounter2, newCounter2)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Failed to update obat counter: %v\n", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
+		}
+
+		_, err = tx.ExecContext(ctx, queryinsertdetailkartustok, newiddetailkartustok, batch.IDKartuStok, batch.IdBatchPenerimaan, batch.IDNomorBatch, masuk, keluar, newisisa)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat insert record detail kartustok baru", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		var totalterima int
+		query := `SELECT IFNULL(SUM(jumlah_diterima), 0) FROM batch_penerimaan WHERE id_detail_pembelian_penerimaan = ?`
+		err = tx.QueryRowContext(ctx, query, batch.IDDetailPembelianPenerimaan).Scan(&totalterima)
+		if err != nil {
+			tx.Rollback()
+			log.Println("error saat menghitung total obat yang diterima", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung total barang yang diterima", Data: nil}, err
+		}
+
+		var totalpesan int
+		querytotalpesan := `SELECT jumlah_dipesan FROM detail_pembelian_penerimaan WHERE id_detail_pembelian_penerimaan_obat = ?`
+		err = tx.QueryRowContext(ctx, querytotalpesan, batch.IDDetailPembelianPenerimaan).Scan(&totalpesan)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat mengambil data jumlah dipesan dari db", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data status penerimaan obat", Data: nil}, err
+		}
+
+		var newStatus string
+		if totalterima == 0 {
+			newStatus = "0" //tidak ada obat diterima
+		} else if totalterima < totalpesan {
+			newStatus = "2" //incomplete
+		} else if totalterima >= totalpesan {
+			newStatus = "1" //done
+		}
+
+		_, err = tx.ExecContext(ctx, querydetailpembelianpenerimaan, totalterima, newStatus, idKaryawan, batch.IDDetailPembelianPenerimaan)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat update detail pembelian penerimaan ", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success"}, err
+}

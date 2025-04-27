@@ -265,6 +265,7 @@ CREATE TABLE nomor_batch (
     no_batch VARCHAR(200) NOT NULL,
     kadaluarsa DATE NOT NULL,
     created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
     keterangan VARCHAR(255)
 )
 
