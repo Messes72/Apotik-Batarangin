@@ -287,6 +287,17 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 
 	}
 
+	queryupdatepembelianpenerimaan := `UPDATE pembelian_penerimaan p SET total_harga = (SELECT IFNULL(SUM(o.harga_beli * dp.jumlah_diterima),0)
+	FROM detail_pembelian_penerimaan dp JOIN obat_jadi o ON o.id_obat = dp.id_kartustok WHERE dp.id_pembelian_penerimaan_obat = ?
+	) WHERE p.id_pembelian_penerimaan_obat =?`
+
+	_, err = tx.ExecContext(ctx, queryupdatepembelianpenerimaan, penerimaan.IDPembelianPenerimaanObat, penerimaan.IDPembelianPenerimaanObat)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat update total harga pembelian penerimaan obat", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("Failed to commit transaction: %v\n", err)
@@ -451,8 +462,8 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 	queryupdatebatchpenerimaan := `UPDATE batch_penerimaan bp JOIN detail_pembelian_penerimaan d ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat SET bp.jumlah_diterima = ? WHERE bp.id_batch_penerimaan = ? AND d.id_pembelian_penerimaan_obat = ?`
 
-	querygetlastinserteddatadetailkartustok := `SELECT sisa FROM detail_kartustok WHERE id_batch_penerimaan = ?
-	ORDER BY created_at DESC LIMIT 1`
+	querygetlastinserteddatadetailkartustok := `SELECT sisa FROM detail_kartustok WHERE id_kartustok = ?
+	ORDER BY id DESC LIMIT 1`
 
 	querygetjumlahditerima := `SELECT jumlah_diterima FROM batch_penerimaan WHERE id_batch_penerimaan = ?`
 
@@ -462,6 +473,12 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 	queryupdatenomorbatch := `UPDATE nomor_batch SET no_batch = ? ,kadaluarsa = ?, updated_at = NOW() WHERE id_nomor_batch = ?  `
 
 	querydetailpembelianpenerimaan := `UPDATE detail_pembelian_penerimaan SET jumlah_diterima = ?, id_status = ?, updated_by = ?, updated_at = NOW() WHERE id_detail_pembelian_penerimaan_obat = ?`
+
+	// queryhargabeli := `SELECT harga_beli from obat_jadi WHERE id_obat = ?`
+
+	queryupdatepembelianpenerimaan := `UPDATE pembelian_penerimaan p SET total_harga = (SELECT IFNULL(SUM(o.harga_beli * dp.jumlah_diterima),0)
+	FROM detail_pembelian_penerimaan dp JOIN obat_jadi o ON o.id_obat = dp.id_kartustok WHERE dp.id_pembelian_penerimaan_obat = ?
+	) WHERE p.id_pembelian_penerimaan_obat =?`
 
 	for _, batch := range obatbatch {
 
@@ -495,7 +512,7 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 		//get last inserted data dari detail kartu stok untuk per id batch penerimaan
 		var lastsisa int
-		err = tx.QueryRowContext(ctx, querygetlastinserteddatadetailkartustok, batch.IdBatchPenerimaan).Scan(&lastsisa)
+		err = tx.QueryRowContext(ctx, querygetlastinserteddatadetailkartustok, batch.IDKartuStok).Scan(&lastsisa)
 		if err != nil && err != sql.ErrNoRows {
 			tx.Rollback()
 			log.Println("Error saat mengambil data detail kartu stok", err)
@@ -575,6 +592,13 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
 		}
 
+	}
+	// log.Println("total harga", totalharga)
+	_, err = tx.ExecContext(ctx, queryupdatepembelianpenerimaan, idpembelianpenerimaanobat, idpembelianpenerimaanobat)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat update total harga pembelian penerimaan", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
 	}
 
 	err = tx.Commit()

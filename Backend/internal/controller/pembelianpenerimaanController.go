@@ -168,6 +168,17 @@ func EditPenerimaan(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid Request"})
 	}
 
+	const layoutdate = "2006-01-02"
+
+	for i := range obatbatch {
+		tanggalkadaluarsa, err := time.Parse(layoutdate, obatbatch[i].KadaluarsaInput)
+		if err != nil {
+			log.Println("Error di controller saat parsing kadaluarsa", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Error saat memproses data"})
+		}
+		obatbatch[i].Kadaluarsa = tanggalkadaluarsa
+	}
+
 	result, err := model.EditPenerimaan(c.Request().Context(), idKaryawan.(string), obatbatch, IDPembelianPenerimaanObat)
 	if err != nil {
 		log.Println("Error msg dari controller edit penerimaan : ", err)
