@@ -38,10 +38,11 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: Colors.transparent,
         title: Text(title, style: GoogleFonts.montserrat(fontWeight: FontWeight.w600)),
         automaticallyImplyLeading: false,
+        // Ini bagian icon untuk berubah
         leading: IconButton(
           onPressed: () {
-            animationTrigger();
-            onMenuPressed();
+            animationTrigger();//
+            onMenuPressed();//
           },
           icon: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
@@ -65,12 +66,12 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         actions: [
-          CircleAvatar(
-            radius: 20,
-            backgroundImage: NetworkImage(
-                "https://cdn.shopify.com/s/files/1/0416/8083/0620/files/01132022_soc_pinterestboardcoverupdate_CN_1200x1200_88c02180-90a1-4745-921e-341c191ec84a_480x480.png?v=1646098139") as ImageProvider,
-          ),
-          Padding(padding: EdgeInsets.only(right: 16)),
+          // CircleAvatar(
+          //   radius: 20,
+          //   backgroundImage: NetworkImage(
+          //       "https://cdn.shopify.com/s/files/1/0416/8083/0620/files/01132022_soc_pinterestboardcoverupdate_CN_1200x1200_88c02180-90a1-4745-921e-341c191ec84a_480x480.png?v=1646098139") as ImageProvider,
+          // ),
+          // Padding(padding: EdgeInsets.only(right: 16)),
           Text(globals.nama, style: GoogleFonts.montserrat(fontSize: 18, fontWeight: FontWeight.w600)),
           Padding(padding: EdgeInsets.only(right: 16))
           // TextStyle(fontSize: 18, fontWeight: FontWeight.bold , fontFamily: GoogleFonts.montserrat()),

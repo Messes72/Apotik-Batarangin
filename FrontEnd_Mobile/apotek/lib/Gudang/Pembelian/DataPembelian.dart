@@ -64,3 +64,103 @@ class DataPembelianBarang {
   }
 }
 
+
+// hhhhhhhhhhhhhh
+class PembelianPenerimaanObatResponse {
+  final int status;
+  final String message;
+  final List<PembelianPenerimaanObat> data;
+  final Metadata metadata;
+
+  PembelianPenerimaanObatResponse({
+    required this.status,
+    required this.message,
+    required this.data,
+    required this.metadata,
+  });
+
+  factory PembelianPenerimaanObatResponse.fromJson(Map<String, dynamic> json) {
+    return PembelianPenerimaanObatResponse(
+      status: json['status'],
+      message: json['message'],
+      data: List<PembelianPenerimaanObat>.from(
+          json['data'].map((x) => PembelianPenerimaanObat.fromJson(x))),
+      metadata: Metadata.fromJson(json['metadata']),
+    );
+  }
+}
+
+class PembelianPenerimaanObat {
+  final int id;
+  final String idPembelianPenerimaanObat;
+  final String idSupplier;
+  final String tanggalPembelian;
+  final String tanggalPembayaran;
+  final String tanggalPenerimaan;
+  final String pemesan;
+  final String? penerima;
+  final int totalHarga;
+  final String keterangan;
+  final DateTime createdAt;
+  final String createdBy;
+  final dynamic obatList; // Bisa diganti kalau struktur obat_list nanti ada
+
+  PembelianPenerimaanObat({
+    required this.id,
+    required this.idPembelianPenerimaanObat,
+    required this.idSupplier,
+    required this.tanggalPembelian,
+    required this.tanggalPembayaran,
+    required this.tanggalPenerimaan,
+    required this.pemesan,
+    this.penerima,
+    required this.totalHarga,
+    required this.keterangan,
+    required this.createdAt,
+    required this.createdBy,
+    this.obatList,
+  });
+
+  factory PembelianPenerimaanObat.fromJson(Map<String, dynamic> json) {
+    return PembelianPenerimaanObat(
+      id: json['id'],
+      idPembelianPenerimaanObat: json['id_pembelian_penerimaan_obat'],
+      idSupplier: json['id_supplier'],
+      tanggalPembelian: json['tanggal_pembelian'],
+      tanggalPembayaran: json['tanggal_pembayaran'],
+      tanggalPenerimaan: json['tanggal_penerimaan'] ?? '',
+      pemesan: json['pemesan'],
+      penerima: json['penerima'], // Bisa null
+      totalHarga: json['total_harga'],
+      keterangan: json['keterangan'],
+      createdAt: DateTime.parse(json['created_at']),
+      createdBy: json['created_by'],
+      obatList: json['obat_list'],
+    );
+  }
+}
+
+class Metadata {
+  final int currentPage;
+  final int pageSize;
+  final int totalPages;
+  final int totalRecords;
+
+  Metadata({
+    required this.currentPage,
+    required this.pageSize,
+    required this.totalPages,
+    required this.totalRecords,
+  });
+
+  factory Metadata.fromJson(Map<String, dynamic> json) {
+    return Metadata(
+      currentPage: json['current_page'],
+      pageSize: json['page_size'],
+      totalPages: json['total_pages'],
+      totalRecords: json['total_records'],
+    );
+  }
+}
+
+

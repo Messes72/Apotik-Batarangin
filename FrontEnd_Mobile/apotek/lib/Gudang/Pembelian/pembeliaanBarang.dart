@@ -94,6 +94,19 @@ class pagePembelian extends State<Pembeliaanbarang>
     });
   }
 
+  Future<void> getDataAllPembelian() async {
+    // try {
+    //   listProduk = await Products.getData();
+    //   // print();
+    //   setState(() {
+    //     filterData = List.from(listProduk);
+    //   });
+    // } catch (e) {
+    //   print("Error: $e");
+    // }
+  }
+
+
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
   var tanggalController = TextEditingController();

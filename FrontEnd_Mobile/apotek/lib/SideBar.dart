@@ -38,10 +38,9 @@ class _SideBarPage extends State<Sidebarcoba2> {
     screenApp = [
       PageProduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
       stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
-      PenerimaanBarang(
-          isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2
-      Inputstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //3
-      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //4
+      PenerimaanBarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 2
+      Inputstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 3
+      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 4
       Detailstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 5
       Editstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 6
     ];
