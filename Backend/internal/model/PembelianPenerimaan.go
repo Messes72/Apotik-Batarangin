@@ -398,17 +398,7 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 
 	err = con.QueryRowContext(ctx, querykaryawan, tmppemesan).Scan(&pembelian.Pemesan)
 
-	if err != nil {
-		log.Println("error saat ambil data karyawan", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pemesan"}, err
-	}
-
 	err = con.QueryRowContext(ctx, querykaryawan, tmppenerima).Scan(&pembelian.Penerima)
-
-	if err != nil {
-		log.Println("error saat ambil data karyawan", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data penerima"}, err
-	}
 
 	if tpembelian.Valid { //format string ke date
 		pembelian.TanggalPembelianInput = tpembelian.Time.Format("2006-01-02")
