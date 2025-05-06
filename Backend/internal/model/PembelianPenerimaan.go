@@ -256,8 +256,8 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 		}
 
-		querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_batch_penerimaan , id_nomor_batch, masuk, keluar, sisa, created_at)
-			VALUES (?,?,?,?,?,0,?,NOW())`
+		querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_batch_penerimaan , id_nomor_batch, masuk, keluar, sisa, created_at, id_depo)
+			VALUES (?,?,?,?,?,0,?,NOW(),'10')`
 
 		var stoklama int
 		querystoklama := `SELECT stok_barang FROM kartu_stok WHERE id_kartustok= ?`
@@ -384,13 +384,30 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 
 	var pembelian class.PembelianPenerimaan
 	var tpembelian, tpembayaran, tpenerimaan sql.NullTime
+	var tmppemesan, tmppenerima string
 
 	err := con.QueryRowContext(ctx, query, idpembelian).Scan(&pembelian.IDPembelianPenerimaanObat, &pembelian.IDSupplier, &pembelian.TotalHarga, &pembelian.Keterangan, &tpembelian, &tpenerimaan,
-		&tpembayaran, &pembelian.Pemesan, &pembelian.Penerima, &pembelian.CreatedAt, &pembelian.CreatedBy, &pembelian.UpdatedAt, &pembelian.UpdatedBy)
+		&tpembayaran, &tmppemesan, &tmppenerima, &pembelian.CreatedAt, &pembelian.CreatedBy, &pembelian.UpdatedAt, &pembelian.UpdatedBy)
 
 	if err != nil {
 		log.Println("Error saata scan data dari rows ", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pembelian obat", Data: nil}, err
+	}
+
+	querykaryawan := `SELECT nama from Karyawan WHERE id_karyawan = ?`
+
+	err = con.QueryRowContext(ctx, querykaryawan, tmppemesan).Scan(&pembelian.Pemesan)
+
+	if err != nil {
+		log.Println("error saat ambil data karyawan", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data pemesan"}, err
+	}
+
+	err = con.QueryRowContext(ctx, querykaryawan, tmppenerima).Scan(&pembelian.Penerima)
+
+	if err != nil {
+		log.Println("error saat ambil data karyawan", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data penerima"}, err
 	}
 
 	if tpembelian.Valid { //format string ke date
@@ -467,8 +484,8 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 	querygetjumlahditerima := `SELECT jumlah_diterima FROM batch_penerimaan WHERE id_batch_penerimaan = ?`
 
-	queryinsertdetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok ,id_batch_penerimaan,id_nomor_batch, masuk, keluar, sisa,created_at,updated_at)
-	VALUES (?,?,?,?,?,?,?,NOW(),NOW())`
+	queryinsertdetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok ,id_batch_penerimaan,id_nomor_batch, masuk, keluar, sisa,created_at,updated_at, id_depo)
+	VALUES (?,?,?,?,?,?,?,NOW(),NOW(),'10')`
 
 	queryupdatenomorbatch := `UPDATE nomor_batch SET no_batch = ? ,kadaluarsa = ?, updated_at = NOW() WHERE id_nomor_batch = ?  `
 
@@ -556,6 +573,21 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 			tx.Rollback()
 			log.Println("Error saat insert record detail kartustok baru", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+		}
+
+		const updKartuStokQ = `
+		UPDATE kartu_stok
+		   SET stok_barang = ?, updated_at = NOW(), updated_by = ?
+		 WHERE id_kartustok = ? AND id_depo = "10"`
+		if _, err = tx.ExecContext(ctx, updKartuStokQ,
+			newisisa,   // the fresh running balance
+			idKaryawan, // who edited
+			batch.IDKartuStok,
+		); err != nil {
+			tx.Rollback()
+			log.Println("Error saat update stok_barang kartu_stok:", err)
+			return class.Response{Status: http.StatusInternalServerError,
+				Message: "Error saat memperbarui stok_barang"}, err
 		}
 
 		var totalterima int

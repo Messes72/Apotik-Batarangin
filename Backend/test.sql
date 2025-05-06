@@ -159,6 +159,27 @@ CREATE TABLE detail_kartustokcounter (
 );
 INSERT INTO detail_kartustokcounter (COUNT) VALUES (1)
 
+CREATE TABLE transaksicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO transaksicounter (COUNT) VALUES (1)
+
+CREATE TABLE aturanpakaicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO aturanpakaicounter (COUNT) VALUES (1)
+
+CREATE TABLE carapakaicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO carapakaicounter (COUNT) VALUES (1)
+
+CREATE TABLE keteranganpakaicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY 
+);
+INSERT INTO keteranganpakaicounter (COUNT) VALUES (1)
+
+
 
 -- Depo Table
 CREATE TABLE Depo (
@@ -291,7 +312,8 @@ CREATE TABLE detail_kartustok (
     id_detail_kartu_stok VARCHAR(100) UNIQUE NOT NULL, 
     id_kartustok VARCHAR(100) NOT NULL,
     id_transaksi VARCHAR(100) NULL,
-    id_distribusi VARCHAR(100) NULL,
+    id_distribusi VARCHAR (50) NULL,
+    id_depo VARCHAR(10),
     id_batch_penerimaan VARCHAR(100) NULL,
     id_nomor_batch VARCHAR(100),
     masuk INT NOT NULL DEFAULT 0,    
@@ -438,6 +460,179 @@ CREATE TABLE batch_penerimaan (
         FOREIGN KEY (id_nomor_batch)
         REFERENCES nomor_batch(id_nomor_batch)
 );
+
+
+CREATE TABLE transaksi (
+    id                   INT AUTO_INCREMENT PRIMARY KEY,
+    id_transaksi         VARCHAR(100) NOT NULL UNIQUE,   
+    id_karyawan          VARCHAR(10) NOT NULL,          
+    total_harga          DECIMAL(15,2) UNSIGNED NOT NULL,
+    metode_pembayaran    VARCHAR(30)  NOT NULL,         
+    keterangan           VARCHAR(255),   
+     id_status                   TINYINT NOT NULL,               
+    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at           DATETIME,
+    CONSTRAINT fk_transaksi_karyawan
+        FOREIGN KEY (id_karyawan)
+        REFERENCES Karyawan(id_karyawan),
+
+    CONSTRAINT fk_transaksi_status
+        FOREIGN KEY (id_status)
+        REFERENCES status_transaksi(id_status)
+);
+
+
+CREATE TABLE aturan_pakai (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    id_aturan_pakai  VARCHAR(50) NOT NULL UNIQUE,
+    aturan_pakai    VARCHAR(255) NOT NULL,
+    created_at       DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    keterangan       VARCHAR(255)
+);
+
+
+CREATE TABLE cara_pakai (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    id_cara_pakai   VARCHAR(50) NOT NULL UNIQUE,
+    nama_cara_pakai VARCHAR(255) NOT NULL,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    keterangan      VARCHAR(255)
+);
+
+
+CREATE TABLE keterangan_pakai (
+    id                     INT AUTO_INCREMENT PRIMARY KEY,
+    id_keterangan_pakai    VARCHAR(50) NOT NULL UNIQUE,
+    nama_keterangan_pakai  VARCHAR(255) NOT NULL,
+    created_at             DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    keterangan             VARCHAR(255)
+);
+
+CREATE TABLE detail_transaksi_penjualan_obat (
+    id                          INT AUTO_INCREMENT PRIMARY KEY,   
+    id_kartustok                VARCHAR(100) NOT NULL,   
+    id_e_resep                  VARCHAR(50),             
+    id_transaksi                VARCHAR(100)  NOT NULL,   
+    id_aturan_pakai             VARCHAR(50),
+    id_cara_pakai               VARCHAR(50),                
+    id_keterangan_pakai         VARCHAR(50),             
+    id_nomor_batch              VARCHAR(100) NOT NULL,   
+    id_kustomer                 VARCHAR(15) NULL, 
+               
+    total_harga                 DECIMAL(15,2) UNSIGNED NOT NULL,
+    kadaluarsa                  DATE NOT NULL,
+    jumlah                      INT UNSIGNED NOT NULL,
+
+    CONSTRAINT fk_dtp_kartustok
+        FOREIGN KEY (id_kartustok)
+        REFERENCES kartu_stok(id_kartustok),
+
+    CONSTRAINT fk_dtp_transaksi
+        FOREIGN KEY (id_transaksi)
+        REFERENCES transaksi(id_transaksi),
+
+    CONSTRAINT fk_dtp_nomor_batch
+        FOREIGN KEY (id_nomor_batch)
+        REFERENCES nomor_batch(id_nomor_batch),
+
+    CONSTRAINT fk_dtp_kustomer
+        FOREIGN KEY (id_kustomer)
+        REFERENCES Kustomer(id_kustomer)    
+
+    
+);
+
+
+
+CREATE TABLE status_transaksi (
+    id_status    TINYINT  PRIMARY KEY,      
+    nama_status  VARCHAR(20) NOT NULL UNIQUE,
+    keterangan   VARCHAR(255)
+);
+
+INSERT INTO status_transaksi (id_status, nama_status, keterangan) VALUES
+  (1, 'berhasil', 'Transaksi lunas, stok sudah keluar'),
+  (2, 'cancel',   'Transaksi dibatalkan, stok tidak keluar');
+
+
+
+
+
+
+/* =================================================================== */
+/*  COUNTER  (if you use the same pattern)                             */
+/* =================================================================== */
+CREATE TABLE IF NOT EXISTS distribusicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO distribusicounter (count) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS detaildistribusicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO detaildistribusicounter (count) VALUES (1);
+
+/* =================================================================== */
+/* 1.  distribusi  – header                                            */
+/* =================================================================== */
+CREATE TABLE distribusi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    id_distribusi        VARCHAR(50) NOT NULL UNIQUE,   -- business ID e.g. "DIS37"
+    id_depo_asal         VARCHAR(10) NOT NULL,          -- Gudang, Apotik, dll.
+    id_depo_tujuan       VARCHAR(10) NOT NULL,
+
+    tanggal_permohonan   DATE NOT NULL,                 -- request date
+    tanggal_pengiriman   DATE,                          -- filled when shipped
+
+    id_status            VARCHAR(50) NOT NULL,          -- use 0/1/2 from `status`
+    keterangan           VARCHAR(255),
+
+    created_at           DATETIME NOT NULL,
+    created_by           VARCHAR(10) NOT NULL,
+    updated_at           DATETIME,
+    updated_by           VARCHAR(10),
+    deleted_at           DATETIME,
+    deleted_by           VARCHAR(10),
+
+    CONSTRAINT fk_distribusi_depo_asal
+        FOREIGN KEY (id_depo_asal)   REFERENCES Depo(id_depo),
+    CONSTRAINT fk_distribusi_depo_tujuan
+        FOREIGN KEY (id_depo_tujuan) REFERENCES Depo(id_depo),
+    CONSTRAINT fk_distribusi_status
+        FOREIGN KEY (id_status)      REFERENCES status(id_status)
+);
+
+/* =================================================================== */
+/* 2.  detail_distribusi  – line items                                 */
+/* =================================================================== */
+CREATE TABLE detail_distribusi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    id_detail_distribusi  VARCHAR(50) NOT NULL UNIQUE,   -- e.g. "DDS99"
+    id_distribusi         VARCHAR(50) NOT NULL,          -- FK → header
+
+    id_kartustok          VARCHAR(100) NOT NULL,         -- obat being moved
+    id_nomor_batch        VARCHAR(100) NOT NULL,         -- exact batch
+    jumlah_diminta        INT UNSIGNED NOT NULL,
+    jumlah_dikirim        INT UNSIGNED NOT NULL,
+
+    created_at            DATETIME NOT NULL,
+    created_by            VARCHAR(10),
+    updated_at            DATETIME,
+    updated_by            VARCHAR(10),
+
+    CONSTRAINT fk_detail_distribusi_header
+        FOREIGN KEY (id_distribusi)  REFERENCES distribusi(id_distribusi),
+
+    CONSTRAINT fk_detail_distribusi_kartu
+        FOREIGN KEY (id_kartustok)   REFERENCES kartu_stok(id_kartustok),
+
+    CONSTRAINT fk_detail_distribusi_batch
+        FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
+);
+
+
 
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

@@ -93,6 +93,13 @@ func Init() *echo.Echo {
 	routePenerimaanBarang.POST("/create", controller.CreatePenerimaan)
 	routePenerimaanBarang.PUT("/:id_pembelian_penerimaan/edit", controller.EditPenerimaan)
 
+	routePOS := e.Group("/PoS")
+	routePOS.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routePOS.POST("/requestalokasi", controller.AlocateBatchObat)
+	routePOS.POST("/checkout", controller.CreateTransaksi)
+	routePOS.GET("/stok/:id_obat", controller.GetStokObat)
+	routePOS.GET("/:id_transaksi", controller.GetTransaksi)
+	routePOS.GET("/transaksi", controller.GetHistoryTransaksi)
 	return e
 
 }

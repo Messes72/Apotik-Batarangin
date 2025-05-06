@@ -205,3 +205,73 @@ type DetailPembelianPenerimaan struct {
 	UpdatedBy                   *string    `json:"updated_by"`
 	DeletedAt                   *time.Time `json:"deleted_at,omitempty"`
 }
+
+type AlokasiBatch struct { //mengatur data individual batch untuk setiap bacth yg dialokasikan ke suatu obat
+	IdBatchPenerimaan string    `json:"id_batch_penerimaan"`
+	IDNomorBatch      string    `json:"id_nomor_batch"`
+	NomorBatch        string    `json:"nomor_batch"`
+	Kadaluarsa        time.Time `json:"kadaluarsa"`
+	Sisa              int       `json:"sisa"`
+	Alokasi           int       `json:"alokasi_obat"`
+}
+
+type RequestAlokasi struct { //untuk data obat yg diminta
+	IDObat    string `json:"id_obat"`
+	Kuantitas int    `json:"kuantitas"`
+}
+
+type AlokasiObatResult struct {
+	IDObat                 string         `json:"id_obat"`
+	Listbatchteralokasikan []AlokasiBatch `json:"list_alokasi"`
+}
+
+type PenjualanObat struct {
+	IDObat          string `json:"id_obat"`
+	Kuantitas       int    `json:"kuantitas"`
+	IdDepo          string `json:"id_depo"`
+	AturanPakai     string `json:"aturan_pakai,omitempty"`
+	CaraPakai       string `json:"cara_pakai,omitempty"`
+	KeteranganPakai string `json:"keterangan_pakai,omitempty"`
+}
+
+type MetodeBayar struct {
+	MetodeBayar string  `json:"metode_bayar"`
+	TotalBayar  float64 `json:"total_bayar"`
+}
+
+type PermintaanPembelian struct {
+	IDKaryawan string          `json:"id_karyawan"`
+	IDKustomer *string         `json:"id_kustomer,omitempty"`
+	Items      []PenjualanObat `json:"items"`
+	Payment    MetodeBayar     `json:"pembayaran"`
+}
+
+type RequestStokBarang struct {
+	IDobat string `json:"id_obat"`
+	Stok   int64  `json:"stok_barang"`
+}
+
+type TransaksiItem struct { //detal transaksi
+	IDKartustok     string    `json:"id_kartustok"`
+	NamaObat        string    `json:"nama_obat"`
+	Jumlah          int       `json:"jumlah"`
+	Totalharga      float64   `json:"total_harga"`
+	NomorBatch      string    `json:"nomor_batch"`
+	Kadaluarsa      time.Time `json:"kadaluarsa"`
+	AturanPakai     string    `json:"aturan_pakai"`
+	CaraPakai       string    `json:"cara_pakai"`
+	KeteranganPakai string    `json:"keterangan_pakai"`
+}
+
+type TransactionDetail struct { //single transaction
+	IDTransaksi  string          `json:"id_transaksi"`
+	KasirID      string          `json:"id_karyawan"`
+	KasirNama    string          `json:"nama_karyawan"`
+	KustomerID   *string         `json:"id_kustomer,omitempty"`
+	KustomerNama *string         `json:"nama_kustomer,omitempty"`
+	TotalHarga   float64         `json:"total_harga"`
+	MetodeBayar  string          `json:"metode_bayar"`
+	Status       string          `json:"status"`
+	CreatedAt    time.Time       `json:"created_at"`
+	Items        []TransaksiItem `json:"items"`
+}
