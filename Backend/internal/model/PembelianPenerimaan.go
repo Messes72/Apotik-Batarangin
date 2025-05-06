@@ -384,7 +384,7 @@ func GetPembelianDetail(ctx context.Context, idpembelian string) (class.Response
 
 	var pembelian class.PembelianPenerimaan
 	var tpembelian, tpembayaran, tpenerimaan sql.NullTime
-	var tmppemesan, tmppenerima string
+	var tmppemesan, tmppenerima *string
 
 	err := con.QueryRowContext(ctx, query, idpembelian).Scan(&pembelian.IDPembelianPenerimaanObat, &pembelian.IDSupplier, &pembelian.TotalHarga, &pembelian.Keterangan, &tpembelian, &tpenerimaan,
 		&tpembayaran, &tmppemesan, &tmppenerima, &pembelian.CreatedAt, &pembelian.CreatedBy, &pembelian.UpdatedAt, &pembelian.UpdatedBy)
