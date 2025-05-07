@@ -275,3 +275,44 @@ type TransactionDetail struct { //single transaction
 	CreatedAt    time.Time       `json:"created_at"`
 	Items        []TransaksiItem `json:"items"`
 }
+
+type RequestBarang struct {
+	IDDepoTujuan string              `json:"id_depo_tujuan"`
+	Keterangan   *string             `json:"keterangan"`
+	ListObat     []RequestBarangObat `json:"list_permintaan_obat"`
+}
+
+type RequestBarangObat struct {
+	IDObat        string  `json:"id_obat"`
+	JumlahDiminta int64   `json:"jumlah_diminta"`
+	IDNomorBatch  *string `json:"id_nomor_batch"`
+}
+
+type Distribusi struct {
+	IdDistribusi      string  `json:"id_distribusi"`
+	IdDepoAsal        *string `json:"id_depo_asal"`
+	IdDepoTujuan      string  `json:"id_depo_tujuan"`
+	TanggalPermohonan string  `json:"tanggal_permohonan"`
+	TanggalPengiriman *string `json:"tanggal_pengiriman"`
+	IdStatus          string  `json:"id_status"`
+	Keterangan        *string `json:"keterangan,omitempty"`
+	CreatedAt         string  `json:"created_at"`
+	CreatedBy         string  `json:"created_by"`
+	UpdatedAt         *string `json:"updated_at,omitempty"`
+	UpdatedBy         *string `json:"updated_by,omitempty"`
+	DeletedAt         *string `json:"deleted_at,omitempty"`
+	DeletedBy         *string `json:"deleted_by,omitempty"`
+}
+
+type DetailDistribusi struct {
+	IdDetailDistribusi string  `json:"id_detail_distribusi"`
+	IdDistribusi       string  `json:"id_distribusi"`
+	IdKartustok        string  `json:"id_kartustok"`
+	IdNomorBatch       *string `json:"id_nomor_batch"`
+	JumlahDiminta      int     `json:"jumlah_diminta"`
+	JumlahDikirim      *int    `json:"jumlah_dikirim"`
+	CreatedAt          string  `json:"created_at"`
+	CreatedBy          string  `json:"created_by"`
+	UpdatedAt          *string `json:"updated_at"`
+	UpdatedBy          *string `json:"updated_by"`
+}

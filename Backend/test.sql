@@ -179,7 +179,10 @@ CREATE TABLE keteranganpakaicounter (
 );
 INSERT INTO keteranganpakaicounter (COUNT) VALUES (1)
 
-
+CREATE TABLE IF NOT EXISTS detaildistribusicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO detaildistribusicounter (count) VALUES (1)
 
 -- Depo Table
 CREATE TABLE Depo (
@@ -613,7 +616,7 @@ CREATE TABLE detail_distribusi (
     id_distribusi         VARCHAR(50) NOT NULL,          -- FK → header
 
     id_kartustok          VARCHAR(100) NOT NULL,         -- obat being moved
-    id_nomor_batch        VARCHAR(100) NOT NULL,         -- exact batch
+    id_nomor_batch        VARCHAR(100) NULL,         -- exact batch
     jumlah_diminta        INT UNSIGNED NOT NULL,
     jumlah_dikirim        INT UNSIGNED NOT NULL,
 

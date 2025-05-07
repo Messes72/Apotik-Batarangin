@@ -474,8 +474,8 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 	querygetjumlahditerima := `SELECT jumlah_diterima FROM batch_penerimaan WHERE id_batch_penerimaan = ?`
 
-	queryinsertdetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok ,id_batch_penerimaan,id_nomor_batch, masuk, keluar, sisa,created_at,updated_at, id_depo)
-	VALUES (?,?,?,?,?,?,?,NOW(),NOW(),'10')`
+	queryinsertdetailkartustok := `INSERT INTO detail_kartustok (id_depo,id_detail_kartu_stok, id_kartustok ,id_batch_penerimaan,id_nomor_batch, masuk, keluar, sisa,created_at,updated_at, id_depo)
+	VALUES (?,?,?,?,?,?,?,?,NOW(),NOW(),'10')`
 
 	queryupdatenomorbatch := `UPDATE nomor_batch SET no_batch = ? ,kadaluarsa = ?, updated_at = NOW() WHERE id_nomor_batch = ?  `
 
@@ -558,7 +558,7 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 			return class.Response{Status: http.StatusInternalServerError, Message: "Failed to update counter", Data: nil}, err
 		}
 
-		_, err = tx.ExecContext(ctx, queryinsertdetailkartustok, newiddetailkartustok, batch.IDKartuStok, batch.IdBatchPenerimaan, batch.IDNomorBatch, masuk, keluar, newisisa)
+		_, err = tx.ExecContext(ctx, queryinsertdetailkartustok, "10", newiddetailkartustok, batch.IDKartuStok, batch.IdBatchPenerimaan, batch.IDNomorBatch, masuk, keluar, newisisa)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat insert record detail kartustok baru", err)

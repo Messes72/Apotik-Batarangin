@@ -10,7 +10,7 @@ import (
 	"proyekApotik/internal/db"
 )
 
-func AlocateBatchObat(ctx context.Context, idobat string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
+func AlocateBatchObat(ctx context.Context, idobat, iddepo string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
 
 	con := db.GetDBCon()
 
@@ -23,7 +23,7 @@ func AlocateBatchObat(ctx context.Context, idobat string, quantitas int) (class.
                               ORDER BY dk.id DESC) AS rn
     FROM detail_kartustok dk
     WHERE dk.id_kartustok = ?   
-      AND dk.id_depo      = '20'
+      AND dk.id_depo      = ?
 )
 SELECT l.id_batch_penerimaan,
        l.id_nomor_batch,
@@ -41,7 +41,7 @@ SELECT l.id_batch_penerimaan,
 	// SELECT l.id_batch_penerimaan, l.id_nomor_batch, nb.no_batch, nb.kadaluarsa, l.sisa FROM latest l JOIN nomor_batch nb ON nb.id_nomor_batch = l.id_nomor_batch
 	// WHERE l.rn = 1 AND l.sisa > 0 ORDER BY nb.kadaluarsa ASC `
 
-	rows, err := con.QueryContext(ctx, querylatestentryperbatch, idobat)
+	rows, err := con.QueryContext(ctx, querylatestentryperbatch, idobat, iddepo)
 	if err != nil {
 		log.Println("Error di rows query get alokasi obat ", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, nil, err
@@ -94,9 +94,9 @@ SELECT l.id_batch_penerimaan,
 func AlokasiMassalObat(ctx context.Context, request []class.RequestAlokasi) (class.Response, error) {
 
 	var hasil []class.AlokasiObatResult
-
+	iddepo := "20"
 	for _, obat := range request {
-		resp, result, err := AlocateBatchObat(ctx, obat.IDObat, obat.Kuantitas)
+		resp, result, err := AlocateBatchObat(ctx, obat.IDObat, iddepo, obat.Kuantitas)
 		if err != nil {
 			log.Println("Error di function alokasi batch per obat ", err)
 			return class.Response{Status: resp.Status, Message: resp.Message}, err
@@ -233,9 +233,9 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 	}
 
 	grandtotal := 0.0
-
+	iddepo := "20"
 	for _, obat := range listobat {
-		_, batchs, err := AlocateBatchObat(ctx, obat.IDObat, obat.Kuantitas)
+		_, batchs, err := AlocateBatchObat(ctx, obat.IDObat, iddepo, obat.Kuantitas)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat call alocatebatchobat di looping", err)

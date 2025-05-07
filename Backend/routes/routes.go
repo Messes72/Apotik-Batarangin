@@ -100,6 +100,10 @@ func Init() *echo.Echo {
 	routePOS.GET("/stok/:id_obat", controller.GetStokObat)
 	routePOS.GET("/:id_transaksi", controller.GetTransaksi)
 	routePOS.GET("/transaksi", controller.GetHistoryTransaksi)
+
+	routeRequestBarang := e.Group("/requestbarang")
+	routeRequestBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeRequestBarang.POST("/apotikrequest", controller.RequestBarangApotikKeGudang)
 	return e
 
 }
