@@ -509,7 +509,7 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 		if selisih == 0 {
 			continue
 		}
-
+		log.Println("JUmlah diterima ", batch.JumlahDiterima)
 		_, err = tx.ExecContext(ctx, queryupdatebatchpenerimaan, batch.JumlahDiterima, batch.IdBatchPenerimaan, idpembelianpenerimaanobat) // update batch penerimaan
 		if err != nil {
 			tx.Rollback()
