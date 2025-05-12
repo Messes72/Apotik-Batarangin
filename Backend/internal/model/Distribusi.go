@@ -575,22 +575,74 @@ func CancelRequest(ctx context.Context, idkaryawan, iddistribusi string) (class.
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: nil}, nil
 }
 
-// func GetRequest(ctx context.Context) (class.Response, err) {
-// 	con := db.GetDBCon()
-// 	tx, err := con.BeginTx(ctx, nil)
-// 	if err != nil {
-// 		log.Printf("Failed to start transaction: %v\n", err)
-// 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+func GetRequest(ctx context.Context, page, pagesize int) (class.Response, error) {
+	con := db.GetDBCon()
+	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
+		page = 1
+	}
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	offset := (page - 1) * pagesize
+	query := `SELECT id_distribusi, id_depo_asal, id_depo_tujuan, tanggal_permohonan,tanggal_pengiriman, keterangan, created_at, created_by , updated_at, updated_by,id_status FROM distribusi WHERE deleted_at IS NULL ORDER BY id DESC LIMIT ? OFFSET ? `
 
-// 	}
-// 	defer tx.Rollback()
+	rows, err := con.QueryContext(ctx, query, pagesize, offset)
+	if err != nil {
+		log.Println("Error saat query distribusi", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data permintaan", Data: nil}, err
+	}
+	defer rows.Close()
 
-// 	query :=
+	var listrequest []class.Distribusi
 
-// 	err = tx.Commit()
-// 	if err != nil {
-// 		log.Printf("Failed to commit transaction: %v\n", err)
-// 		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
-// 	}
+	for rows.Next() {
 
-// }
+		var distribusi class.Distribusi
+		var TanggalPengiriman sql.NullTime
+		var ket sql.NullString
+		var updatedat sql.NullTime
+		var updatedby sql.NullString
+
+		err := rows.Scan(&distribusi.IdDistribusi, &distribusi.IdDepoAsal, &distribusi.IdDepoTujuan, &distribusi.TanggalPermohonan, &TanggalPengiriman, &ket, &distribusi.CreatedAt, &distribusi.CreatedBy, &updatedat, &updatedby, &distribusi.IdStatus)
+		if err != nil {
+			log.Println("Error saat scan data distribusi", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data permintaan", Data: nil}, err
+
+		}
+
+		distribusi.TanggalPengiriman = toPtrTime(TanggalPengiriman)
+		distribusi.Keterangan = toPtrString(ket)
+		distribusi.UpdatedAt = toPtrTime(updatedat)
+		distribusi.UpdatedBy = toPtrString(updatedby)
+
+		listrequest = append(listrequest, distribusi)
+
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("rows error get all requet", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data permintaan", Data: nil}, err
+	}
+
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM distribusi WHERE deleted_at IS NULL`
+	err = con.QueryRowContext(ctx, countrecordquery).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("error total record distribusi ")
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data request"}, nil
+	}
+
+	totalpage := (totalrecord + pagesize - 1) / pagesize //bisa juga pakai total/pagesize tp kan nanti perlu di bulatkan keatas pakai package math dimana dia perlu type floating point yg membuat performa hitung lebih lambat
+
+	metadata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pagesize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: listrequest, Metadata: metadata}, nil
+
+}

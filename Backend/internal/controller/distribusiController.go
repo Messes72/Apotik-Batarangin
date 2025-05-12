@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -103,6 +104,31 @@ func CancelRequest(c echo.Context) error {
 	}
 
 	result, err := model.CancelRequest(c.Request().Context(), idKaryawan, iddistribusi)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func GetRequest(c echo.Context) error {
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+
+	result, err := model.GetRequest(c.Request().Context(), page, pageSize)
 	if err != nil {
 		return c.JSON(result.Status, result)
 	}
