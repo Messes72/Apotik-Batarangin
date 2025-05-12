@@ -104,6 +104,11 @@ func Init() *echo.Echo {
 	routeRequestBarang := e.Group("/requestbarang")
 	routeRequestBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routeRequestBarang.POST("/apotikrequest", controller.RequestBarangApotikKeGudang)
+	routeRequestBarang.GET("/:id", controller.GetRequestByID)
+	routeRequestBarang.GET("", controller.GetRequest)
+	routeRequestBarang.POST("/distribusibarang", controller.FulfilRequestApotik)
+	routeRequestBarang.POST("/cancelrequest", controller.CancelRequest)
+
 	return e
 
 }

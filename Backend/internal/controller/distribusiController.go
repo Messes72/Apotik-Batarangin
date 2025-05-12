@@ -3,6 +3,7 @@ package internal
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -35,5 +36,75 @@ func RequestBarangApotikKeGudang(c echo.Context) error {
 		c.JSON(http.StatusInternalServerError, map[string]string{"message": "Error saat memproses permintaan"})
 	}
 
+	return c.JSON(result.Status, result)
+}
+
+func GetRequestByID(c echo.Context) error {
+	iddistribusi := c.Param("id_distribusi")
+	if iddistribusi == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "parameter permintaan tidak lengkap"})
+	}
+
+	result, err := model.GetRequestByID(c.Request().Context(), iddistribusi)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func FulfilRequestApotik(c echo.Context) error {
+
+	idKaryawaninput := c.Get("id_karyawan")
+	if idKaryawaninput == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
+
+	idKaryawan, ok := idKaryawaninput.(string)
+	if !ok || idKaryawan == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid karyawan data"})
+	}
+
+	var requestBody class.FulfilRequest
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid Request",
+		})
+	}
+
+	tanggalpengiriman, err := time.Parse("2006-01-02", requestBody.TanggalPengirimaninput)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "invalid tanggal pengiriman"})
+	}
+
+	requestBody.TanggalPengiriman = tanggalpengiriman
+
+	result, err := model.FulfilRequestApotik(c.Request().Context(), idKaryawan, requestBody)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func CancelRequest(c echo.Context) error {
+	idKaryawaninput := c.Get("id_karyawan")
+	if idKaryawaninput == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
+
+	idKaryawan, ok := idKaryawaninput.(string)
+	if !ok || idKaryawan == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid karyawan data"})
+	}
+
+	iddistribusi := c.QueryParam("id")
+	if iddistribusi == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "parameter tidak lengkap"})
+	}
+
+	result, err := model.CancelRequest(c.Request().Context(), idKaryawan, iddistribusi)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
 	return c.JSON(result.Status, result)
 }

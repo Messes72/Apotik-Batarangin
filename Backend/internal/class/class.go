@@ -286,6 +286,20 @@ type RequestBarangObat struct {
 	IDObat        string  `json:"id_obat"`
 	JumlahDiminta int64   `json:"jumlah_diminta"`
 	IDNomorBatch  *string `json:"id_nomor_batch"`
+	CatatanApotik *string `json:"catatan_apotik"`
+}
+
+type FulfilRequest struct {
+	IdDistribusi            string              `json:"id_distribusi"`
+	ListPemenuhanDistribusi []FulfilRequestObat `json:"list_pemenuhan_distribusi"`
+	TanggalPengiriman       time.Time           `json:"-"`
+	TanggalPengirimaninput  string              `json:"tanggal_pengiriman"`
+	CatatanGudang           *string             `json:"catatan_gudang"`
+}
+
+type FulfilRequestObat struct {
+	IdDetailDistribusi string `json:"id_detail_distribusi"`
+	JumlahDikirim      int    `json:"jumlah_dikirim"`
 }
 
 type Distribusi struct {
@@ -305,14 +319,24 @@ type Distribusi struct {
 }
 
 type DetailDistribusi struct {
-	IdDetailDistribusi string  `json:"id_detail_distribusi"`
-	IdDistribusi       string  `json:"id_distribusi"`
-	IdKartustok        string  `json:"id_kartustok"`
-	IdNomorBatch       *string `json:"id_nomor_batch"`
-	JumlahDiminta      int     `json:"jumlah_diminta"`
-	JumlahDikirim      *int    `json:"jumlah_dikirim"`
-	CreatedAt          string  `json:"created_at"`
-	CreatedBy          string  `json:"created_by"`
-	UpdatedAt          *string `json:"updated_at"`
-	UpdatedBy          *string `json:"updated_by"`
+	IdDetailDistribusi string                  `json:"id_detail_distribusi"`
+	IdDistribusi       string                  `json:"id_distribusi"`
+	IdKartustok        string                  `json:"id_kartustok"`
+	IdNomorBatch       *string                 `json:"id_nomor_batch"`
+	JumlahDiminta      int                     `json:"jumlah_diminta"`
+	JumlahDikirim      *int                    `json:"jumlah_dikirim"`
+	CreatedAt          string                  `json:"created_at"`
+	CreatedBy          string                  `json:"created_by"`
+	UpdatedAt          *string                 `json:"updated_at,omitempty"`
+	UpdatedBy          *string                 `json:"updated_by,omitempty"`
+	CatatanApotik      *string                 `json:"catatan_apotik,omitempty"`
+	CatatanGudang      *string                 `json:"catatan_gudang,omitempty"`
+	DetailBatch        []BatchDetailDistribusi `json:"batch_obat"`
+}
+
+type BatchDetailDistribusi struct {
+	IdNomorBatch string    `json:"id_nomor_batch"` // ID of the batch
+	NoBatch      string    `json:"no_batch"`       // Batch number (e.g., BT001, BT002)
+	Kadaluarsa   time.Time `json:"kadaluarsa"`     // Expiration date of the batch
+	Jumlah       int       `json:"jumlah"`         // Quantity of the batch available
 }

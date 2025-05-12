@@ -184,6 +184,11 @@ CREATE TABLE IF NOT EXISTS detaildistribusicounter (
 );
 INSERT IGNORE INTO detaildistribusicounter (count) VALUES (1)
 
+CREATE TABLE IF NOT EXISTS batchdetaildistribusicounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO batchdetaildistribusicounter (count) VALUES (1)
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -588,7 +593,7 @@ CREATE TABLE distribusi (
     tanggal_permohonan   DATE NOT NULL,                 -- request date
     tanggal_pengiriman   DATE,                          -- filled when shipped
 
-    id_status            VARCHAR(50) NOT NULL,          -- use 0/1/2 from `status`
+            
     keterangan           VARCHAR(255),
 
     created_at           DATETIME NOT NULL,
@@ -601,9 +606,8 @@ CREATE TABLE distribusi (
     CONSTRAINT fk_distribusi_depo_asal
         FOREIGN KEY (id_depo_asal)   REFERENCES Depo(id_depo),
     CONSTRAINT fk_distribusi_depo_tujuan
-        FOREIGN KEY (id_depo_tujuan) REFERENCES Depo(id_depo),
-    CONSTRAINT fk_distribusi_status
-        FOREIGN KEY (id_status)      REFERENCES status(id_status)
+        FOREIGN KEY (id_depo_tujuan) REFERENCES Depo(id_depo)
+    
 );
 
 /* =================================================================== */
@@ -614,12 +618,10 @@ CREATE TABLE detail_distribusi (
 
     id_detail_distribusi  VARCHAR(50) NOT NULL UNIQUE,   -- e.g. "DDS99"
     id_distribusi         VARCHAR(50) NOT NULL,          -- FK → header
-
-    id_kartustok          VARCHAR(100) NOT NULL,         -- obat being moved
-    id_nomor_batch        VARCHAR(100) NULL,         -- exact batch
+      -- exact batch
     jumlah_diminta        INT UNSIGNED NOT NULL,
     jumlah_dikirim        INT UNSIGNED NOT NULL,
-
+id_status            VARCHAR(50) NOT NULL DEFAULT '0', //jangan lupa ini di dump harus diganti 
     created_at            DATETIME NOT NULL,
     created_by            VARCHAR(10),
     updated_at            DATETIME,
@@ -630,12 +632,23 @@ CREATE TABLE detail_distribusi (
 
     CONSTRAINT fk_detail_distribusi_kartu
         FOREIGN KEY (id_kartustok)   REFERENCES kartu_stok(id_kartustok),
-
-    CONSTRAINT fk_detail_distribusi_batch
-        FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
+    CONSTRAINT fk_distribusi_status
+        FOREIGN KEY (id_status)      REFERENCES status(id_status)
 );
 
 
+
+CREATE TABLE batch_detail_distribusi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_batch_detail_distribusi VARCHAR(50) NOT NULL UNIQUE,
+    id_detail_distribusi VARCHAR(50) NOT NULL,       -- FK ke detail_distribusi
+    id_nomor_batch VARCHAR(100) NOT NULL,            -- batch yg digunakan
+    jumlah INT UNSIGNED NOT NULL,                    -- jumlah dari batch ini
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (id_detail_distribusi) REFERENCES detail_distribusi(id_detail_distribusi),
+    FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
+);
 
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

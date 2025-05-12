@@ -19,7 +19,7 @@ func AlocateBatchObat(ctx context.Context, idobat, iddepo string, quantitas int)
     SELECT dk.id_batch_penerimaan,
            dk.id_nomor_batch,
            dk.sisa,
-           ROW_NUMBER() OVER (PARTITION BY dk.id_batch_penerimaan
+           ROW_NUMBER() OVER (PARTITION BY dk.id_nomor_batch
                               ORDER BY dk.id DESC) AS rn
     FROM detail_kartustok dk
     WHERE dk.id_kartustok = ?   
@@ -130,13 +130,13 @@ func GetHargaJual(ctx context.Context, idObat string) (float64, error) {
 }
 
 // kartu stok lookup
-func getKartuStokID(tx *sql.Tx, idObat string) (string, error) {
+func getKartuStokID(tx *sql.Tx, idObat, iddepo string) (string, error) {
 	var id string
 	err := tx.QueryRow(`
         SELECT id_kartustok
           FROM kartu_stok
-         WHERE id_obat = ? AND id_depo = '20'`,
-		idObat).Scan(&id)
+         WHERE id_obat = ? AND id_depo = ?`,
+		idObat, iddepo).Scan(&id)
 	return id, err
 }
 
@@ -154,10 +154,16 @@ func nextBizID(tx *sql.Tx, tbl, prefix string) (string, error) {
 
 func moveOut(
 	tx *sql.Tx,
-	kasir, idKartu, trxID string,
-	b class.AlokasiBatch,
+	kasir, idKartu, trxID, iddepo string,
+	b class.AlokasiBatch, kuantitas int,
 ) error {
 
+	if kuantitas <= 0 {
+		return fmt.Errorf("kuantitas harus > 0")
+	}
+	if kuantitas > b.Sisa {
+		return fmt.Errorf("qty %d melebihi sisa %d pada batch %s", kuantitas, b.Sisa, b.IDNomorBatch)
+	}
 	dksID, err := nextBizID(tx, "detail_kartustokcounter", "DKS")
 	if err != nil {
 		return err
@@ -170,12 +176,12 @@ func moveOut(
 		  (id_detail_kartu_stok,id_kartustok,
 		   id_transaksi,id_batch_penerimaan,id_nomor_batch,
 		   masuk,keluar,sisa,created_at,id_depo)
-		VALUES (?,?,?,?,?,0,?, ?,NOW(),'20')`,
+		VALUES (?,?,?,?,?,0,?, ?,NOW(),?)`,
 		dksID, idKartu,
 		trxID,
 		b.IdBatchPenerimaan,
 		b.IDNomorBatch,
-		b.Alokasi, newSaldo)
+		kuantitas, newSaldo, iddepo)
 	if err != nil {
 		return err
 	}
@@ -183,8 +189,8 @@ func moveOut(
 	_, err = tx.Exec(`
 		UPDATE kartu_stok
 		   SET stok_barang = ?, updated_at = NOW(), updated_by = ?
-		 WHERE id_kartustok = ? AND id_depo = '20'`,
-		newSaldo, kasir, idKartu)
+		 WHERE id_kartustok = ? AND id_depo = ?`,
+		newSaldo, kasir, idKartu, iddepo)
 	return err
 }
 
@@ -296,7 +302,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat input keterangan pakai"}, err
 		}
 
-		idkartu, err := getKartuStokID(tx, obat.IDObat)
+		idkartu, err := getKartuStokID(tx, obat.IDObat, "20")
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat query kartu stok sesuai id depo apotik", err)
@@ -318,7 +324,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 		}
 
 		for _, indivudalbatch := range batchs { //loop untuk tiap batch
-			err = moveOut(tx, idkaryawan, idkartu, newidtransaksi, indivudalbatch)
+			err = moveOut(tx, idkaryawan, idkartu, newidtransaksi, "20", indivudalbatch, indivudalbatch.Alokasi)
 			if err != nil {
 				tx.Rollback()
 				log.Println("Error saat memproses perpindahan stok", err)
