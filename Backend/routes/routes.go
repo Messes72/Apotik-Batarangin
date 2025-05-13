@@ -108,6 +108,7 @@ func Init() *echo.Echo {
 	routeRequestBarang.GET("", controller.GetRequest)
 	routeRequestBarang.POST("/distribusibarang", controller.FulfilRequestApotik)
 	routeRequestBarang.POST("/cancelrequest", controller.CancelRequest)
+	routeRequestBarang.PUT("/edit", controller.EditRequest)
 
 	return e
 

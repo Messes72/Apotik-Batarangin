@@ -282,10 +282,13 @@ type RequestBarang struct {
 	ListObat     []RequestBarangObat `json:"list_permintaan_obat"`
 }
 
+type RequestBody struct {
+	ListPermintaanObat []RequestBarangObat `json:"list_permintaan_obat"`
+}
+
 type RequestBarangObat struct {
 	IDObat        string  `json:"id_obat"`
 	JumlahDiminta int64   `json:"jumlah_diminta"`
-	IDNomorBatch  *string `json:"id_nomor_batch"`
 	CatatanApotik *string `json:"catatan_apotik"`
 }
 
@@ -308,7 +311,7 @@ type Distribusi struct {
 	IdDepoTujuan      string  `json:"id_depo_tujuan"`
 	TanggalPermohonan string  `json:"tanggal_permohonan"`
 	TanggalPengiriman *string `json:"tanggal_pengiriman"`
-	IdStatus          string  `json:"id_status"`
+	IdStatus          *string `json:"id_status"`
 	Keterangan        *string `json:"keterangan,omitempty"`
 	CreatedAt         string  `json:"created_at"`
 	CreatedBy         string  `json:"created_by"`

@@ -41,7 +41,7 @@ func RequestBarangApotikKeGudang(c echo.Context) error {
 }
 
 func GetRequestByID(c echo.Context) error {
-	iddistribusi := c.Param("id_distribusi")
+	iddistribusi := c.Param("id")
 	if iddistribusi == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "parameter permintaan tidak lengkap"})
 	}
@@ -129,6 +129,37 @@ func GetRequest(c echo.Context) error {
 	}
 
 	result, err := model.GetRequest(c.Request().Context(), page, pageSize)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func EditRequest(c echo.Context) error {
+	idKaryawaninput := c.Get("id_karyawan")
+	if idKaryawaninput == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
+
+	idKaryawan, ok := idKaryawaninput.(string)
+	if !ok || idKaryawan == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid karyawan data"})
+	}
+
+	iddistribusi := c.QueryParam("id")
+	if iddistribusi == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "parameter tidak lengkap"})
+	}
+
+	var requestBody class.RequestBody
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid Request",
+		})
+	}
+
+	result, err := model.EditRequest(c.Request().Context(), iddistribusi, idKaryawan, requestBody.ListPermintaanObat)
 	if err != nil {
 		return c.JSON(result.Status, result)
 	}

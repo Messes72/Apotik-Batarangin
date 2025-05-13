@@ -626,6 +626,9 @@ id_status            VARCHAR(50) NOT NULL DEFAULT '0', //jangan lupa ini di dump
     created_by            VARCHAR(10),
     updated_at            DATETIME,
     updated_by            VARCHAR(10),
+    created_by            VARCHAR(10),
+    deleted_at            DATETIME,
+    deleted_by            VARCHAR(10)
 
     CONSTRAINT fk_detail_distribusi_header
         FOREIGN KEY (id_distribusi)  REFERENCES distribusi(id_distribusi),

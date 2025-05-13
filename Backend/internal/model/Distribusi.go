@@ -120,7 +120,7 @@ func GetRequestByID(ctx context.Context, iddistribusi string) (class.Response, e
 	err = con.QueryRowContext(ctx, querykaryawan, distribusi.CreatedBy).Scan(&distribusi.CreatedBy)
 	err = con.QueryRowContext(ctx, querykaryawan, distribusi.UpdatedBy).Scan(&updatedby)
 
-	querydetail := `SELECT id_detail_distribusi , id_distribusi, id_kartustok, jumlah_diminta, jumlah_dikirim, created_at, created_by ,updated_at, updated_by, catatan_apotik, catatan_gudang FROM detail_distribusi WHERE id_distribusi = ? `
+	querydetail := `SELECT id_detail_distribusi , id_distribusi, id_kartustok, jumlah_diminta, jumlah_dikirim, created_at, created_by ,updated_at, updated_by, catatan_apotik, catatan_gudang FROM detail_distribusi WHERE id_distribusi = ? AND deleted_at IS NULL`
 	rows, err := con.QueryContext(ctx, querydetail, iddistribusi)
 	if err != nil {
 		log.Println("Error saat mengambil data detail distribusi obat", err)
@@ -351,8 +351,9 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 	)
 
 	var cekstatus string
-	querycekstatus := `SELECT id_status FROM distribusi WHERE id_distribusi = ? FOR UPDATE `
-	err = tx.QueryRowContext(ctx, querycekstatus, distribusi.IdDistribusi).Scan(&cekstatus)
+	var tanggalkirim sql.NullTime
+	querycekstatus := `SELECT id_status , tanggal_pengiriman FROM distribusi WHERE id_distribusi = ? FOR UPDATE `
+	err = tx.QueryRowContext(ctx, querycekstatus, distribusi.IdDistribusi).Scan(&cekstatus, &tanggalkirim)
 	if err != nil {
 		log.Println("Error saat mengambil data status distribusi", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
@@ -375,7 +376,7 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 		var idobat string
 		var jumlahdiminta int
 
-		querydetaildistribusi := `SELECT id_kartustok ,jumlah_diminta FROM detail_distribusi WHERE id_detail_distribusi = ? AND id_distribusi = ? FOR UPDATE `
+		querydetaildistribusi := `SELECT id_kartustok ,jumlah_diminta FROM detail_distribusi WHERE id_detail_distribusi = ? AND deleted_at IS NULL AND id_distribusi = ? FOR UPDATE `
 		err = tx.QueryRowContext(ctx, querydetaildistribusi, obat.IdDetailDistribusi, distribusi.IdDistribusi).Scan(&idobat, &jumlahdiminta)
 		if err != nil {
 			log.Println("Error saat mengambil detail distribusi ", err)
@@ -387,8 +388,8 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 		}
 		if obat.JumlahDikirim == 0 {
 			incomplete = true
-			querystatuskirimkosong := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = 0 WHERE id_detail_distribusi = ?`
-			_, err = tx.ExecContext(ctx, querystatuskirimkosong, statusIncomplete, obat.IdDetailDistribusi)
+			querystatuskirimkosong := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = 0, catatan_gudang = ? WHERE id_detail_distribusi = ? AND deleted_at IS NULL`
+			_, err = tx.ExecContext(ctx, querystatuskirimkosong, statusIncomplete, distribusi.CatatanGudang, obat.IdDetailDistribusi)
 			if err != nil {
 				log.Println("Error saat update status saat tidak mengirimkan obat")
 				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
@@ -489,8 +490,8 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 			incomplete = true
 		}
 
-		queryupdatestatus := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = ? WHERE id_detail_distribusi = ? `
-		_, err = tx.ExecContext(ctx, queryupdatestatus, statustoset, dikirim, obat.IdDetailDistribusi)
+		queryupdatestatus := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = ?, catatan_gudang = ? WHERE id_detail_distribusi = ? AND deleted_at IS NULL `
+		_, err = tx.ExecContext(ctx, queryupdatestatus, statustoset, dikirim, distribusi.CatatanGudang, obat.IdDetailDistribusi)
 		if err != nil {
 			log.Println("Error saat update status distribusi obat ", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data"}, err
@@ -559,7 +560,7 @@ func CancelRequest(ctx context.Context, idkaryawan, iddistribusi string) (class.
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat membatalkan request Apotik", Data: nil}, err
 	}
 
-	queryupdatestatusdetaildistribusi := `UPDATE detail_distribusi SET id_status = ?, updated_at = NOW(), updated_by = ? WHERE id_distribusi = ?`
+	queryupdatestatusdetaildistribusi := `UPDATE detail_distribusi SET id_status = ?, updated_at = NOW(), updated_by = ? WHERE id_distribusi = ? AND deleted_at IS NULL`
 	_, err = tx.ExecContext(ctx, queryupdatestatusdetaildistribusi, statusCanceled, idkaryawan, iddistribusi)
 	if err != nil {
 		log.Println("Error saat update detail distribusi", err)
@@ -602,8 +603,9 @@ func GetRequest(ctx context.Context, page, pagesize int) (class.Response, error)
 		var ket sql.NullString
 		var updatedat sql.NullTime
 		var updatedby sql.NullString
+		var idstatus sql.NullString
 
-		err := rows.Scan(&distribusi.IdDistribusi, &distribusi.IdDepoAsal, &distribusi.IdDepoTujuan, &distribusi.TanggalPermohonan, &TanggalPengiriman, &ket, &distribusi.CreatedAt, &distribusi.CreatedBy, &updatedat, &updatedby, &distribusi.IdStatus)
+		err := rows.Scan(&distribusi.IdDistribusi, &distribusi.IdDepoAsal, &distribusi.IdDepoTujuan, &distribusi.TanggalPermohonan, &TanggalPengiriman, &ket, &distribusi.CreatedAt, &distribusi.CreatedBy, &updatedat, &updatedby, &idstatus)
 		if err != nil {
 			log.Println("Error saat scan data distribusi", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data permintaan", Data: nil}, err
@@ -614,6 +616,7 @@ func GetRequest(ctx context.Context, page, pagesize int) (class.Response, error)
 		distribusi.Keterangan = toPtrString(ket)
 		distribusi.UpdatedAt = toPtrTime(updatedat)
 		distribusi.UpdatedBy = toPtrString(updatedby)
+		distribusi.IdStatus = toPtrString(idstatus)
 
 		listrequest = append(listrequest, distribusi)
 
@@ -644,5 +647,77 @@ func GetRequest(ctx context.Context, page, pagesize int) (class.Response, error)
 	}
 
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: listrequest, Metadata: metadata}, nil
+
+}
+
+func EditRequest(ctx context.Context, iddistribusi, idkaryawan string, obj []class.RequestBarangObat) (class.Response, error) {
+	con := db.GetDBCon()
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+
+	}
+	defer tx.Rollback()
+
+	const (
+		statusOpen = "0"
+	)
+
+	querycekfulfiled := `SELECT tanggal_pengiriman, id_status FROM distribusi WHERE id_distribusi = ? AND deleted_at IS NULL`
+	var curstatus string
+	var tanggalkirim sql.NullTime
+
+	err = tx.QueryRowContext(ctx, querycekfulfiled, iddistribusi).Scan(&tanggalkirim, &curstatus)
+	if err == sql.ErrNoRows {
+		return class.Response{Status: http.StatusBadRequest, Message: "Request tidak ditemukan, mungkin sudah pernah dicancel sebelumnya", Data: nil}, nil
+	}
+	if err != nil {
+		log.Println("Error saat cek status distribusi ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat edit request", Data: nil}, err
+	}
+
+	if curstatus != statusOpen || tanggalkirim.Valid {
+		return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("Request sudah dipenuhi gudang pada %s, tidak dapat diubah", tanggalkirim.Time.Format("2006-01-02")), Data: nil}, nil
+	}
+
+	queryupdatedistribusi := `UPDATE distribusi SET updated_at = NOW(), updated_by = ? WHERE id_distribusi = ? `
+	_, err = tx.ExecContext(ctx, queryupdatedistribusi, idkaryawan, iddistribusi)
+	if err != nil {
+		log.Println("Error saat update distribusi", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Edit Request", Data: nil}, err
+	}
+
+	querydeleteolddetaildistribusi := `UPDATE detail_distribusi SET deleted_at = NOW(), deleted_by = ? WHERE id_distribusi = ? `
+	_, err = tx.ExecContext(ctx, querydeleteolddetaildistribusi, idkaryawan, iddistribusi)
+	if err != nil {
+		log.Println("Error saat soft delete detail distribusi ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Edit Requset", Data: nil}, err
+	}
+
+	queryinsertdetaildistribusi := `INSERT INTO detail_distribusi (id_detail_distribusi, id_distribusi, id_kartustok, jumlah_diminta, created_at ,created_by, updated_at, updated_by,catatan_apotik, id_status,jumlah_dikirim) VALUES (?,?,?,?,NOW(),'sysedit',NOW(),?,?,?,0)`
+
+	for _, obat := range obj {
+
+		newiddetail, err := nextBizID(tx, "detaildistribusicounter", "DDIS")
+		if err != nil {
+			log.Println("Error saat generate id baru untuk detail distribusi", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Edit Request", Data: nil}, err
+		}
+
+		_, err = tx.ExecContext(ctx, queryinsertdetaildistribusi, newiddetail, iddistribusi, obat.IDObat, obat.JumlahDiminta, idkaryawan, obat.CatatanApotik, statusOpen)
+		if err != nil {
+			log.Println("Error saat insert data detail distribusi baru", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Edit Request", Data: nil}, err
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: nil}, nil
 
 }
