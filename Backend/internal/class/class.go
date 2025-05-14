@@ -297,12 +297,12 @@ type FulfilRequest struct {
 	ListPemenuhanDistribusi []FulfilRequestObat `json:"list_pemenuhan_distribusi"`
 	TanggalPengiriman       time.Time           `json:"-"`
 	TanggalPengirimaninput  string              `json:"tanggal_pengiriman"`
-	CatatanGudang           *string             `json:"catatan_gudang"`
 }
 
 type FulfilRequestObat struct {
-	IdDetailDistribusi string `json:"id_detail_distribusi"`
-	JumlahDikirim      int    `json:"jumlah_dikirim"`
+	IdDetailDistribusi string  `json:"id_detail_distribusi"`
+	JumlahDikirim      int     `json:"jumlah_dikirim"`
+	CatatanGudang      *string `json:"catatan_gudang"`
 }
 
 type Distribusi struct {

@@ -602,6 +602,7 @@ CREATE TABLE distribusi (
     updated_by           VARCHAR(10),
     deleted_at           DATETIME,
     deleted_by           VARCHAR(10),
+    id_status    VARCHAR(50)
 
     CONSTRAINT fk_distribusi_depo_asal
         FOREIGN KEY (id_depo_asal)   REFERENCES Depo(id_depo),

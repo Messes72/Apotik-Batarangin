@@ -391,7 +391,7 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 		if obat.JumlahDikirim == 0 {
 			incomplete = true
 			querystatuskirimkosong := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = 0, catatan_gudang = ? WHERE id_detail_distribusi = ? AND deleted_at IS NULL`
-			_, err = tx.ExecContext(ctx, querystatuskirimkosong, statusIncomplete, distribusi.CatatanGudang, obat.IdDetailDistribusi)
+			_, err = tx.ExecContext(ctx, querystatuskirimkosong, statusIncomplete, obat.CatatanGudang, obat.IdDetailDistribusi)
 			if err != nil {
 				log.Println("Error saat update status saat tidak mengirimkan obat")
 				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
@@ -493,7 +493,7 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 		}
 
 		queryupdatestatus := `UPDATE detail_distribusi SET id_status = ?, jumlah_dikirim = ?, catatan_gudang = ? WHERE id_detail_distribusi = ? AND deleted_at IS NULL `
-		_, err = tx.ExecContext(ctx, queryupdatestatus, statustoset, dikirim, distribusi.CatatanGudang, obat.IdDetailDistribusi)
+		_, err = tx.ExecContext(ctx, queryupdatestatus, statustoset, dikirim, obat.CatatanGudang, obat.IdDetailDistribusi)
 		if err != nil {
 			log.Println("Error saat update status distribusi obat ", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data"}, err
