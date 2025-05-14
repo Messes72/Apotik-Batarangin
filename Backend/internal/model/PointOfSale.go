@@ -8,7 +8,6 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
-	"time"
 )
 
 func AlocateBatchObat(ctx context.Context, idobat, iddepo string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
@@ -35,7 +34,6 @@ SELECT l.id_batch_penerimaan,
   JOIN nomor_batch nb ON nb.id_nomor_batch = l.id_nomor_batch
  WHERE l.rn = 1
    AND l.sisa > 0
-   AND nb.kadaluarsa > NOW()
  ORDER BY nb.kadaluarsa ASC;
 `
 	// querylatestentryperbatch := `WITH latest AS (SELECT dk.id_batch_penerimaan , dk.id_nomor_batch, dk.sisa,
@@ -61,10 +59,6 @@ SELECT l.id_batch_penerimaan,
 		if err != nil {
 			log.Println("Error saat scan alokasi batch")
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, nil, err
-		}
-
-		if batch.Kadaluarsa.Before(time.Now()) {
-			continue //skip kalau expired (time dari local time system)
 		}
 
 		if kebutuhan <= 0 {

@@ -230,7 +230,32 @@ Create TABLE detail_karyawan(
     CONSTRAINT fk_detail_karyawan_karyawan FOREIGN KEY (id_karyawan) REFERENCES Karyawan(id_karyawan)
 )
 
- //berubah , lihat erd
+
+
+
+CREATE TABLE stok_opname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_stokopname VARCHAR(10) UNIQUE NOT NULL,
+    id_satuan
+    stok_barang INT UNSIGNED NOT NULL,
+    catatan VARCHAR(255),
+    created_at DATETIME NOT NULL
+);
+
+
+
+CREATE TABLE detail_stokopname (
+    id_depo VARCHAR(10) NOT NULL,
+    id_stokopname VARCHAR(10) NOT NULL,
+    id_kartustok VARCHAR(15) NOT NULL,
+    inputjumlah INT UNSIGNED NOT NULL, 
+    catatan VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME,
+    deleted_at DATETIME,
+    CONSTRAINT fk_detail_stokopname_stokopname FOREIGN KEY (id_stokopname) REFERENCES stok_opname(id_stokopname),
+    CONSTRAINT fk_detail_stokopname_kartustok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok)
+); //berubah , lihat erd
 
 CREATE TABLE detail_keluarmasukobat (
     id_kartustok VARCHAR(15) NOT NULL,
@@ -627,48 +652,6 @@ CREATE TABLE batch_detail_distribusi (
     FOREIGN KEY (id_detail_distribusi) REFERENCES detail_distribusi(id_detail_distribusi),
     FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
 );
-
-
-
-
-
-
-CREATE TABLE stok_opname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_stokopname VARCHAR(10) UNIQUE NOT NULL,
-    tanggal_opname DATE NOT NULL,
-    stok_barang INT UNSIGNED NOT NULL,
-    catatan VARCHAR(255),
-    created_at DATETIME NOT NULL
-);
-
-
-
-CREATE TABLE detail_stokopname (
-    id_depo VARCHAR(10) NOT NULL,
-    id_stokopname VARCHAR(10) NOT NULL,
-    id_kartustok VARCHAR(15) NOT NULL,
-    inputjumlah INT UNSIGNED NOT NULL, 
-    catatan VARCHAR(255),
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME,
-    deleted_at DATETIME,
-    CONSTRAINT fk_detail_stokopname_stokopname FOREIGN KEY (id_stokopname) REFERENCES stok_opname(id_stokopname),
-    CONSTRAINT fk_detail_stokopname_kartustok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok)
-);
-
-
-CREATE TABLE 
-
-
-
-
-
-
-
-
-
-
 
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

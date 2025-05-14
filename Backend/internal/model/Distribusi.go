@@ -26,10 +26,8 @@ func RequestBarangApotikKeGudang(ctx context.Context, idkarayawan string, listob
 	}
 
 	querydistribusi := `INSERT INTO distribusi (id_distribusi, id_depo_asal, id_depo_tujuan ,id_status,tanggal_permohonan, keterangan, created_at, created_by) VALUES (?,?,?,?,NOW(),?,NOW(),?)`
-	depoasal := "10"
-	depotujuan := "20"
 
-	_, err = tx.ExecContext(ctx, querydistribusi, IdDistribusi, depoasal, depotujuan, "0", distribusi.Keterangan, idkarayawan)
+	_, err = tx.ExecContext(ctx, querydistribusi, IdDistribusi, "10", "20", "0", distribusi.Keterangan, idkarayawan)
 	if err != nil {
 		log.Println("Error saat insert data ke distribusi", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
@@ -723,7 +721,3 @@ func EditRequest(ctx context.Context, iddistribusi, idkaryawan string, obj []cla
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: nil}, nil
 
 }
-
-// func ReturObatApotik(ctx context.Context)(class.Response, error){
-
-// }
