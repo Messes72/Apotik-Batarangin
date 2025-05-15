@@ -430,10 +430,12 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 
 		idkartustokapotik, err = getKartuStokID(tx, idobat, depoApotik)
 		if err != nil {
+			log.Println("awld;lkadf", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
 		}
 		idkartustokgudang, err = getKartuStokID(tx, idobat, depoGudang)
 		if err != nil {
+			log.Println("awld;lkadf", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
 		}
 
