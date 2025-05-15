@@ -1,0 +1,2 @@
+D:/Magang/Apotik-Batarangin/FrontEnd_Mobile/apotek/android/app/.cxx/Debug/3w5q2k4p/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/Magang/Apotik-Batarangin/FrontEnd_Mobile/apotek/android/app/.cxx/Debug/3w5q2k4p/armeabi-v7a/CMakeFiles/rebuild_cache.dir
