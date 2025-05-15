@@ -233,29 +233,6 @@ Create TABLE detail_karyawan(
 
 
 
-CREATE TABLE stok_opname (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_stokopname VARCHAR(10) UNIQUE NOT NULL,
-    id_satuan
-    stok_barang INT UNSIGNED NOT NULL,
-    catatan VARCHAR(255),
-    created_at DATETIME NOT NULL
-);
-
-
-
-CREATE TABLE detail_stokopname (
-    id_depo VARCHAR(10) NOT NULL,
-    id_stokopname VARCHAR(10) NOT NULL,
-    id_kartustok VARCHAR(15) NOT NULL,
-    inputjumlah INT UNSIGNED NOT NULL, 
-    catatan VARCHAR(255),
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME,
-    deleted_at DATETIME,
-    CONSTRAINT fk_detail_stokopname_stokopname FOREIGN KEY (id_stokopname) REFERENCES stok_opname(id_stokopname),
-    CONSTRAINT fk_detail_stokopname_kartustok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok)
-); //berubah , lihat erd
 
 CREATE TABLE detail_keluarmasukobat (
     id_kartustok VARCHAR(15) NOT NULL,
@@ -322,6 +299,7 @@ CREATE TABLE detail_kartustok (
     id_transaksi VARCHAR(100) NULL,
     id_distribusi VARCHAR (50) NULL,
     id_depo VARCHAR(10),
+    id_stokopname VARCHAR(50) NULL,
     id_batch_penerimaan VARCHAR(100) NULL,
     id_nomor_batch VARCHAR(100),
     masuk INT NOT NULL DEFAULT 0,    
@@ -580,6 +558,21 @@ CREATE TABLE IF NOT EXISTS detaildistribusicounter (
 );
 INSERT IGNORE INTO detaildistribusicounter (count) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS stok_opnamecounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT INTO stok_opnamecounter (count) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS detail_stokopnamecounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO detail_stokopnamecounter (count) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS stok_opname_batchcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO stok_opname_batchcounter (count) VALUES (1);
+
 /* =================================================================== */
 /* 1.  distribusi  – header                                            */
 /* =================================================================== */
@@ -653,6 +646,60 @@ CREATE TABLE batch_detail_distribusi (
     FOREIGN KEY (id_detail_distribusi) REFERENCES detail_distribusi(id_detail_distribusi),
     FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
 );
+
+
+
+CREATE TABLE stok_opname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_stokopname VARCHAR(50) UNIQUE NOT NULL,
+    id_depo VARCHAR(10) NOT NULL,
+    tanggal_stokopname DATE NOT NULL, 
+    catatan VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    created_by VARCHAR(10) NOT NULL,
+    updated_at      DATETIME,
+    updated_by      VARCHAR(10),
+    FOREIGN KEY (id_depo) REFERENCES Depo(id_depo)
+);
+
+
+
+CREATE TABLE detail_stokopname (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_stokopname VARCHAR(50) NOT NULL,
+    id_detail_stokopname VARCHAR(100) NOT NULL UNIQUE,
+    id_kartustok VARCHAR(15) NOT NULL,
+    sistem_qty      INT        NOT NULL,       
+    fisik_qty       INT        DEFAULT 0,     
+    selisih         INT        DEFAULT 0,
+    catatan VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    created_by      VARCHAR(10) NOT NULL,
+    updated_at DATETIME,
+    updated_by      VARCHAR(10) NOT NULL,
+    CONSTRAINT fk_detail_stokopname_stokopname FOREIGN KEY (id_stokopname) REFERENCES stok_opname(id_stokopname),
+    CONSTRAINT fk_detail_stokopname_kartustok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok)
+);
+
+
+CREATE TABLE stok_opname_batch(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_stok_opname_batch VARCHAR(100) NOT NULL UNIQUE,
+    id_detail_stokopname VARCHAR(100) NOT NULL,
+    id_nomor_batch VARCHAR(100) NOT NULL,
+    sistem_qty      INT        NOT NULL,       
+    fisik_qty       INT        DEFAULT 0,     
+    selisih         INT        DEFAULT 0,
+    catatan VARCHAR(255),
+    created_at      DATETIME   NOT NULL,
+    created_by      VARCHAR(10) NOT NULL,
+    updated_at      DATETIME,
+    updated_by      VARCHAR(10),
+    FOREIGN KEY (id_detail_stokopname)    REFERENCES detail_stokopname(id_detail_stokopname),
+    FOREIGN KEY (id_nomor_batch) REFERENCES nomor_batch(id_nomor_batch)
+)
+
+
 
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

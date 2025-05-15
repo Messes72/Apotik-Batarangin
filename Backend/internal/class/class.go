@@ -343,3 +343,22 @@ type BatchDetailDistribusi struct {
 	Kadaluarsa   time.Time `json:"kadaluarsa"`     // Expiration date of the batch
 	Jumlah       int       `json:"jumlah"`         // Quantity of the batch available
 }
+
+type RequestStokOpnameObatBatch struct {
+	IDNomorBatch   string  `json:"id_nomor_batch"`
+	KuantitasFisik int     `json:"kuantitas_fisik"`
+	Catatan        *string `json:"catatan,omitempty"`
+}
+
+type RequestStokOpnameObat struct {
+	IDKartuStok string                       `json:"id_kartustok"`
+	Batch       []RequestStokOpnameObatBatch `json:"batches"`
+}
+
+type RequestStokOpname struct {
+	IDDepo            string                  `json:"id_depo"`
+	TanggalStokOpname string                  `json:"tanggal_stok_opname"`
+	CreatedBy         string                  `json:"created_by"`
+	Catatan           *string                 `json:"catatan,omitempty"`
+	Items             []RequestStokOpnameObat `json:"items"`
+}

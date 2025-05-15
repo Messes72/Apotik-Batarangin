@@ -438,7 +438,7 @@ func GetHistoryTransaksi(ctx context.Context, page, pagesize int) (class.Respons
 	offset := (page - 1) * pagesize
 
 	querygetall := `SELECT t.id_transaksi, t.created_at, k.nama, t.id_kustomer, ku.nama, t.total_harga, t.metode_pembayaran, t.id_status
-	FROM transaksi t JOIN karyawan k ON t.id_karyawan = k.id_karyawan
+	FROM transaksi t JOIN Karyawan k ON t.id_karyawan = k.id_karyawan
 	LEFT JOIN Kustomer ku ON t.id_kustomer = ku.id_kustomer ORDER BY t.created_at DESC LIMIT ? OFFSET ? `
 
 	rows, err := con.QueryContext(ctx, querygetall, pagesize, offset)
