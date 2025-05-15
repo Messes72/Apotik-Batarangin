@@ -429,34 +429,7 @@ class _PageProduk extends State<PageProduk> {
     );
   }
 
-  // void _updateProduk(
-  //   Produk item,
-  //   TextEditingController nomorKartu,
-  //   TextEditingController nomorBatch,
-  //   TextEditingController kode,
-  //   TextEditingController kategori,
-  //   TextEditingController namaObat,
-  //   TextEditingController kadaluarsa,
-  //   TextEditingController satuan,
-  //   TextEditingController jumlah,
-  //   TextEditingController caraPemakaian,
-  // ) {
-  //   setState(() {
-  //     // 🔹 Ini yang memastikan UI diperbarui
-  //     item.nomorKartu = nomorKartu.text;
-  //     item.nomorBatch = nomorBatch.text;
-  //     item.kode = kode.text;
-  //     item.kategori = kategori.text;
-  //     item.namaObat = namaObat.text;
-  //     item.kadaluarsa = DateFormat('dd/MM/yyyy').parse(kadaluarsa.text);
-  //     item.satuan = satuan.text;
-  //     item.jumlah = int.parse(jumlah.text);
-  //     item.caraPemakaian = caraPemakaian.text;
-  //   });
 
-  //   // Navigator.pop(context); // 🔹 Menutup dialog setelah menyimpan
-  //   _alertDone("diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
-  // }
 
   Future<void> _editProduk(Products item) async {
     String url = "http://leap.crossnet.co.id:2688/${item.linkGambarObat}";
@@ -1423,8 +1396,8 @@ class _PageProduk extends State<PageProduk> {
                       const SizedBox(height: 16),
                       Text(
                         "Apakah Anda yakin akan \n ${isi} data ini?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                        style: GoogleFonts.montserrat(
+                          fontWeight: FontWeight.w600,
                           fontSize: constraints.maxWidth *
                               0.02, // Ukuran teks responsif
                         ),
@@ -1624,12 +1597,12 @@ class _PageProduk extends State<PageProduk> {
         (startIndex + _rowsPerPage).clamp(0, filterData.length); // Batas aman
     List<Products> paginatedData = filterData.sublist(startIndex, endIndex);
     return Scaffold(
-      appBar: NavbarTop(
-          title: "PRODUK",
-          onMenuPressed: widget.toggleSidebar,
-          isExpanded: widget.isExpanded,
-          animationTrigger: onMenuPressed,
-          animation: triggerAnimation),
+      // appBar: NavbarTop(
+      //     title: "PRODUK",
+      //     onMenuPressed: widget.toggleSidebar,
+      //     isExpanded: widget.isExpanded,
+      //     animationTrigger: onMenuPressed,
+      //     animation: triggerAnimation),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -2895,7 +2868,8 @@ class _PageProduk extends State<PageProduk> {
 
                 // **Atur Tampilan Dropdown Menu**
                 dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
+                  width: constraints.maxWidth, 
+                  maxHeight: 150,// Ikuti lebar input field
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
                     border: Border.all(color: ColorStyle.button_grey),
@@ -3013,7 +2987,8 @@ class _PageProduk extends State<PageProduk> {
 
                 // **Atur Tampilan Dropdown Menu**
                 dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
+                  width: constraints.maxWidth,
+                  maxHeight: 150, // Ikuti lebar input field
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
                     border: Border.all(color: ColorStyle.button_grey),
@@ -3131,7 +3106,8 @@ class _PageProduk extends State<PageProduk> {
 
                 // **Atur Tampilan Dropdown Menu**
                 dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
+                  width: constraints.maxWidth,
+                  maxHeight: 150,// Ikuti lebar input field
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
                     border: Border.all(color: ColorStyle.button_grey),
@@ -3209,7 +3185,8 @@ class _PageProduk extends State<PageProduk> {
 
                 // **Atur Tampilan Dropdown Menu**
                 dropdownStyleData: DropdownStyleData(
-                  width: constraints.maxWidth, // Ikuti lebar input field
+                  width: constraints.maxWidth,
+                  maxHeight: 150, // Ikuti lebar input field
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5),
                     border: Border.all(color: ColorStyle.button_grey),

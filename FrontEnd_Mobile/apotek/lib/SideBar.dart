@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:apotek/Gudang/Pembelian/pembeliaanBarang.dart';
 import 'package:apotek/Gudang/Stock/detailStockOpname.dart';
 import 'package:apotek/Gudang/Stock/editStockOpname.dart';
 import 'package:apotek/Gudang/Stock/inputStockOpname.dart';
+import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/login.dart';
 import 'package:flutter/material.dart';
@@ -22,26 +25,46 @@ class Sidebarcoba2 extends StatefulWidget {
   });
 
   @override
-  State<Sidebarcoba2> createState() => _SideBarPage();
+  State<Sidebarcoba2> createState() => _Sidebarcoba2();
 }
 
-class _SideBarPage extends State<Sidebarcoba2> {
+class _Sidebarcoba2 extends State<Sidebarcoba2> {
   bool isExpanded = false;
   // int selectedIndex = 0;
   int hoveredIndex = -1;
-  late final List<Widget> screenApp;
+  void changePage(int indexx) {
+    setState(() {
+      global.selectedIndex = indexx;
+    });
+  }
 
+  List<Widget> screenApp = [];
+  Timer? timerChange;
+  int pageIndex = 0;
   @override
   void initState() {
     super.initState();
+    // timerChange = Timer.periodic(
+    //   Duration(seconds: 1),
+    //   (timer) {
+    //     setState(() {
+    //       pageIndex = global.selectedIndex;
+    //     });
+    //   },
+    // );
+    pageIndex = global.selectedIndex;
     isExpanded = widget.isExpanded;
     screenApp = [
       PageProduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
       stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
-      PenerimaanBarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 2
-      Inputstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 3
-      Pembeliaanbarang(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 4
-      Detailstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 5
+      PenerimaanBarang(
+          isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 2
+      Inputstockopname(
+          isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 3
+      Pembeliaanbarang(
+          isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 4
+      Detailstockopname(
+          isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 5
       Editstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 6
     ];
   }
@@ -128,7 +151,25 @@ class _SideBarPage extends State<Sidebarcoba2> {
         Expanded(
           child: AnimatedSwitcher(
             duration: Duration(milliseconds: 300),
-            child: screenApp[global.selectedIndex],
+            child: Column(
+              children: [
+                NavbarTop(
+                    title: pageIndex == 0 ? "PRODUK" : pageIndex == 1 ?"STOCK OPNAME": pageIndex == 2 ? "PENERIMAAN BARANG": pageIndex == 4 ?"PEMBELIAN BARANG" : pageIndex == 3 ? "INPUT STOCK OPNAME" : pageIndex ==5 ? "DETAIL STOCK OPNAME" : pageIndex == 6 ? "EDIT STOCK OPNAME" : "TIDAK ADA",
+                    onMenuPressed: () {
+                      setState(() {
+                        if (isExpanded) {
+                          isExpanded = false;
+                        } else {
+                          isExpanded = true;
+                        }
+                      });
+                    },
+                    isExpanded: isExpanded,
+                    animationTrigger: () {},
+                    animation: isExpanded?true:false),
+                Expanded(child: screenApp[pageIndex]),
+              ],
+            ),
           ),
         ),
       ],
@@ -142,7 +183,7 @@ class _SideBarPage extends State<Sidebarcoba2> {
       onExit: (_) => setState(() => hoveredIndex = -1),
       child: InkWell(
         onTap: () {
-          if (index == 3 ) {
+          if (index == 3) {
             setState(() {
               global.selectedIndex = 0; // Reset ke halaman Product
             });
@@ -154,7 +195,9 @@ class _SideBarPage extends State<Sidebarcoba2> {
             // Untuk menu lainnya
             setState(() {
               global.selectedIndex = index;
+              pageIndex = index;
               global.selectedScreen = index;
+
               // if (index == 3) {
               //   index = 0;
               // }
@@ -191,7 +234,10 @@ class _SideBarPage extends State<Sidebarcoba2> {
                     padding: const EdgeInsets.only(left: 8),
                     child: Text(
                       title,
-                      style: GoogleFonts.montserrat(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.montserrat(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
                     ),
@@ -250,7 +296,10 @@ class _SideBarPage extends State<Sidebarcoba2> {
                     padding: const EdgeInsets.only(left: 8),
                     child: Text(
                       title,
-                      style: GoogleFonts.montserrat(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.montserrat(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600),
                       overflow: TextOverflow.ellipsis,
                       softWrap: false,
                     ),
@@ -262,4 +311,4 @@ class _SideBarPage extends State<Sidebarcoba2> {
       ),
     );
   }
-} 
+}

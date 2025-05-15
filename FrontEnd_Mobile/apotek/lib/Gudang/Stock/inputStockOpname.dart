@@ -1103,12 +1103,12 @@ class inputStock extends State<Inputstockopname> {
     List<StokOpnameData> paginatedData =
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
-      appBar: NavbarTop(
-          title: "INPUT DATA STOCK OPNAME",
-          onMenuPressed: widget.toggleSidebar,
-          isExpanded: widget.isExpanded,
-          animationTrigger: onMenuPressed,
-          animation: triggerAnimation),
+      // appBar: NavbarTop(
+      //     title: "INPUT DATA STOCK OPNAME",
+      //     onMenuPressed: widget.toggleSidebar,
+      //     isExpanded: widget.isExpanded,
+      //     animationTrigger: onMenuPressed,
+      //     animation: triggerAnimation),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(16),

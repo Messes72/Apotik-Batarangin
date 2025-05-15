@@ -1111,12 +1111,12 @@ class editStock extends State<Editstockopname> {
     List<StokOpnameData> paginatedData =
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
-      appBar: NavbarTop(
-          title: "EDIT DATA STOCK OPNAME",
-          onMenuPressed: widget.toggleSidebar,
-          isExpanded: widget.isExpanded,
-          animationTrigger: onMenuPressed,
-          animation: triggerAnimation),
+      // appBar: NavbarTop(
+      //     title: "EDIT DATA STOCK OPNAME",
+      //     onMenuPressed: widget.toggleSidebar,
+      //     isExpanded: widget.isExpanded,
+      //     animationTrigger: onMenuPressed,
+      //     animation: triggerAnimation),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(16),

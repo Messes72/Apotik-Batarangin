@@ -1111,12 +1111,12 @@ class detailStock extends State<Detailstockopname> {
     List<StokOpnameData> paginatedData =
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
-      appBar: NavbarTop(
-          title: "INFORMASI DATA STOCK OPNAME",
-          onMenuPressed: widget.toggleSidebar,
-          isExpanded: widget.isExpanded,
-          animationTrigger: onMenuPressed,
-          animation: triggerAnimation),
+      // appBar: NavbarTop(
+      //     title: "INFORMASI DATA STOCK OPNAME",
+      //     onMenuPressed: widget.toggleSidebar,
+      //     isExpanded: widget.isExpanded,
+      //     animationTrigger: onMenuPressed,
+      //     animation: triggerAnimation),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(16),

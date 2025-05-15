@@ -80,6 +80,20 @@ class LoginPage extends State<Login> {
       );
     }
   }
+  // NANTI DIHAPUS YA jangan LUPAAAAAAAA !!!!!!!!!!!!!!!!!!!!!!!!!!!
+  @override
+  void initState() {
+    super.initState();
+
+    // 🔐 Hardcoded credentials
+    _email.text = "admin"; // ganti sesuai user default
+    _password.text = "admin"; // ganti sesuai password default
+
+    // 🔁 Delay 1 detik lalu langsung login
+    Future.delayed(Duration(seconds: 1), () {
+      login(context); // langsung login otomatis
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

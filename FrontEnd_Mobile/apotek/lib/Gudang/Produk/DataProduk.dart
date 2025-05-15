@@ -168,7 +168,7 @@ class Products {
     String url =
         "http://leap.crossnet.co.id:2688/product/info?page=1&page_size=20";
     var response = await http.get(Uri.parse(url),
-        headers: {'Authorization': '$token', 'x-api-key': 'helopanda'});
+        headers: {'Authorization': '$token', 'x-api-key': '$xApiKey'});
     var jsonObject = jsonDecode(response.body);
     var data = jsonObject['data'];
     List<Products> produkObat = [];

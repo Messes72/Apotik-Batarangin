@@ -1,11 +1,14 @@
 import 'package:apotek/Gudang/Stock/DataStockOpname.dart';
 import 'package:apotek/NavbarTop.dart';
+import 'package:apotek/SideBar.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
+import 'package:apotek/main.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:apotek/global.dart' as global;
+import 'package:apotek/SideBar.dart';
 
 class stokopname extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -1104,12 +1107,12 @@ class stokPage extends State<stokopname> {
     List<StokOpnameData> paginatedData =
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
-      appBar: NavbarTop(
-          title: "STOCK OPNAME",
-          onMenuPressed: widget.toggleSidebar,
-          isExpanded: widget.isExpanded,
-          animationTrigger: onMenuPressed,
-          animation: triggerAnimation),
+      // appBar: NavbarTop(
+      //     title: "STOCK OPNAME",
+      //     onMenuPressed: widget.toggleSidebar,
+      //     isExpanded: widget.isExpanded,
+      //     animationTrigger: onMenuPressed,
+      //     animation: triggerAnimation),
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(16),
@@ -1129,6 +1132,10 @@ class stokPage extends State<stokopname> {
                               3; // ini halaman yang ditampilkan
                           global.selectedScreen = 1; // ini di sidebarnya
                         });
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MyApp()));
                         // _inputStockOpname();
                       },
                       icon:
