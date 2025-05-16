@@ -362,3 +362,10 @@ type RequestStokOpname struct {
 	Catatan           *string                 `json:"catatan,omitempty"`
 	Items             []RequestStokOpnameObat `json:"items"`
 }
+
+type BatchInfo struct {
+	IdNomorBatch string  `json:"id_nomor_batch"`
+	NoBatch      string  `json:"no_batch"`
+	Kadaluarsa   *string `json:"kadaluarsa,omitempty"`
+	Saldo        int     `json:"sisa"`
+}

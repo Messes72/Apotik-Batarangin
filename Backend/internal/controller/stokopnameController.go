@@ -35,3 +35,18 @@ func CreateStokOpname(c echo.Context) error {
 	return c.JSON(result.Status, result)
 
 }
+
+func GetNomorBatch(c echo.Context) error {
+	idkartustok := c.QueryParam("obat")
+	iddepo := c.QueryParam("depo")
+
+	if idkartustok == "" || iddepo == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Terjadi kesalahan pada parameter program"})
+	}
+
+	result, err := model.GetNomorBatch(c.Request().Context(), idkartustok, iddepo)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}

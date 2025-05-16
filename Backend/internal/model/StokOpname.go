@@ -356,4 +356,59 @@ func CreateStokOpname(ctx context.Context, idkaryawan string, stokopname class.R
 
 }
 
-func GetNomorBatch(ctx context.Context) {}
+func GetNomorBatch(ctx context.Context, idkartsok, iddepo string) (class.Response, error) {
+	con := db.GetDBCon()
+
+	query := ` 
+			WITH latest AS (
+		SELECT dk.id_nomor_batch,
+			dk.sisa,
+			ROW_NUMBER() OVER (PARTITION BY dk.id_nomor_batch
+								ORDER BY dk.id DESC) AS rn
+		FROM detail_kartustok dk
+		WHERE dk.id_kartustok = ?   
+		AND dk.id_depo      = ?
+	)
+	SELECT l.id_nomor_batch,
+		nb.no_batch,
+		nb.kadaluarsa,
+		l.sisa
+	FROM latest l
+	JOIN nomor_batch nb ON nb.id_nomor_batch = l.id_nomor_batch
+	WHERE l.rn = 1
+	AND l.sisa > 0
+	ORDER BY nb.kadaluarsa ASC;`
+
+	rows, err := con.QueryContext(ctx, query, idkartsok, iddepo)
+	if err != nil {
+		log.Println("Error saat ambil list nomor batch untuk obat teserbut")
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data nomor batch"}, err
+	}
+	defer rows.Close()
+
+	var list []class.BatchInfo
+	for rows.Next() {
+		var batch class.BatchInfo
+		var kadaluarsa sql.NullTime
+
+		err := rows.Scan(&batch.IdNomorBatch, &batch.NoBatch, &kadaluarsa, &batch.Saldo)
+		if err != nil {
+			log.Println("Error saat loop query individual batch data", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data nomor batch"}, err
+		}
+
+		if kadaluarsa.Valid {
+			tmp := kadaluarsa.Time.Format("2006-01-02")
+			batch.Kadaluarsa = &tmp
+		}
+		list = append(list, batch)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error saat rows close query nomor batch", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data nomor obat "}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: list}, nil
+}
