@@ -676,7 +676,7 @@ CREATE TABLE detail_stokopname (
     created_at DATETIME NOT NULL,
     created_by      VARCHAR(10) NOT NULL,
     updated_at DATETIME,
-    updated_by      VARCHAR(10) NOT NULL,
+    updated_by      VARCHAR(10) NULL,
     CONSTRAINT fk_detail_stokopname_stokopname FOREIGN KEY (id_stokopname) REFERENCES stok_opname(id_stokopname),
     CONSTRAINT fk_detail_stokopname_kartustok FOREIGN KEY (id_kartustok) REFERENCES kartu_stok(id_kartustok)
 );

@@ -110,6 +110,10 @@ func Init() *echo.Echo {
 	routeRequestBarang.POST("/cancelrequest", controller.CancelRequest)
 	routeRequestBarang.PUT("/edit", controller.EditRequest)
 
+	routeStokOpname := e.Group("/stokopname")
+	routeStokOpname.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeStokOpname.POST("/create", controller.CreateStokOpname)
+
 	return e
 
 }
