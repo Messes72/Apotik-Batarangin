@@ -412,3 +412,72 @@ func GetNomorBatch(ctx context.Context, idkartsok, iddepo string) (class.Respons
 
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: list}, nil
 }
+
+func GetAllStokOpname(ctx context.Context, iddepo string, page, pageSize int) (class.Response, error) {
+	con := db.GetDBCon()
+
+	if page <= 0 {
+		page = 1
+
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	offset := (page - 1) * pageSize
+
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM stok_opname WHERE id_depo = ?`
+	err := con.QueryRowContext(ctx, countrecordquery, iddepo).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("gagal menghitung jumlah entry table stok opname , pada query di model stok opname")
+		return class.Response{Status: http.StatusInternalServerError, Message: "gagal menghitung jumlah record stok opname depo"}, nil
+	}
+
+	totalpage := (totalrecord + pageSize - 1) / pageSize
+
+	query := `SELECT so.id_stokopname, so.tanggal_stokopname, IFNULL(SUM(ds.selisih),0) AS total_selisih, so.catatan, so.created_at, k.nama FROM stok_opname so
+	LEFT JOIN detail_stokopname ds ON ds.id_stokopname = so.id_stokopname
+	LEFT JOIN Karyawan k ON k.id_karyawan = so.created_by
+	WHERE so.id_depo = ? 
+	GROUP by so.id_stokopname
+	ORDER BY so.created_at DESC
+	LIMIT ? OFFSET ?`
+
+	rows, err := con.QueryContext(ctx, query, iddepo, pageSize, offset)
+	if err != nil {
+		log.Println("Error saat query data get allstokopname", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+	defer rows.Close()
+
+	var list []class.StokOpname
+	for rows.Next() {
+
+		var stokopname class.StokOpname
+
+		err := rows.Scan(&stokopname.IDStokOpname, &stokopname.TanggalStokOpname, &stokopname.TotalSelisih, &stokopname.Catatan, &stokopname.Created_at, &stokopname.CreatedBy)
+		if err != nil {
+			log.Println("Error saat scan query all stok opname", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+		}
+		list = append(list, stokopname)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error saat rows close query get all stok opname", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok opname "}, err
+	}
+
+	metedata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metedata}, nil
+
+}

@@ -114,7 +114,7 @@ func Init() *echo.Echo {
 	routeStokOpname.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routeStokOpname.POST("/create", controller.CreateStokOpname)
 	routeStokOpname.GET("/batch", controller.GetNomorBatch)
-
+	routeStokOpname.GET("/:depo", controller.GetAllStokOpname)
 	return e
 
 }

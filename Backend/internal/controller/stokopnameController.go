@@ -2,6 +2,7 @@ package internal
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 
@@ -45,6 +46,35 @@ func GetNomorBatch(c echo.Context) error {
 	}
 
 	result, err := model.GetNomorBatch(c.Request().Context(), idkartustok, iddepo)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func GetAllStokOpname(c echo.Context) error {
+	iddepo := c.Param("depo")
+	if iddepo == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Terjadi kesalahan pada parameter program"})
+	}
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+
+	result, err := model.GetAllStokOpname(c.Request().Context(), iddepo, page, pageSize)
 	if err != nil {
 		return c.JSON(result.Status, result)
 	}

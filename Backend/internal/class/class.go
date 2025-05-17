@@ -369,3 +369,12 @@ type BatchInfo struct {
 	Kadaluarsa   *string `json:"kadaluarsa,omitempty"`
 	Saldo        int     `json:"sisa"`
 }
+
+type StokOpname struct {
+	IDStokOpname      string    `json:"id_stokopname"`
+	TanggalStokOpname string    `json:"tanggal_stokopname"`
+	TotalSelisih      int       `json:"total_selisih"`
+	Catatan           string    `json:"catatan,omitempty"`
+	Created_at        time.Time `json:"created_at"`
+	CreatedBy         string    `json:"created_by"`
+}
