@@ -80,3 +80,16 @@ func GetAllStokOpname(c echo.Context) error {
 	}
 	return c.JSON(result.Status, result)
 }
+
+func GetDetailStokOpname(c echo.Context) error {
+	idstokopname := c.Param("id_stokopname")
+	if idstokopname == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Terjadi kesalahan pada parameter program"})
+	}
+
+	result, err := model.GetDetailStokOpname(c.Request().Context(), idstokopname)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}

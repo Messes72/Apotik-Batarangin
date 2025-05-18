@@ -372,9 +372,36 @@ type BatchInfo struct {
 
 type StokOpname struct {
 	IDStokOpname      string    `json:"id_stokopname"`
+	IDDepo            string    `json:"id_depo,omitempty"`
+	NamaDepo          string    `json:"nama_depo,omitempty"`
 	TanggalStokOpname string    `json:"tanggal_stokopname"`
 	TotalSelisih      int       `json:"total_selisih"`
-	Catatan           string    `json:"catatan,omitempty"`
+	Catatan           *string   `json:"catatan,omitempty"`
 	Created_at        time.Time `json:"created_at"`
 	CreatedBy         string    `json:"created_by"`
+}
+
+type StokOpnameObatBatch struct {
+	IdNomorBatch    string  `json:"id_nomor_batch"`
+	NoBatch         string  `json:"no_batch"`
+	KuantitasSistem int     `json:"kuantitas_sistem"`
+	KuantitasFisik  int     `json:"kuantitas_fisik"`
+	Selisih         int     `json:"selisih"`
+	Catatan         *string `json:"catatan,omitempty"`
+}
+
+type StokOpnameObat struct {
+	IDKartuStok     string                `json:"id_kartustok"`
+	IDObat          string                `json:"id_obat"`
+	NamaObat        string                `json:"nama_obat"`
+	KuantitasSistem int                   `json:"kuantitas_sistem"`
+	KuantitasFisik  int                   `json:"kuantitas_fisik"`
+	Selisih         int                   `json:"selisih"`
+	Catatan         *string               `json:"catatan,omitempty"`
+	Batch           []StokOpnameObatBatch `json:"batches"`
+}
+
+type StokOpnameGetResult struct {
+	StokOpname StokOpname       `json:"stok_opname"`
+	Items      []StokOpnameObat `json:"items"`
 }

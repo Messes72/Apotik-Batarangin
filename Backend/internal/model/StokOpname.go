@@ -481,3 +481,112 @@ func GetAllStokOpname(ctx context.Context, iddepo string, page, pageSize int) (c
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metedata}, nil
 
 }
+
+func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Response, error) {
+
+	con := db.GetDBCon()
+
+	queryheader := `SELECT so.id_stokopname, so.id_depo, so.tanggal_stokopname, d.nama,IFNULL(so.catatan,'') AS catatan,so.created_at, k.nama
+	FROM stok_opname so 
+	JOIN depo d ON d.id_depo = so.id_depo
+	JOIN Karyawan k ON k.id_karyawan = so.created_by
+	WHERE id_stokopname = ?
+	ORDER BY so.created_at`
+	var headerstokopname class.StokOpname
+	var catatan sql.NullString
+	err := con.QueryRowContext(ctx, queryheader, idstokopname).Scan(&headerstokopname.IDStokOpname, &headerstokopname.IDDepo, &headerstokopname.TanggalStokOpname, &headerstokopname.NamaDepo, &catatan, &headerstokopname.Created_at, &headerstokopname.CreatedBy)
+	if err != nil {
+		log.Println("Error saat mengambil header stok opname", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+	if catatan.Valid {
+		headerstokopname.Catatan = &catatan.String
+	}
+
+	obatmap := map[string]*class.StokOpnameObat{}
+	totalselisih := 0
+
+	qeuerydetailstokopname := `SELECT ds.id_detail_stokopname, ds.id_kartustok, ds.sistem_qty, ds.fisik_qty, ds.selisih, IFNULL(ds.catatan,'') AS catatan,ks.id_obat, oj.nama_obat
+	FROM detail_stokopname ds 
+	JOIN kartu_stok ks ON ks.id_kartustok = ds.id_kartustok AND ks.id_depo = ?
+	JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
+	WHERE ds.id_stokopname = ?`
+
+	rows, err := con.QueryContext(ctx, qeuerydetailstokopname, headerstokopname.IDDepo, idstokopname)
+	if err != nil {
+		log.Println("Error saat query detail stok opname", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var iddetailstokopname string
+		var obat class.StokOpnameObat
+		var catatan sql.NullString
+		err := rows.Scan(&iddetailstokopname, &obat.IDKartuStok, &obat.KuantitasSistem, &obat.KuantitasFisik, &obat.Selisih, &catatan, &obat.IDObat, &obat.NamaObat)
+		if err != nil {
+			log.Println("Error saat scan data detail stok opname", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+		}
+		if catatan.Valid {
+			obat.Catatan = &catatan.String
+		}
+		totalselisih += obat.Selisih
+		obatmap[iddetailstokopname] = &obat
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error saat looping rows di detail stok opname", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+	headerstokopname.TotalSelisih = totalselisih
+
+	querybatchobat := `SELECT sb.id_detail_stokopname, sb.id_nomor_batch, nb.no_batch, sb.sistem_qty, sb.fisik_qty, sb.selisih,IFNULL(sb.catatan,'')   
+	FROM stok_opname_batch sb 
+	JOIN nomor_batch nb ON nb.id_nomor_batch = sb.id_nomor_batch
+	WHERE sb.id_detail_stokopname IN (SELECT id_detail_stokopname FROM detail_stokopname WHERE id_stokopname = ?)`
+	batchrow, err := con.QueryContext(ctx, querybatchobat, idstokopname)
+	if err != nil {
+		log.Println("Error saat query stok opname batch", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+	defer batchrow.Close()
+
+	for batchrow.Next() {
+		var batch class.StokOpnameObatBatch
+		var iddetailstokopaname string
+
+		var catatan sql.NullString
+		err := batchrow.Scan(&iddetailstokopaname, &batch.IdNomorBatch, &batch.NoBatch, &batch.KuantitasSistem, &batch.KuantitasFisik, &batch.Selisih, &catatan)
+		if err != nil {
+			log.Println("Error saat scan data stok opname batch", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+		}
+		if catatan.Valid {
+			batch.Catatan = &catatan.String
+		}
+
+		obat, ok := obatmap[iddetailstokopaname]
+		if ok {
+			obat.Batch = append(obat.Batch, batch)
+		}
+
+	}
+
+	err = batchrow.Err()
+	if err != nil {
+		log.Println("Error saat looping rows di stok opname batch", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
+	}
+
+	var list []class.StokOpnameObat
+	for _, obj := range obatmap {
+		list = append(list, *obj)
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: class.StokOpnameGetResult{
+		StokOpname: headerstokopname,
+		Items:      list,
+	}}, nil
+}
