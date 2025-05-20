@@ -4,6 +4,7 @@ import 'package:apotek/Apotik/Transaksi/DataTransaksi.dart';
 import 'package:apotek/Gudang/Penerimaan/DataPenerimaan.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
+import 'package:apotek/main.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,6 +58,63 @@ class _KwitansiObat extends State<KwitansiObat>
     }
   }
 
+  String formatRupiah(num number) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp. ',
+      decimalDigits: 0,
+    );
+    return formatter.format(number);
+  }
+
+  double hitungTotalHarga(List<Item> keranjang) {
+    return keranjang.fold(
+        0, (total, item) => total + item.hargaObat * item.kuantitas);
+  }
+
+  Future<void> postPembelianObatPOS() async {
+    String url = "http://leap.crossnet.co.id:2688/PoS/checkout";
+    // Susun obat_list dari isi dan isi2
+    List<Map<String, dynamic>> pembelianObat = [];
+    // print("ISI LENGTH: ${isi.length}");
+    // print("ISI2 LENGTH: ${isi2.length}");
+    // print("ISI data: ${isi[0]!.namaObat}");
+    // print("ISI LENGTH: ${isi2[0]}");
+
+    for (int i = 0; i < keranjang.length; i++) {
+      pembelianObat.add({
+        "id_obat": keranjang[i]!.idObat,
+        "kuantitas": int.tryParse(keranjang[i]!.kuantitas.toString()),
+        "aturan_pakai": keranjang[i]!.aturanPakai,
+        "cara_pakai": keranjang[i]!.caraPakai,
+        "keterangan_pakai": keranjang[i]!.keteranganPakai
+      });
+    }
+    final isi = {
+      "id_kustomer": _selectedNamaKustomer!.idKustomer,
+      "pembayaran": {
+        "metode_bayar": _selectedMetodePembayaran,
+      },
+      "items": pembelianObat // langsung assign
+    };
+
+    var response = await http.post(Uri.parse(url),
+        headers: {
+          "Authorization": '${global.token}',
+          "x-api-key": '${global.xApiKey}',
+          "Content-Type": "application/json" // Tambahkan ini juga!
+        },
+        body: jsonEncode(isi));
+    // print(response.body);
+    if (response.statusCode == 200) {
+      print("✅ Sukses mengirim input data pembelian di POS");
+      print(response.body);
+    } else {
+      print("❌ Gagal: ${response.statusCode}");
+      print(response.body);
+    }
+  }
+
   void onMenuPressed() {
     setState(() {
       triggerAnimation = !triggerAnimation; // Toggle sidebar
@@ -65,247 +123,7 @@ class _KwitansiObat extends State<KwitansiObat>
 
   int _rowsPerPage = 10; // Default jumlah baris per halaman
   int _currentPage = 0;
-  List<DataPenerimaanBarang> filterData = [];
-  final List<DataPenerimaanBarang> _data = [
-    DataPenerimaanBarang(
-        namaBarang: "Joy",
-        kategoriBarang: "kategoriBarang",
-        kode: "1",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "084937483",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "Jln Mentari no 9",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "Joy",
-        kategoriBarang: "kategoriBarang",
-        kode: "2",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "0384239743",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "Jln Mentari no 9",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "Joy",
-        kategoriBarang: "kategoriBarang",
-        kode: "3",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "03483294739",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "Jln Mentari no 9",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "Joy",
-        kategoriBarang: "kategoriBarang",
-        kode: "4",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "02382938293",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "Jalan Mentari no 9",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "Joy",
-        kategoriBarang: "kategoriBarang",
-        kode: "5",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "3",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "Jln Mentari no 9",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "10",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-    DataPenerimaanBarang(
-        namaBarang: "namaBarang",
-        kategoriBarang: "kategoriBarang",
-        kode: "kode",
-        hargaJual: "hargaJual",
-        hargaBeli: "hargaBeli",
-        kadaluarsa: DateTime(2030, 2, 12),
-        stok: "stok",
-        satuan: "satuan",
-        noBatch: "noBatch",
-        namaSupplier: "namaSupplier",
-        namaPenerimaBarang: "namaPenerimaBarang",
-        tanggalPenerimaan: DateTime(2025, 3, 12),
-        catatan: "Tolong diperiksa kembali"),
-  ];
+  List<Item> filterData = [];
 
   DateFormat dateformat = DateFormat("dd/MM/yyyy");
   DateTime selectedDate = DateTime.now();
@@ -326,292 +144,69 @@ class _KwitansiObat extends State<KwitansiObat>
     }
   }
 
-  void _viewDetails(DataPenerimaanBarang item) {
+  void _alertDone(String isi) {
     showDialog(
       context: context,
       builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.6, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                        color: ColorStyle.alert_ungu,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          topRight: Radius.circular(10),
-                        ),
-                      ),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Kwitansi Obat",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close, color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            Column(
-                              children: [
-                                SizedBox(
-                                  height: 16,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 21, right: 21),
-                                      child: Text(
-                                        "01 Januari 2025",
-                                        style: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 18),
-                                      ),
-                                    )
-                                  ],
-                                ),
-
-                                SizedBox(height: 15),
-                                // Padding(
-                                //   padding: const EdgeInsets.symmetric(
-                                //       horizontal: 16),
-                                //   child: LayoutBuilder(
-                                //     builder: (context, constraints) {
-                                //       return SingleChildScrollView(
-                                //         scrollDirection: Axis.horizontal,
-                                //         child: DataTable(
-                                //           columnSpacing: 16,
-                                //           headingRowHeight: 48,
-                                //           dataRowMinHeight: 36,
-                                //           dataRowMaxHeight: 40,
-                                //           headingRowColor:
-                                //               MaterialStateProperty
-                                //                   .resolveWith<Color?>(
-                                //             (Set<MaterialState> states) {
-                                //               return Colors.grey
-                                //                   .shade300; // Warna latar seluruh baris header
-                                //             },
-                                //           ),
-                                //           columns: [
-                                //             DataColumn(
-                                //               label: Container(
-                                //                 color: Colors.grey.shade300,
-                                //                 padding: EdgeInsets.symmetric(
-                                //                     vertical: 12,
-                                //                     horizontal: 8),
-                                //                 child: Center(
-                                //                   child: Text(
-                                //                     "Nama Obat",
-                                //                     textAlign:
-                                //                         TextAlign.center,
-                                //                     style: GoogleFonts.inter(
-                                //                       fontWeight:
-                                //                           FontWeight.w600,
-                                //                       fontSize: 13,
-                                //                     ),
-                                //                   ),
-                                //                 ),
-                                //               ),
-                                //             ),
-                                //             DataColumn(
-                                //               label: Container(
-                                //                 color: Colors.grey.shade300,
-                                //                 padding: EdgeInsets.symmetric(
-                                //                     vertical: 12,
-                                //                     horizontal: 8),
-                                //                 child: Center(
-                                //                   child: Text(
-                                //                     "Jumlah",
-                                //                     textAlign:
-                                //                         TextAlign.center,
-                                //                     style: GoogleFonts.inter(
-                                //                       fontWeight:
-                                //                           FontWeight.w600,
-                                //                       fontSize: 13,
-                                //                     ),
-                                //                   ),
-                                //                 ),
-                                //               ),
-                                //             ),
-                                //             DataColumn(
-                                //               label: Container(
-                                //                 color: Colors.grey.shade300,
-                                //                 padding: EdgeInsets.symmetric(
-                                //                     vertical: 12,
-                                //                     horizontal: 8),
-                                //                 child: Center(
-                                //                   child: Text(
-                                //                     "Harga",
-                                //                     textAlign:
-                                //                         TextAlign.center,
-                                //                     style: GoogleFonts.inter(
-                                //                       fontWeight:
-                                //                           FontWeight.w600,
-                                //                       fontSize: 13,
-                                //                     ),
-                                //                   ),
-                                //                 ),
-                                //               ),
-                                //             ),
-
-                                //           ],
-                                //           rows: detailBarangPembelian!
-                                //               .obatList
-                                //               .asMap()
-                                //               .entries
-                                //               .map((entry) {
-                                //             final obat = entry.value;
-                                //             return DataRow(
-                                //               cells: [
-                                //                 DataCell(Text(
-                                //                   obat.namaObat,
-                                //                   style: GoogleFonts.inter(
-                                //                     fontWeight:
-                                //                         FontWeight.w400,
-                                //                     fontSize: 12,
-                                //                   ),
-                                //                 )),
-                                //                 DataCell(Center(
-                                //                   child: Text(
-                                //                     obat.jumlahDipesan
-                                //                         .toString(),
-                                //                     textAlign:
-                                //                         TextAlign.center,
-                                //                     style: GoogleFonts.inter(
-                                //                       fontWeight:
-                                //                           FontWeight.w400,
-                                //                       fontSize: 12,
-                                //                     ),
-                                //                   ),
-                                //                 )),
-                                //                 DataCell(Center(
-                                //                   child: Text(
-                                //                     obat.jumlahDiterima
-                                //                         .toString(),
-                                //                     textAlign:
-                                //                         TextAlign.center,
-                                //                     style: GoogleFonts.inter(
-                                //                       fontWeight:
-                                //                           FontWeight.w400,
-                                //                       fontSize: 12,
-                                //                     ),
-                                //                   ),
-                                //                 )),
-
-                                //               ],
-                                //             );
-                                //           }).toList(),
-                                //         ),
-                                //       );
-                                //     },
-                                //   ),
-                                // ),
-                                detailField("Metode Pembayaran", item.catatan),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
+        // Tutup dialog otomatis setelah 2 detik
+        Future.delayed(const Duration(seconds: 2), () {
+          if (context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MyHomePage()),
             );
-          },
+          }
+        });
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return FractionallySizedBox(
+                widthFactor: 0.5, // 50% dari lebar layar
+                heightFactor: 0.4, // 40% dari tinggi layar
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize:
+                          MainAxisSize.min, // Supaya tidak bisa di-scroll
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "images/done.png",
+                          width: constraints.maxWidth *
+                              0.08, // Sesuaikan ukuran gambar
+                          height: constraints.maxWidth * 0.08,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Data berhasil $isi !",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: constraints.maxWidth *
+                                0.025, // Ukuran teks dinamis
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         );
       },
     );
-  }
-
-  Future<void> postPenerimaan() async {
-    String url = "http://leap.crossnet.co.id:2688/PoS/checkout";
-    // Susun obat_list dari isi dan isi2
-    List<Map<String, dynamic>> obatList = [];
-    // print("ISI LENGTH: ${isi.length}");
-    // print("ISI2 LENGTH: ${isi2.length}");
-    // print("ISI data: ${isi[0]!.namaObat}");
-    // print("ISI LENGTH: ${isi2[0]}");
-
-    // for (int i = 0; i < isi.length; i++) {
-    //   if (isi[i] != null && isi2[i].text.isNotEmpty) {
-    //     obatList.add({
-    //       "id_detail_pembelian_penerimaan_obat": isi[i]!
-    //           .idDetailPembelianPenerimaanObat, // contoh ID dummy, ganti sesuai logikamu
-    //       "nomor_batch": isi2[i].text,
-    //       "kadaluarsa": tanggal[i].text,
-    //       "jumlah_diterima": int.tryParse(isi3[i].text),
-    //       "id_kartustok": isi[i]!.idKartustok,
-    //       "nama_obat": isi[i]!.namaObat,
-    //     });
-    //   }
-    // }
-    // final body = {
-    //   "id_kustomer": idKustomerController.text,
-    //   "pembayaran": {
-    //     "metode_bayar": metodeBayarController.text,
-    //   },
-    //   "items": keranjang // langsung assign
-    // };
-
-    var response = await http.post(Uri.parse(url),
-        headers: {
-          "Authorization": '${global.token}',
-          "x-api-key": '${global.xApiKey}',
-          "Content-Type": "application/json" // Tambahkan ini juga!
-        },
-        body: jsonEncode({
-          "id_kustomer": _selectedKategoriEdit,
-          "pembayaran": tanggalController.text,
-        }));
-    // print(response.body);
-    if (response.statusCode == 200) {
-      print("✅ Sukses mengirim input data pembelian di POS");
-      print(response.body);
-    } else {
-      print("❌ Gagal: ${response.statusCode}");
-      print(response.body);
-    }
   }
 
   @override
@@ -619,17 +214,29 @@ class _KwitansiObat extends State<KwitansiObat>
     // TODO: implement initState
     super.initState();
     getDataKustomer();
-    filterData = List.from(_data);
+    aturanControllers = keranjang
+        .map((item) => TextEditingController(text: item.aturanPakai))
+        .toList();
+    caraPakaiControllers = keranjang
+        .map((item) => TextEditingController(text: item.caraPakai))
+        .toList();
+    keteranganControllers = keranjang
+        .map((item) => TextEditingController(text: item.keteranganPakai))
+        .toList();
+    filterData = List.from(keranjang);
   }
 
   void filtering(String query) {
     setState(() {
       if (query.isEmpty) {
-        filterData = List.from(_data);
+        filterData = List.from(keranjang);
       } else {
-        filterData = _data.where((item) {
-          return item.namaBarang.toLowerCase().contains(query.toLowerCase()) ||
-              item.stok.toLowerCase().contains(query.toLowerCase());
+        filterData = keranjang.where((item) {
+          return item.namaObat.toLowerCase().contains(query.toLowerCase()) ||
+              item.kuantitas
+                  .toString()
+                  .toLowerCase()
+                  .contains(query.toLowerCase());
         }).toList();
       }
       _currentPage = 0; // Reset ke halaman pertama setelah filter
@@ -642,22 +249,9 @@ class _KwitansiObat extends State<KwitansiObat>
     super.dispose();
   }
 
-  void filterByStatus(String status) {
-    setState(() {
-      if (status == "Selesai") {
-        filterData = _data.where((item) => item.stok == "10").toList();
-      } else if (status == "Batal") {
-        filterData = _data.where((item) => item.stok != "10").toList();
-      } else {
-        filterData =
-            List.from(_data); // Jika pilih "Semua", tampilkan semua data
-      }
-    });
-  }
-
-  var keterangan = TextEditingController();
-  var aturan = TextEditingController();
-  var caraPakai = TextEditingController();
+  List<TextEditingController> aturanControllers = [];
+  List<TextEditingController> caraPakaiControllers = [];
+  List<TextEditingController> keteranganControllers = [];
 
   @override
   Widget build(BuildContext context) {
@@ -665,8 +259,7 @@ class _KwitansiObat extends State<KwitansiObat>
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex =
         (startIndex + _rowsPerPage).clamp(0, filterData.length); // Batas aman
-    List<DataPenerimaanBarang> paginatedData =
-        filterData.sublist(startIndex, endIndex);
+    List<Item> paginatedData = filterData.sublist(startIndex, endIndex);
     return Scaffold(
       // appBar: NavbarTop(title: "PENERIMAAN BARANG", onMenuPressed: onMenuPressed, isExpanded: isExpanded),
       // appBar: NavbarTop(
@@ -847,13 +440,18 @@ class _KwitansiObat extends State<KwitansiObat>
                                               ),
                                             )),
                                           ],
-                                          rows: paginatedData.map((item) {
+                                          rows: keranjang
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            int index = entry.key;
+                                            final item = entry.value;
                                             return DataRow(
                                               // color: MaterialStateProperty.all(
                                               //     Colors.white),
                                               cells: [
                                                 DataCell(Center(
-                                                    child: Text("obat",
+                                                    child: Text(item.namaObat,
                                                         textAlign:
                                                             TextAlign.center,
                                                         style: TextStyle(
@@ -864,7 +462,9 @@ class _KwitansiObat extends State<KwitansiObat>
                                                           fontSize: 14,
                                                         )))),
                                                 DataCell(Center(
-                                                    child: Text(item.kode,
+                                                    child: Text(
+                                                        item.kuantitas
+                                                            .toString(),
                                                         textAlign:
                                                             TextAlign.center,
                                                         style: TextStyle(
@@ -879,7 +479,28 @@ class _KwitansiObat extends State<KwitansiObat>
                                                       child: SizedBox(
                                                         width: 100,
                                                         child: TextFormField(
-                                                          controller: aturan,
+                                                          controller:
+                                                              aturanControllers[
+                                                                  index],
+                                                          onChanged: (value) {
+                                                            keranjang[index] =
+                                                                Item(
+                                                              idObat:
+                                                                  item.idObat,
+                                                              namaObat:
+                                                                  item.namaObat,
+                                                              hargaObat: item
+                                                                  .hargaObat,
+                                                              kuantitas: item
+                                                                  .kuantitas,
+                                                              aturanPakai:
+                                                                  value,
+                                                              caraPakai: item
+                                                                  .caraPakai,
+                                                              keteranganPakai: item
+                                                                  .keteranganPakai,
+                                                            );
+                                                          },
                                                           style: GoogleFonts.inter(
                                                               color: ColorStyle
                                                                   .tulisan_form,
@@ -899,7 +520,27 @@ class _KwitansiObat extends State<KwitansiObat>
                                                       child: SizedBox(
                                                         width: 100,
                                                         child: TextFormField(
-                                                          controller: caraPakai,
+                                                          controller:
+                                                              caraPakaiControllers[
+                                                                  index],
+                                                          onChanged: (value) {
+                                                            keranjang[index] =
+                                                                Item(
+                                                              idObat:
+                                                                  item.idObat,
+                                                              namaObat:
+                                                                  item.namaObat,
+                                                              hargaObat: item
+                                                                  .hargaObat,
+                                                              kuantitas: item
+                                                                  .kuantitas,
+                                                              aturanPakai: item
+                                                                  .aturanPakai,
+                                                              caraPakai: value,
+                                                              keteranganPakai: item
+                                                                  .keteranganPakai,
+                                                            );
+                                                          },
                                                           style: GoogleFonts.inter(
                                                               color: ColorStyle
                                                                   .tulisan_form,
@@ -917,7 +558,27 @@ class _KwitansiObat extends State<KwitansiObat>
                                                     child: SizedBox(
                                                       width: 100,
                                                       child: TextFormField(
-                                                        controller: keterangan,
+                                                        controller:
+                                                            keteranganControllers[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          keranjang[index] =
+                                                              Item(
+                                                            idObat: item.idObat,
+                                                            namaObat:
+                                                                item.namaObat,
+                                                            hargaObat:
+                                                                item.hargaObat,
+                                                            kuantitas:
+                                                                item.kuantitas,
+                                                            aturanPakai: item
+                                                                .aturanPakai,
+                                                            caraPakai:
+                                                                item.caraPakai,
+                                                            keteranganPakai:
+                                                                value,
+                                                          );
+                                                        },
                                                         style: GoogleFonts.inter(
                                                             color: ColorStyle
                                                                 .tulisan_form,
@@ -937,7 +598,7 @@ class _KwitansiObat extends State<KwitansiObat>
                                                     child: SizedBox(
                                                       width: 100,
                                                       child: Text(
-                                                        item.hargaBeli,
+                                                        "${formatRupiah(item.hargaObat)},00",
                                                         overflow: TextOverflow
                                                             .visible,
                                                         style: TextStyle(
@@ -974,8 +635,7 @@ class _KwitansiObat extends State<KwitansiObat>
                             Text("Total Harga",
                                 style: GoogleFonts.inter(fontSize: 18)),
                             Text(
-                              "500000",
-                              // "Rp. ${hitungTotal().toString().replaceAll('.', ',')},00",
+                              "${formatRupiah(hitungTotalHarga(keranjang))},00",
                               style: GoogleFonts.inter(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w600,
@@ -1194,7 +854,11 @@ class _KwitansiObat extends State<KwitansiObat>
                         height: 35,
                         width: 350,
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () async {
+                            await postPembelianObatPOS();
+                            Navigator.pop(context);
+                            _alertDone("diinput");
+                          },
                           icon:
                               Icon(Icons.print, color: Colors.white, size: 22),
                           label: Transform.translate(
@@ -1216,126 +880,6 @@ class _KwitansiObat extends State<KwitansiObat>
                         ),
                       ),
                     ),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.end,
-                    //   children: [
-                    //     Text("Rows per page:",
-                    //         style: TextStyle(
-                    //             color: ColorStyle.text_hint, fontSize: 14)),
-                    //     Padding(padding: EdgeInsets.only(right: 8)),
-                    //     Center(
-                    //       child: SizedBox(
-                    //         width:
-                    //             65, // Sesuaikan lebar agar tidak terlalu besar
-                    //         height:
-                    //             25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                    //         child: DropdownButtonFormField2<int>(
-                    //           isExpanded:
-                    //               false, // Jangan meluaskan dropdown ke full width
-                    //           value: _rowsPerPage,
-                    //           items: rowItems
-                    //               .map((e) => DropdownMenuItem(
-                    //                     value: e,
-                    //                     child: Text(
-                    //                       e.toString(),
-                    //                       style: TextStyle(
-                    //                           fontSize: 14,
-                    //                           color: ColorStyle.text_hint),
-                    //                       overflow: TextOverflow.ellipsis,
-                    //                     ),
-                    //                   ))
-                    //               .toList(),
-                    //           onChanged: (value) {
-                    //             setState(() {
-                    //               _rowsPerPage = value!;
-                    //             });
-                    //           },
-                    //           decoration: InputDecoration(
-                    //             contentPadding: EdgeInsets.symmetric(
-                    //                 horizontal: 4, vertical: 2),
-                    //             constraints: BoxConstraints(maxHeight: 30),
-                    //             enabledBorder: OutlineInputBorder(
-                    //               borderRadius: BorderRadius.circular(
-                    //                   5), // Border radius halus
-                    //               borderSide:
-                    //                   BorderSide(color: ColorStyle.button_grey),
-                    //             ),
-                    //             focusedBorder: OutlineInputBorder(
-                    //               borderRadius: BorderRadius.circular(5),
-                    //               borderSide: BorderSide(
-                    //                   color: ColorStyle
-                    //                       .text_secondary), // Saat aktif, border lebih gelap
-                    //             ),
-                    //           ),
-
-                    //           // **Atur Tampilan Dropdown**
-                    //           buttonStyleData: ButtonStyleData(
-                    //             height: 25, // Tinggi tombol dropdown
-                    //             padding: EdgeInsets.symmetric(
-                    //                 horizontal: 6), // Jarak dalam dropdown
-                    //           ),
-
-                    //           // **Atur Tampilan Dropdown yang Muncul**
-                    //           dropdownStyleData: DropdownStyleData(
-                    //             width:
-                    //                 65, // Lebar dropdown harus sama dengan input
-                    //             decoration: BoxDecoration(
-                    //               borderRadius: BorderRadius.circular(5),
-                    //               border:
-                    //                   Border.all(color: ColorStyle.button_grey),
-                    //               color: Colors.white,
-                    //             ),
-                    //           ),
-
-                    //           // **Atur Posisi Item Dropdown**
-                    //           menuItemStyleData: const MenuItemStyleData(
-                    //             padding: EdgeInsets.symmetric(
-                    //                 horizontal:
-                    //                     8), // Padding antar item dropdown
-                    //           ),
-
-                    //           // **Ganti Icon Dropdown**
-                    //           iconStyleData: IconStyleData(
-                    //             icon: Icon(Icons.keyboard_arrow_down_outlined,
-                    //                 size: 20, color: Colors.black),
-                    //             openMenuIcon: Icon(
-                    //                 Icons.keyboard_arrow_up_outlined,
-                    //                 size: 20,
-                    //                 color: Colors.black),
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     Padding(padding: EdgeInsets.only(right: 8)),
-                    //     Text("Page $endIndex of ${filterData.length}",
-                    //         style: TextStyle(
-                    //             color: ColorStyle.text_hint, fontSize: 14)),
-                    //     Row(
-                    //       children: [
-                    //         IconButton(
-                    //           icon: Icon(Icons.chevron_left),
-                    //           onPressed: _currentPage > 0
-                    //               ? () {
-                    //                   setState(() {
-                    //                     _currentPage--;
-                    //                   });
-                    //                 }
-                    //               : null,
-                    //         ),
-                    //         IconButton(
-                    //           icon: Icon(Icons.chevron_right),
-                    //           onPressed: _currentPage < totalPages - 1
-                    //               ? () {
-                    //                   setState(() {
-                    //                     _currentPage++;
-                    //                   });
-                    //                 }
-                    //               : null,
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ],
-                    // ),
                   ],
                 ),
               ),

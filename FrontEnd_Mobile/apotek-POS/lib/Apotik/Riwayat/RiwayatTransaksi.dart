@@ -1,3 +1,4 @@
+import 'package:apotek/Apotik/Transaksi/DataTransaksi.dart';
 import 'package:apotek/Gudang/Penerimaan/DataPenerimaan.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
@@ -40,16 +41,22 @@ class _kustomerApotek extends State<KustomerApotek>
   final _formKey = GlobalKey<FormState>();
 
   // Tab
-  final List<String> _titles = [
-    "KUSTOMER",
-    "RIWAYAT KUSTOMER",
-  ];
+
   int _selectedTabIndex = 0;
 
   void onMenuPressed() {
     setState(() {
       triggerAnimation = !triggerAnimation; // Toggle sidebar
     });
+  }
+
+  String formatRupiah(num number) {
+    final formatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp. ',
+      decimalDigits: 0,
+    );
+    return formatter.format(number);
   }
 
   int _rowsPerPage = 10; // Default jumlah baris per halaman
@@ -327,9 +334,9 @@ class _kustomerApotek extends State<KustomerApotek>
               ),
               child: Container(
                 width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
+                    constraints.maxWidth * 0.7, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.6, // Batasi tinggi agar tidak terlalu besar
+                    0.7, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -381,10 +388,23 @@ class _kustomerApotek extends State<KustomerApotek>
                           children: [
                             Column(
                               children: [
-                                SizedBox(height: 16,),
+                                SizedBox(
+                                  height: 16,
+                                ),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          left: 21, right: 21),
+                                      child: Text(
+                                        "John Smith",
+                                        style: GoogleFonts.inter(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 18),
+                                      ),
+                                    ),
                                     Padding(
                                       padding: const EdgeInsets.only(
                                           left: 21, right: 21),
@@ -397,142 +417,318 @@ class _kustomerApotek extends State<KustomerApotek>
                                     )
                                   ],
                                 ),
-
-                               SizedBox(height: 15),
-                                  // Padding(
-                                  //   padding: const EdgeInsets.symmetric(
-                                  //       horizontal: 16),
-                                  //   child: LayoutBuilder(
-                                  //     builder: (context, constraints) {
-                                  //       return SingleChildScrollView(
-                                  //         scrollDirection: Axis.horizontal,
-                                  //         child: DataTable(
-                                  //           columnSpacing: 16,
-                                  //           headingRowHeight: 48,
-                                  //           dataRowMinHeight: 36,
-                                  //           dataRowMaxHeight: 40,
-                                  //           headingRowColor:
-                                  //               MaterialStateProperty
-                                  //                   .resolveWith<Color?>(
-                                  //             (Set<MaterialState> states) {
-                                  //               return Colors.grey
-                                  //                   .shade300; // Warna latar seluruh baris header
-                                  //             },
-                                  //           ),
-                                  //           columns: [
-                                  //             DataColumn(
-                                  //               label: Container(
-                                  //                 color: Colors.grey.shade300,
-                                  //                 padding: EdgeInsets.symmetric(
-                                  //                     vertical: 12,
-                                  //                     horizontal: 8),
-                                  //                 child: Center(
-                                  //                   child: Text(
-                                  //                     "Nama Obat",
-                                  //                     textAlign:
-                                  //                         TextAlign.center,
-                                  //                     style: GoogleFonts.inter(
-                                  //                       fontWeight:
-                                  //                           FontWeight.w600,
-                                  //                       fontSize: 13,
-                                  //                     ),
-                                  //                   ),
-                                  //                 ),
-                                  //               ),
-                                  //             ),
-                                  //             DataColumn(
-                                  //               label: Container(
-                                  //                 color: Colors.grey.shade300,
-                                  //                 padding: EdgeInsets.symmetric(
-                                  //                     vertical: 12,
-                                  //                     horizontal: 8),
-                                  //                 child: Center(
-                                  //                   child: Text(
-                                  //                     "Jumlah",
-                                  //                     textAlign:
-                                  //                         TextAlign.center,
-                                  //                     style: GoogleFonts.inter(
-                                  //                       fontWeight:
-                                  //                           FontWeight.w600,
-                                  //                       fontSize: 13,
-                                  //                     ),
-                                  //                   ),
-                                  //                 ),
-                                  //               ),
-                                  //             ),
-                                  //             DataColumn(
-                                  //               label: Container(
-                                  //                 color: Colors.grey.shade300,
-                                  //                 padding: EdgeInsets.symmetric(
-                                  //                     vertical: 12,
-                                  //                     horizontal: 8),
-                                  //                 child: Center(
-                                  //                   child: Text(
-                                  //                     "Harga",
-                                  //                     textAlign:
-                                  //                         TextAlign.center,
-                                  //                     style: GoogleFonts.inter(
-                                  //                       fontWeight:
-                                  //                           FontWeight.w600,
-                                  //                       fontSize: 13,
-                                  //                     ),
-                                  //                   ),
-                                  //                 ),
-                                  //               ),
-                                  //             ),
-                                             
-                                  //           ],
-                                  //           rows: detailBarangPembelian!
-                                  //               .obatList
-                                  //               .asMap()
-                                  //               .entries
-                                  //               .map((entry) {
-                                  //             final obat = entry.value;
-                                  //             return DataRow(
-                                  //               cells: [
-                                  //                 DataCell(Text(
-                                  //                   obat.namaObat,
-                                  //                   style: GoogleFonts.inter(
-                                  //                     fontWeight:
-                                  //                         FontWeight.w400,
-                                  //                     fontSize: 12,
-                                  //                   ),
-                                  //                 )),
-                                  //                 DataCell(Center(
-                                  //                   child: Text(
-                                  //                     obat.jumlahDipesan
-                                  //                         .toString(),
-                                  //                     textAlign:
-                                  //                         TextAlign.center,
-                                  //                     style: GoogleFonts.inter(
-                                  //                       fontWeight:
-                                  //                           FontWeight.w400,
-                                  //                       fontSize: 12,
-                                  //                     ),
-                                  //                   ),
-                                  //                 )),
-                                  //                 DataCell(Center(
-                                  //                   child: Text(
-                                  //                     obat.jumlahDiterima
-                                  //                         .toString(),
-                                  //                     textAlign:
-                                  //                         TextAlign.center,
-                                  //                     style: GoogleFonts.inter(
-                                  //                       fontWeight:
-                                  //                           FontWeight.w400,
-                                  //                       fontSize: 12,
-                                  //                     ),
-                                  //                   ),
-                                  //                 )),
-                                                  
-                                  //               ],
-                                  //             );
-                                  //           }).toList(),
-                                  //         ),
-                                  //       );
-                                  //     },
-                                  //   ),
-                                  // ),
+                                SizedBox(height: 15),
+                                Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Container(
+                                    width: constraints.maxWidth *
+                                        0.65, // Sesuaikan dengan ukuran layar
+                                    height: constraints.maxHeight * 0.5,
+                                    // padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: ColorStyle.shadow
+                                              .withOpacity(0.25),
+                                          spreadRadius: 0,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 1), // x dan y
+                                        ),
+                                      ],
+                                      // borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: LayoutBuilder(
+                                              builder: (context, constraints) {
+                                            return SingleChildScrollView(
+                                              scrollDirection: Axis.horizontal,
+                                              child: ConstrainedBox(
+                                                constraints: BoxConstraints(
+                                                    minWidth:
+                                                        constraints.maxWidth),
+                                                child: SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.vertical,
+                                                  child: DataTable(
+                                                    // headingRowColor:
+                                                    //     MaterialStateProperty.all(
+                                                    //         Colors.white),
+                                                    columnSpacing:
+                                                        60, // Menambah jarak antar kolom
+                                                    dataRowMinHeight:
+                                                        60, // Menambah tinggi minimum baris
+                                                    dataRowMaxHeight:
+                                                        60, // Menambah tinggi maksimum baris
+                                                    columns: [
+                                                      DataColumn(
+                                                        label: Expanded(
+                                                          // color: Colors
+                                                          //     .grey.shade300,
+                                                          // padding: EdgeInsets
+                                                          //     .symmetric(
+                                                          //         vertical: 12,
+                                                          //         horizontal:
+                                                          //             8),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "Nama Obat",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataColumn(
+                                                        label: Expanded(
+                                                          // color: Colors
+                                                          //     .grey.shade300,
+                                                          // padding: EdgeInsets
+                                                          //     .symmetric(
+                                                          //         vertical: 12,
+                                                          //         horizontal:
+                                                          //             8),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "Jumlah",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      DataColumn(
+                                                        label: Expanded(
+                                                          // color: Colors
+                                                          //     .grey.shade300,
+                                                          // padding: EdgeInsets
+                                                          //     .symmetric(
+                                                          //         vertical: 12,
+                                                          //         horizontal:
+                                                          //             8),
+                                                          child: Center(
+                                                            child: Text(
+                                                              "Harga",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 13,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    rows: keranjang
+                                                        .asMap()
+                                                        .entries
+                                                        .map((entry) {
+                                                      final obat = entry.value;
+                                                      return DataRow(
+                                                        cells: [
+                                                          DataCell(Center(
+                                                            child: Text(
+                                                              obat.namaObat,
+                                                              textAlign:
+                                                              TextAlign.center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                          DataCell(Center(
+                                                            child: Text(
+                                                              obat.kuantitas
+                                                                  .toString(),
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                          DataCell(Center(
+                                                            child: Text(
+                                                              "${formatRupiah(obat.hargaObat)},00",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts
+                                                                  .inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w400,
+                                                                fontSize: 12,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Padding(
+                                //   padding: const EdgeInsets.symmetric(
+                                //       horizontal: 16),
+                                //   child: LayoutBuilder(
+                                //     builder: (context, constraints) {
+                                //       return SingleChildScrollView(
+                                //         scrollDirection: Axis.horizontal,
+                                //         child: DataTable(
+                                //           columnSpacing: 16,
+                                //           headingRowHeight: 48,
+                                //           dataRowMinHeight: 36,
+                                //           dataRowMaxHeight: 40,
+                                //           headingRowColor: MaterialStateProperty
+                                //               .resolveWith<Color?>(
+                                //             (Set<MaterialState> states) {
+                                //               return Colors.grey
+                                //                   .shade300; // Warna latar seluruh baris header
+                                //             },
+                                //           ),
+                                //           columns: [
+                                //             DataColumn(
+                                //               label: Container(
+                                //                 color: Colors.grey.shade300,
+                                //                 padding: EdgeInsets.symmetric(
+                                //                     vertical: 12,
+                                //                     horizontal: 8),
+                                //                 child: Center(
+                                //                   child: Text(
+                                //                     "Nama Obat",
+                                //                     textAlign: TextAlign.center,
+                                //                     style: GoogleFonts.inter(
+                                //                       fontWeight:
+                                //                           FontWeight.w600,
+                                //                       fontSize: 13,
+                                //                     ),
+                                //                   ),
+                                //                 ),
+                                //               ),
+                                //             ),
+                                //             DataColumn(
+                                //               label: Container(
+                                //                 color: Colors.grey.shade300,
+                                //                 padding: EdgeInsets.symmetric(
+                                //                     vertical: 12,
+                                //                     horizontal: 8),
+                                //                 child: Center(
+                                //                   child: Text(
+                                //                     "Jumlah",
+                                //                     textAlign: TextAlign.center,
+                                //                     style: GoogleFonts.inter(
+                                //                       fontWeight:
+                                //                           FontWeight.w600,
+                                //                       fontSize: 13,
+                                //                     ),
+                                //                   ),
+                                //                 ),
+                                //               ),
+                                //             ),
+                                //             DataColumn(
+                                //               label: Container(
+                                //                 color: Colors.grey.shade300,
+                                //                 padding: EdgeInsets.symmetric(
+                                //                     vertical: 12,
+                                //                     horizontal: 8),
+                                //                 child: Center(
+                                //                   child: Text(
+                                //                     "Harga",
+                                //                     textAlign: TextAlign.center,
+                                //                     style: GoogleFonts.inter(
+                                //                       fontWeight:
+                                //                           FontWeight.w600,
+                                //                       fontSize: 13,
+                                //                     ),
+                                //                   ),
+                                //                 ),
+                                //               ),
+                                //             ),
+                                //           ],
+                                //           rows: keranjang
+                                //               .asMap()
+                                //               .entries
+                                //               .map((entry) {
+                                //             final obat = entry.value;
+                                //             return DataRow(
+                                //               cells: [
+                                //                 DataCell(Text(
+                                //                   obat.namaObat,
+                                //                   style: GoogleFonts.inter(
+                                //                     fontWeight: FontWeight.w400,
+                                //                     fontSize: 12,
+                                //                   ),
+                                //                 )),
+                                //                 DataCell(Center(
+                                //                   child: Text(
+                                //                     obat.kuantitas.toString(),
+                                //                     textAlign: TextAlign.center,
+                                //                     style: GoogleFonts.inter(
+                                //                       fontWeight:
+                                //                           FontWeight.w400,
+                                //                       fontSize: 12,
+                                //                     ),
+                                //                   ),
+                                //                 )),
+                                //                 DataCell(Center(
+                                //                   child: Text(
+                                //                     obat.hargaObat.toString(),
+                                //                     textAlign: TextAlign.center,
+                                //                     style: GoogleFonts.inter(
+                                //                       fontWeight:
+                                //                           FontWeight.w400,
+                                //                       fontSize: 12,
+                                //                     ),
+                                //                   ),
+                                //                 )),
+                                //               ],
+                                //             );
+                                //           }).toList(),
+                                //         ),
+                                //       );
+                                //     },
+                                //   ),
+                                // ),
                                 detailField("Metode Pembayaran", item.catatan),
                               ],
                             ),
@@ -556,14 +752,6 @@ class _kustomerApotek extends State<KustomerApotek>
     // TODO: implement initState
     super.initState();
     filterData = List.from(_data);
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {
-          _selectedTabIndex = _tabController.index;
-        });
-      }
-    });
   }
 
   void filtering(String query) {
@@ -625,9 +813,7 @@ class _kustomerApotek extends State<KustomerApotek>
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Padding(padding: EdgeInsets.only(bottom: 16)),
             Expanded(
-                child:
-                    TabBarView(controller: _tabController, children: <Widget>[
-              Container(
+              child: Container(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1006,381 +1192,7 @@ class _kustomerApotek extends State<KustomerApotek>
                   ],
                 ),
               ),
-              Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Expanded(
-                          child: Container(
-                            height: 40,
-                            // width: 242,
-                            // decoration: BoxDecoration(
-                            //   border: Border.all(
-                            //       color: ColorStyle.fill_stroke, width: 1),
-                            //   color: ColorStyle.fill_form,
-                            //   borderRadius: BorderRadius.circular(4),
-                            // ),
-                            child: Container(
-                              height: 40,
-                              // width: 242,
-                              // decoration: BoxDecoration(
-                              //   border: Border.all(
-                              //       color: ColorStyle.fill_stroke, width: 1),
-                              //   color: ColorStyle.fill_form,
-                              //   borderRadius: BorderRadius.circular(4),
-                              // ),
-                              child: TextField(
-                                controller: text,
-                                onChanged: filtering,
-                                decoration: InputDecoration(
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: ColorStyle.fill_form,
-
-                                  // Menambahkan ikon di dalam TextField
-                                  prefixIcon: Padding(
-                                    padding: EdgeInsets.only(left: 8, right: 8),
-                                    child: Icon(
-                                      Icons.search_outlined,
-                                      color: Color(0XFF1B1442),
-                                      size: 30, // Sesuaikan ukuran ikon
-                                    ),
-                                  ),
-                                  contentPadding:
-                                      EdgeInsets.only(left: 8, bottom: 12.5),
-                                  hintText: "Search",
-                                  hintStyle: TextStyle(
-                                    color: ColorStyle.text_hint,
-                                    fontSize: 16,
-                                  ),
-
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: ColorStyle.fill_stroke,
-                                        width: 1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.black, width: 1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.only(bottom: 26)),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: ColorStyle.putih_background,
-                            boxShadow: [
-                              BoxShadow(
-                                color: ColorStyle.shadow.withOpacity(0.25),
-                                spreadRadius: 0,
-                                blurRadius: 4,
-                                offset: Offset(0, 1), // x dan y
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                  return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                          minWidth: constraints.maxWidth),
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
-                                        child: DataTable(
-                                          headingRowColor:
-                                              MaterialStateProperty.all(
-                                                  Colors.white),
-                                          columnSpacing:
-                                              80, // Menambah jarak antar kolom
-                                          dataRowMinHeight:
-                                              60, // Menambah tinggi minimum baris
-                                          dataRowMaxHeight:
-                                              60, // Menambah tinggi maksimum baris
-                                          columns: const [
-                                            DataColumn(
-                                                label: Expanded(
-                                                    child: Center(
-                                                        child: Text('No',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold))))),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Nama Kustomer',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Alamat Kustomer',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text(
-                                                    'Nommor Telepon Kustomer',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Catatan Kustomer',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                          ],
-                                          rows: paginatedData.map((item) {
-                                            return DataRow(
-                                              color: MaterialStateProperty.all(
-                                                  Colors.white),
-                                              cells: [
-                                                DataCell(Center(
-                                                    child: Text(item.kode,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 14,
-                                                        )))),
-                                                DataCell(Center(
-                                                    child: Text(item.namaBarang,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontSize: 14,
-                                                        )))),
-                                                DataCell(
-                                                  Center(
-                                                    child: SizedBox(
-                                                      width: 100,
-                                                      child: Text(
-                                                        item.namaSupplier,
-                                                        overflow: TextOverflow
-                                                            .visible,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 2,
-                                                        textAlign: TextAlign
-                                                            .center, // Batas maksimal baris teks
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-
-                                                // DataCell(Text(item.quantity.toString())),
-                                                DataCell(Center(
-                                                    child: Text(
-                                                        item.stok.toString(),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontSize: 14,
-                                                        )))),
-
-                                                DataCell(
-                                                  Center(
-                                                    child: SizedBox(
-                                                      width: 300,
-                                                      child: Text(
-                                                        item.catatan,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 2,
-                                                        textAlign: TextAlign
-                                                            .start, // Batas maksimal baris teks
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text("Rows per page:",
-                            style: TextStyle(
-                                color: ColorStyle.text_hint, fontSize: 14)),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Center(
-                          child: SizedBox(
-                            width:
-                                65, // Sesuaikan lebar agar tidak terlalu besar
-                            height:
-                                25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                            child: DropdownButtonFormField2<int>(
-                              isExpanded:
-                                  false, // Jangan meluaskan dropdown ke full width
-                              value: _rowsPerPage,
-                              items: rowItems
-                                  .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e.toString(),
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: ColorStyle.text_hint),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _rowsPerPage = value!;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                                constraints: BoxConstraints(maxHeight: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      5), // Border radius halus
-                                  borderSide:
-                                      BorderSide(color: ColorStyle.button_grey),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide(
-                                      color: ColorStyle
-                                          .text_secondary), // Saat aktif, border lebih gelap
-                                ),
-                              ),
-
-                              // **Atur Tampilan Dropdown**
-                              buttonStyleData: ButtonStyleData(
-                                height: 25, // Tinggi tombol dropdown
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 6), // Jarak dalam dropdown
-                              ),
-
-                              // **Atur Tampilan Dropdown yang Muncul**
-                              dropdownStyleData: DropdownStyleData(
-                                width:
-                                    65, // Lebar dropdown harus sama dengan input
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  border:
-                                      Border.all(color: ColorStyle.button_grey),
-                                  color: Colors.white,
-                                ),
-                              ),
-
-                              // **Atur Posisi Item Dropdown**
-                              menuItemStyleData: const MenuItemStyleData(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        8), // Padding antar item dropdown
-                              ),
-
-                              // **Ganti Icon Dropdown**
-                              iconStyleData: IconStyleData(
-                                icon: Icon(Icons.keyboard_arrow_down_outlined,
-                                    size: 20, color: Colors.black),
-                                openMenuIcon: Icon(
-                                    Icons.keyboard_arrow_up_outlined,
-                                    size: 20,
-                                    color: Colors.black),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Text("Page $endIndex of ${filterData.length}",
-                            style: TextStyle(
-                                color: ColorStyle.text_hint, fontSize: 14)),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.chevron_left),
-                              onPressed: _currentPage > 0
-                                  ? () {
-                                      setState(() {
-                                        _currentPage--;
-                                      });
-                                    }
-                                  : null,
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.chevron_right),
-                              onPressed: _currentPage < totalPages - 1
-                                  ? () {
-                                      setState(() {
-                                        _currentPage++;
-                                      });
-                                    }
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ]))
+            )
           ]),
         ),
       ),

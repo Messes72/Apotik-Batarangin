@@ -182,8 +182,10 @@ class Pembayaran {
 class Item {
   final String idObat;
   final int kuantitas;
+  final String namaObat;
   final String aturanPakai;
   final String caraPakai;
+  final double hargaObat;
   final String keteranganPakai;
 
   Item({
@@ -191,6 +193,8 @@ class Item {
     required this.kuantitas,
     required this.aturanPakai,
     required this.caraPakai,
+    required this.namaObat,
+    required this.hargaObat,
     required this.keteranganPakai,
   });
 
@@ -200,7 +204,9 @@ class Item {
       kuantitas: json['kuantitas'],
       aturanPakai: json['aturan_pakai'],
       caraPakai: json['cara_pakai'],
+      namaObat: json['nama_obat'],
       keteranganPakai: json['keterangan_pakai'],
+      hargaObat: json['harga_obat']
     );
   }
 
@@ -214,4 +220,5 @@ class Item {
     };
   }
 }
+List<Item> keranjang = [];
 
