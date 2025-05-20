@@ -51,8 +51,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
-      body: COBATRANSAKSI(),
+      body: Sidebarcoba2(isExpanded: isExpanded, onMenuPressed: toggleSidebar),
+      // body: COBATRANSAKSI(),
       
     );
   }

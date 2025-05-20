@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:apotek/Apotik/Riwayat/RiwayatTransaksi.dart';
+import 'package:apotek/Apotik/Transaksi/KwitansiObat.dart';
 import 'package:apotek/Apotik/Transaksi/inputTransaksi.dart';
 import 'package:apotek/Apotik/Transaksi/transaksi.dart';
 import 'package:apotek/Gudang/Pembelian/pembeliaanBarang.dart';
@@ -60,7 +61,8 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
     screenApp = [
       TransaksiPage(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //0
       KustomerApotek(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //1
-      inputTransaksi(isExpanded: isExpanded, toggleSidebar: toggleSidebar) //2
+      inputTransaksi(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2
+      KwitansiObat(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 3
     ];
   }
 
@@ -153,7 +155,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
                             ? "RIWAYAT TRANSAKSI"
                             : pageIndex == 2
                                 ? "PENERIMAAN BARANG"
-                                : "TIDAK ADA",
+                                : pageIndex == 3 ? "KWITANSI OBAT" : "TIDAK ADA",
                     onMenuPressed: () {
                       setState(() {
                         if (isExpanded) {

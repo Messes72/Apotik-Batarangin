@@ -24,7 +24,8 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
   ];
 
   String formatRupiah(int number) {
-    final formatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formatter =
+        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
     return formatter.format(number);
   }
 
@@ -42,87 +43,82 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
             // KIRI
             Expanded(
               flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("TRANSAKSI", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 12),
-                    TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.search),
-                        hintText: "Search",
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 12),
-                    Row(
-                      children: [
-                        ChoiceChip(label: Text('Obat'), selected: true),
-                        SizedBox(width: 8),
-                        ChoiceChip(label: Text('Racikan'), selected: false),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Expanded(
-                      child: GridView.count(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        children: paginatedData.map((obat) {
-                          Color? badgeColor;
-                          String? badgeText;
-                          if (obat['stokMinimum'] == 0) {
-                            badgeColor = Colors.red;
-                            badgeText = 'Habis';
-                          } else if (obat['stokMinimum'] <= 10) {
-                            badgeColor = Colors.orange;
-                            badgeText = 'Sisa';
-                          }
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(Icons.medical_services, size: 32),
-                                  SizedBox(height: 8),
-                                  Text("${obat['namaObat']}", style: TextStyle(fontWeight: FontWeight.bold)),
-                                  Text("${obat['idObat']}", style: TextStyle(fontSize: 12)),
-                                  Text("Stock : ${obat['stokMinimum']} ${obat['namaSatuan']}", style: TextStyle(fontSize: 12)),
-                                  if (badgeText != null)
-                                    Container(
-                                      margin: EdgeInsets.only(top: 4),
-                                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: badgeColor,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        badgeText,
-                                        style: TextStyle(color: Colors.white, fontSize: 10),
-                                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      ChoiceChip(label: Text('Obat'), selected: true),
+                      SizedBox(width: 8),
+                      ChoiceChip(label: Text('Racikan'), selected: false),
+                    ],
+                  ),
+                  SizedBox(height: 12),
+                  Expanded(
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      children: paginatedData.map((obat) {
+                        Color? badgeColor;
+                        String? badgeText;
+                        if (obat['stokMinimum'] == 0) {
+                          badgeColor = Colors.red;
+                          badgeText = 'Habis';
+                        } else if (obat['stokMinimum'] <= 10) {
+                          badgeColor = Colors.orange;
+                          badgeText = 'Sisa';
+                        }
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.medical_services, size: 32),
+                                SizedBox(height: 8),
+                                Text("${obat['namaObat']}",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                Text("${obat['idObat']}",
+                                    style: TextStyle(fontSize: 12)),
+                                Text(
+                                    "Stock : ${obat['stokMinimum']} ${obat['namaSatuan']}",
+                                    style: TextStyle(fontSize: 12)),
+                                if (badgeText != null)
+                                  Container(
+                                    margin: EdgeInsets.only(top: 4),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: badgeColor,
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  Spacer(),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed: () {},
-                                      child: Text("Tambah"),
+                                    child: Text(
+                                      badgeText,
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 10),
                                     ),
-                                  )
-                                ],
-                              ),
+                                  ),
+                                Spacer(),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {},
+                                    child: Text("Tambah"),
+                                  ),
+                                )
+                              ],
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                  ],
-                ),
+                  ),
+                  Row(
+                    children: [Text("ayam mabawa")],
+                  ),
+                ],
               ),
             ),
 
@@ -137,7 +133,9 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text("Kwitansi Obat", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text("Kwitansi Obat",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
                         CircleAvatar(child: Icon(Icons.person))
                       ],
                     ),
@@ -151,7 +149,8 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
                       },
                       children: [
                         TableRow(
-                          decoration: BoxDecoration(color: Colors.grey.shade200),
+                          decoration:
+                              BoxDecoration(color: Colors.grey.shade200),
                           children: [
                             _tableCell('Nama Obat', true),
                             _tableCell('Jumlah', true),
@@ -170,7 +169,8 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
                                     icon: Icon(Icons.remove_circle),
                                     onPressed: () {
                                       setState(() {
-                                        if (item['jumlah'] > 0) item['jumlah']--;
+                                        if (item['jumlah'] > 0)
+                                          item['jumlah']--;
                                       });
                                     },
                                   ),
@@ -226,7 +226,8 @@ class _COBATRANSAKSIState extends State<COBATRANSAKSI> {
       child: Text(
         text,
         textAlign: TextAlign.center,
-        style: TextStyle(fontWeight: isHeader ? FontWeight.bold : FontWeight.normal),
+        style: TextStyle(
+            fontWeight: isHeader ? FontWeight.bold : FontWeight.normal),
       ),
     );
   }
