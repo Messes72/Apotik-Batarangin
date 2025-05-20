@@ -165,3 +165,75 @@ func EditRequest(c echo.Context) error {
 	}
 	return c.JSON(result.Status, result)
 }
+
+func ReturObatApotik(c echo.Context) error {
+
+	idKaryawaninput := c.Get("id_karyawan")
+	if idKaryawaninput == nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Unauthorized, missing karyawan data in token"})
+	}
+
+	idKaryawan, ok := idKaryawaninput.(string)
+	if !ok || idKaryawan == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid karyawan data"})
+	}
+
+	var requestBody class.ReturBarang
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Invalid Request",
+		})
+	}
+
+	result, err := model.ReturObatApotik(c.Request().Context(), idKaryawan, requestBody)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func GetAllRetur(c echo.Context) error {
+	iddepo := c.Param("id_depo")
+	if iddepo == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Parameter Invalid"})
+	}
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+
+	result, err := model.GetAllRetur(iddepo, page, pageSize)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
+
+func GetReturById(c echo.Context) error {
+
+	idretur := c.QueryParam("id")
+	if idretur == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Parameter Invalid"})
+	}
+
+	result, err := model.GetDetailRetur(idretur)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+
+	return c.JSON(result.Status, result)
+
+}

@@ -405,3 +405,49 @@ type StokOpnameGetResult struct {
 	StokOpname StokOpname       `json:"stok_opname"`
 	Items      []StokOpnameObat `json:"items"`
 }
+
+type ReturBarangObatBatch struct {
+	IDNomorBatch string  `json:"id_nomor_batch"`
+	NomorBatch   string  `json:"nomor_batch"`
+	Kuantitas    int     `json:"kuantitas"`
+	Kadaluarsa   string  `json:"kadaluarsa"`
+	Catatan      *string `json:"catatan,omitempty"`
+}
+
+type ReturBarangObat struct {
+	IDKartuStok string                 `json:"id_kartustok"`
+	Catatan     *string                `json:"catatan,omitempty"`
+	Batch       []ReturBarangObatBatch `json:"batches"`
+}
+
+type ReturBarang struct {
+	IDDepo       string            `json:"id_depo"`
+	TanggalRetur string            `json:"tanggal_retur"`
+	TujuanRetur  string            `json:"tujuan_retur"`
+	Catatan      *string           `json:"catatan,omitempty"`
+	Items        []ReturBarangObat `json:"items"`
+}
+
+type ReturBarangData struct {
+	IDRetur      string    `json:"id_retur"`
+	IDDepo       string    `json:"id_depo"`
+	NamaDepo     string    `json:"nama_depo"`
+	TanggalRetur string    `json:"tanggal_retur"`
+	TujuanRetur  string    `json:"tujuan_retur"`
+	Catatan      *string   `json:"catatan,omitempty"`
+	Created_at   time.Time `json:"created_at"`
+	CreatedBy    string    `json:"created_by"`
+}
+
+type AllReturBarangData struct {
+	Alldata ReturBarangData     `json:"alldata"`
+	Items   []ReturBarangDetail `json:"items"`
+}
+
+type ReturBarangDetail struct {
+	IDDetailReturBarang string                 `json:"id_detail_retur_barang"`
+	IDKartuStok         string                 `json:"id_kartustok"`
+	TotalKuantitas      int                    `json:"total_kuantitas"`
+	Catatan             *string                `json:"catatan,omitempty"`
+	Batch               []ReturBarangObatBatch `json:"batches"`
+}

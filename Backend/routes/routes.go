@@ -116,6 +116,12 @@ func Init() *echo.Echo {
 	routeStokOpname.GET("/batch", controller.GetNomorBatch)
 	routeStokOpname.GET("/all/:depo", controller.GetAllStokOpname)
 	routeStokOpname.GET("/:id_stokopname", controller.GetDetailStokOpname)
+
+	routeReturBarang := e.Group("/retur")
+	routeReturBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeReturBarang.POST("/create", controller.ReturObatApotik)
+	routeReturBarang.GET("/:id_depo", controller.GetAllRetur)
+	routeReturBarang.GET("/get", controller.GetReturById)
 	return e
 
 }

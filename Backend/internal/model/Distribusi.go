@@ -3,11 +3,14 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
+	"strings"
+	"time"
 )
 
 func RequestBarangApotikKeGudang(ctx context.Context, idkarayawan string, listobat []class.RequestBarangObat, distribusi class.RequestBarang) (class.Response, error) {
@@ -726,6 +729,457 @@ func EditRequest(ctx context.Context, iddistribusi, idkaryawan string, obj []cla
 
 }
 
-// func ReturObatApotik(ctx context.Context)(class.Response, error){
+var (
+	errBatchUnknown = errors.New("nomor batch tidak dikenali di depo asal")
+)
 
-// }
+func latestSaldo(tx *sql.Tx, idkartustok, idnomorbatch, iddepo string) (int, error) {
+
+	query := `WITH latest AS (SELECT sisa, ROW_NUMBER() OVER (ORDER BY id DESC) rn 
+	FROM detail_kartustok WHERE id_kartustok = ? AND id_nomor_batch = ? AND id_depo = ? )
+	SELECT sisa FROM latest WHERE rn = 1`
+
+	var saldo int
+
+	err := tx.QueryRow(query, idkartustok, idnomorbatch, iddepo).Scan(&saldo)
+	if err == sql.ErrNoRows {
+		return 0, errBatchUnknown
+	}
+
+	if err != nil {
+		return 0, err
+	}
+	return saldo, nil
+
+}
+
+const (
+	depoRetur = "99"
+)
+
+func makessurekartustokexist(tx *sql.Tx, idkartusok, idobat string, created_by string) error {
+
+	querycek := `SELECT 1 FROM kartu_stok WHERE id_kartustok = ? AND id_depo = ? LIMIT 1`
+	var cek int
+	err := tx.QueryRow(querycek, idkartusok, depoRetur).Scan(&cek)
+	if err == nil {
+		return nil //artinya kartustok ada untuk obat ini ada di depo ini.
+	} else if err != sql.ErrNoRows {
+		return err
+	}
+
+	queryinsert := `INSERT INTO kartu_stok (id_depo, id_obat,id_kartustok,stok_barang, created_at, created_by)
+	VALUES(?,?,?,?,NOW(),?)`
+
+	_, err = tx.Exec(queryinsert, depoRetur, idkartusok, idkartusok, 0, created_by)
+	if err != nil {
+		log.Println("Error insert into kartu stok pada func makesurekartustokexist", err)
+		return err
+
+	}
+
+	return err
+}
+
+func returStokMovementIn(tx *sql.Tx, idkartu, iddepo, idbatch, idretur, idbatchpenerimaan string, masuk, keluar, saldoakhir int) error {
+	iddetailkartustok, err := nextBizID(tx, "detail_kartustokcounter", "DKS")
+	if err != nil {
+		log.Println("Error saat generate id detail karustok pada func returStokMovementIn", err)
+		return err
+	}
+
+	query := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_retur, id_depo,id_batch_penerimaan, id_nomor_batch, masuk, keluar, sisa, created_at)
+	VALUES (?,?,?,?,?,?,?,?,?,NOW())`
+
+	_, err = tx.Exec(query, iddetailkartustok, idkartu, idretur, iddepo, idbatchpenerimaan, idbatch, masuk, keluar, saldoakhir)
+	if err != nil {
+		log.Println("Error saat insert detail kartu stok pada fuction returStokMovementIn", err)
+		return err
+	}
+	return err
+}
+
+func getIDPembelianPenerimaan(tx *sql.Tx, idkartustok, idnomorbatch, depo string) (string, error) {
+	var id string
+	query := `SELECT id_batch_penerimaan FROM detail_kartustok WHERE id_kartustok = ? AND id_nomor_batch = ? AND id_depo = ? ORDER BY id DESC LIMIT 1`
+	err := tx.QueryRow(query, idkartustok, idnomorbatch, depo).Scan(&id)
+	if err != nil {
+		log.Println("Error saat get id batch penerimaan di dalam function getIDPembelianPenerimaan", err)
+		return "", fmt.Errorf("no batch_penerimaan for %s/%s@%s", idkartustok, idnomorbatch, depo)
+	}
+	return id, err
+}
+
+func ReturObatApotik(ctx context.Context, idkaryawan string, retur class.ReturBarang) (class.Response, error) {
+
+	const (
+		depoRetur = "99"
+	)
+
+	con := db.GetDBCon()
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+
+	}
+	defer tx.Rollback()
+
+	if len(retur.Items) == 0 {
+		log.Println("Obat Request retur kosong", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Payload Kosong"}, nil
+	}
+
+	idretur, err := nextBizID(tx, "retur_barangcounter", "RTR")
+	if err != nil {
+		log.Println("Error saat generate id retur barang", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+	}
+
+	queryreturbarang := `INSERT INTO retur_barang (id_retur, id_depo,tanggal_retur, tujuan_retur, catatan , created_at, created_by ) 
+	VALUES (?,?,?,?,?,NOW(),?)`
+	returdate, err := time.Parse("2006-01-02", retur.TanggalRetur)
+	if err != nil {
+		log.Println("Error saat parsing retur date", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Format Tanggal Retur Invalid"}, err
+	}
+	_, err = tx.ExecContext(ctx, queryreturbarang, idretur, retur.IDDepo, returdate, retur.TujuanRetur, retur.Catatan, idkaryawan)
+	if err != nil {
+		log.Println("Error saat insert retur barang", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+	}
+
+	for _, obat := range retur.Items {
+		if len(obat.Batch) == 0 {
+			return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("obat %s tidak punya batch", obat.IDKartuStok)}, nil
+		}
+
+		iddetailreturobat, err := nextBizID(tx, "detail_retur_barangcounter", "DRB")
+		if err != nil {
+			log.Println("Error saat generate id detail retur barang", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+		}
+
+		totalkuantitas := 0
+
+		querydetailreturobat := `INSERT INTO detail_retur_barang (id_detail_retur_barang, id_retur, id_kartustok, total_qty, catatan, created_at, created_by)
+		VALUES (?,?,?,?,?,NOW(),?)`
+
+		_, err = tx.ExecContext(ctx, querydetailreturobat, iddetailreturobat, idretur, obat.IDKartuStok, 0, obat.Catatan, idkaryawan)
+		if err != nil {
+			log.Println("Error saat insert detail retur barang", err)
+			log.Println("IDkartustok : ", obat.IDKartuStok)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+		}
+
+		for _, batch := range obat.Batch {
+
+			if batch.Kuantitas <= 0 {
+				return class.Response{Status: http.StatusBadRequest, Message: "Kuantitas harus > 0"}, nil
+			}
+
+			saldosistem, err := latestSaldo(tx, obat.IDKartuStok, batch.IDNomorBatch, retur.IDDepo)
+			if err == errBatchUnknown {
+				fmt.Sprintf("ERROR batch %s bukan milik depo %s",
+					batch.IDNomorBatch, retur.IDDepo)
+				return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("batch %s bukan milik depo %s",
+					batch.IDNomorBatch, retur.IDDepo)}, nil
+			} else if err != nil {
+				log.Println("Error pada function latestSaldo", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			if batch.Kuantitas > saldosistem {
+				return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("stok batch %s hanya %d, tidak cukup",
+					batch.IDNomorBatch, saldosistem)}, nil
+			}
+
+			idbatchretur, err := nextBizID(tx, "batch_retur_barangcounter", "BRB")
+			if err != nil {
+				log.Println("Error saat generate id batch retur barang ", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat generate id batch retur barang"}, err
+			}
+
+			querybatchretur := `INSERT INTO batch_retur_barang (id_batch_retur_barang, id_detail_retur_barang, id_nomor_batch, qty, catatan,created_at, created_by)
+			VALUES (?,?,?,?,?,NOW(),?)`
+
+			_, err = tx.ExecContext(ctx, querybatchretur, idbatchretur, iddetailreturobat, batch.IDNomorBatch, batch.Kuantitas, batch.Catatan, idkaryawan)
+			if err != nil {
+				log.Println("Error saat inset batch retur barang", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			idbatchpenerimaan, err := getIDPembelianPenerimaan(tx, obat.IDKartuStok, batch.IDNomorBatch, retur.IDDepo)
+			if err != nil {
+				log.Println("Error saat memanggil getIDPembelianPenerimaan", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			newsaldodepoasal := saldosistem - batch.Kuantitas //movement barang keluar dari depo asal
+			err = returStokMovementIn(tx, obat.IDKartuStok, retur.IDDepo, batch.IDNomorBatch, idretur, idbatchpenerimaan, 0, batch.Kuantitas, newsaldodepoasal)
+			if err != nil {
+				log.Println("Error saat function retur stok movement out ", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			queryupdatekartustok := `UPDATE kartu_stok SET stok_barang = ?, updated_at = NOW(), updated_by = ? WHERE id_kartustok = ? AND id_depo = ?`
+			_, err = tx.ExecContext(ctx, queryupdatekartustok, newsaldodepoasal, idkaryawan, obat.IDKartuStok, retur.IDDepo)
+			if err != nil {
+				log.Println("Error saat update kartu stok", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			err = makessurekartustokexist(tx, obat.IDKartuStok, obat.IDKartuStok, idkaryawan)
+			if err != nil {
+				log.Println("Error makesurekartustokexist di retur model", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			//stok retur masuk ke depo 99
+			saldoBaru, err := latestSaldo(tx, obat.IDKartuStok, batch.IDNomorBatch, depoRetur)
+			if err == errBatchUnknown {
+				saldoBaru = 0
+			} else if err != nil {
+				log.Println("Error pada function latestSaldo", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			newsaldoretur := saldoBaru + batch.Kuantitas
+
+			err = returStokMovementIn(tx, obat.IDKartuStok, depoRetur, batch.IDNomorBatch, idretur, idbatchpenerimaan, batch.Kuantitas, 0, newsaldoretur)
+			if err != nil {
+				log.Println("Error saat call returstokmovement in di newsaldoretur", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+
+			_, err = tx.ExecContext(ctx, queryupdatekartustok, newsaldoretur, idkaryawan, obat.IDKartuStok, depoRetur)
+			if err != nil {
+				log.Println("Error saat update kartustok untuk depo retur", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+			}
+			totalkuantitas += batch.Kuantitas
+
+		}
+
+		querydetailretur := `UPDATE detail_retur_barang SET total_qty = ? WHERE id_detail_retur_barang = ?`
+		_, err = tx.ExecContext(ctx, querydetailretur, totalkuantitas, iddetailreturobat)
+		if err != nil {
+			log.Println("Error saat update detail retur barang untuk set total kuantitas", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data Retur Barang"}, err
+		}
+
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: nil}, nil
+
+}
+
+func GetAllRetur(iddepo string, page, pagesize int) (class.Response, error) {
+
+	con := db.GetDBCon()
+
+	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
+		page = 1
+	}
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	offset := (page - 1) * pagesize
+	queryreturbarang := `SELECT r.id_retur, r.id_depo, d.nama AS nama_depo, r.tanggal_retur, r.tujuan_retur, r.catatan, r.created_at, k.nama AS created_by 
+	FROM retur_barang r JOIN Depo d ON d.id_depo = r.id_depo
+	JOIN Karyawan k ON k.id_karyawan = r.created_by
+	WHERE r.id_depo = ?
+	ORDER BY r.created_at DESC 
+	LIMIT ? OFFSET ? `
+	// queryreturbarang := `SELECT
+	// FROM retur_barang r JOIN Depo d ON d.id_depo = r.id_depo
+	// JOIN Karyawan k ON k.id_karyawan = r.created_by
+	// ORDER BY r.created_at DESC`
+
+	rows, err := con.Query(queryreturbarang, iddepo, pagesize, offset)
+	if err != nil {
+		log.Println("Error saat query all retur", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Retur"}, err
+	}
+	defer rows.Close()
+
+	var list []class.ReturBarangData
+	for rows.Next() {
+		var data class.ReturBarangData
+		var catatan sql.NullString
+
+		err := rows.Scan(&data.IDRetur, &data.IDDepo, &data.NamaDepo, &data.TanggalRetur, &data.TujuanRetur, &catatan, &data.Created_at, &data.CreatedBy)
+		if err != nil {
+			log.Println("Error saat scan rows query all retur", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Retur"}, err
+		}
+		if catatan.Valid {
+			data.Catatan = &catatan.String
+		}
+		list = append(list, data)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Ada Error pada rows get all retur", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Retur"}, err
+	}
+	if list == nil {
+		list = []class.ReturBarangData{}
+	}
+
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM retur_barang`
+	err = con.QueryRow(countrecordquery).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("gagal menghitung jumlah entry table retur barang , pada query di model distribusi")
+		return class.Response{Status: http.StatusInternalServerError, Message: "gagal menghitung jumlah record retur"}, nil
+	}
+
+	totalpage := (totalrecord + pagesize - 1) / pagesize //bisa juga pakai total/pagesize tp kan nanti perlu di bulatkan keatas pakai package math dimana dia perlu type floating point yg membuat performa hitung lebih lambat
+
+	metadata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pagesize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metadata}, nil
+
+}
+
+func GetDetailRetur(idretur string) (class.Response, error) {
+
+	con := db.GetDBCon()
+	queryreturbarang := `SELECT r.id_retur, r.id_depo, d.nama AS nama_depo, r.tanggal_retur, r.tujuan_retur, r.catatan, r.created_at, k.nama AS created_by 
+	FROM retur_barang r JOIN Depo d ON d.id_depo = r.id_depo
+	JOIN Karyawan k ON k.id_karyawan = r.created_by
+	WHERE r.id_retur = ?`
+
+	var header class.ReturBarangData
+	var catatan sql.NullString
+	var tanggalretur sql.NullTime
+	err := con.QueryRow(queryreturbarang, idretur).Scan(&header.IDRetur, &header.IDDepo, &header.NamaDepo, &tanggalretur, &header.TujuanRetur, &catatan, &header.Created_at, &header.CreatedBy)
+	if err == sql.ErrNoRows {
+		return class.Response{Status: http.StatusBadRequest, Message: "Data Detail Retur tidak ditemukan"}, err
+	}
+	if err != nil {
+		log.Println("Error saat query header retur barang", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Retur "}, err
+	}
+	if catatan.Valid {
+		header.Catatan = &catatan.String
+	}
+	if tanggalretur.Valid {
+		header.TanggalRetur = tanggalretur.Time.Format("2006-01-02")
+	}
+
+	querydetailretur := `SELECT id_detail_retur_barang, id_kartustok,total_qty, catatan 
+	FROM detail_retur_barang WHERE id_retur = ?`
+	rows, err := con.Query(querydetailretur, idretur)
+	if err != nil {
+		log.Println("Error saat query detail retur barang", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambild data Detail Retur"}, err
+	}
+	defer rows.Close()
+
+	mapobat := make(map[string]*class.ReturBarangDetail)
+	var list []class.ReturBarangDetail
+
+	for rows.Next() {
+		var obat class.ReturBarangDetail
+		var catatan sql.NullString
+		err := rows.Scan(&obat.IDDetailReturBarang, &obat.IDKartuStok, &obat.TotalKuantitas, &catatan)
+		if err != nil {
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambild data Detail Retur"}, err
+		}
+		if catatan.Valid {
+			obat.Catatan = &catatan.String
+		}
+		obat.Batch = make([]class.ReturBarangObatBatch, 0)
+		mapobat[obat.IDDetailReturBarang] = &obat
+		list = append(list, obat)
+
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Println("Ada Error pada rows obat pada  get detail retur", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Retur"}, err
+	}
+
+	if len(list) > 0 {
+
+		var iddetailretur []interface{}
+
+		for _, obj := range list {
+			iddetailretur = append(iddetailretur, obj.IDDetailReturBarang)
+		}
+
+		placeholder := make([]string, len(iddetailretur))
+		for i := range iddetailretur {
+			placeholder[i] = "?"
+		}
+
+		querybatch := fmt.Sprintf(`SELECT b.id_detail_retur_barang, b.id_nomor_batch, b.qty, b.catatan, nb.kadaluarsa, nb.no_batch FROM batch_retur_barang b 
+		JOIN nomor_batch nb ON nb.id_nomor_batch = b.id_nomor_batch
+		WHERE b.id_detail_retur_barang IN (%s)`, strings.Join(placeholder, ","))
+
+		batchrows, err := con.Query(querybatch, iddetailretur...)
+
+		if err != nil {
+			log.Println("Error saat query batch obat", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Retur"}, err
+		}
+		defer batchrows.Close()
+
+		for batchrows.Next() {
+			var iddetail string
+			var batch class.ReturBarangObatBatch
+			var catatan sql.NullString
+			var kadaluarsa sql.NullTime
+
+			err := batchrows.Scan(&iddetail, &batch.IDNomorBatch, &batch.Kuantitas, &catatan, &kadaluarsa, &batch.NomorBatch)
+			if err != nil {
+				log.Println("Error saat scan batchrows ", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Retur"}, err
+			}
+
+			if catatan.Valid {
+				batch.Catatan = &catatan.String
+			}
+			if kadaluarsa.Valid {
+				batch.Kadaluarsa = kadaluarsa.Time.Format("2006-01-02")
+			}
+
+			obat, ok := mapobat[iddetail]
+			if ok {
+				obat.Batch = append(obat.Batch, batch)
+			}
+		}
+
+		err = batchrows.Err()
+		if err != nil {
+			log.Println("Ada Error pada rows batch pada  get detail retur", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Retur"}, err
+		}
+	}
+
+	out := make([]class.ReturBarangDetail, 0, len(mapobat))
+	for _, ptr := range mapobat {
+		out = append(out, *ptr)
+	}
+
+	result := class.AllReturBarangData{
+		Alldata: header,
+		Items:   out,
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: result}, nil
+}
