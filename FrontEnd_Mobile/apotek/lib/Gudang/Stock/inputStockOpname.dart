@@ -1132,8 +1132,11 @@ class inputStock extends State<Inputstockopname> {
                       onPressed: () {
                         print("SAVE");
                       },
-                      icon: const Icon(Icons.download,
-                          color: Colors.white, size: 22),
+                      icon: Image.asset(
+                        "images/download.png",
+                        width: 22,
+                        height: 22,
+                      ),
                       label: Text("Simpan Stock Opname",
                           style: GoogleFonts.inter(
                               color: Colors.white,

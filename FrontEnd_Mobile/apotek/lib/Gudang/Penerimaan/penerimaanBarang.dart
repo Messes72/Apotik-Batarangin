@@ -634,15 +634,18 @@ class pagePenerimaan extends State<PenerimaanBarang>
     if (picked != null && picked != selectedDate2) {
       setState(() {
         selectedDate2 = picked;
-        kadaluarsaControllers[index].text = DateFormat("yyyy-MM-dd").format(selectedDate2);
+        kadaluarsaControllers[index].text =
+            DateFormat("yyyy-MM-dd").format(selectedDate2);
       });
     }
   }
+
   List<TextEditingController> jumlahControllers = [];
   var nomorPembelianEdit = TextEditingController();
   var idPenerimaan;
   Future<void> putPenerimaan(String id) async {
-    String url = "http://leap.crossnet.co.id:2688/penerimaanbarang/${idPenerimaan}/edit";
+    String url =
+        "http://leap.crossnet.co.id:2688/penerimaanbarang/${idPenerimaan}/edit";
     // Susun obat_list dari isi dan isi2
     List<Map<String, dynamic>> obatList = [];
     // print("ISI LENGTH: ${isi.length}");
@@ -651,7 +654,9 @@ class pagePenerimaan extends State<PenerimaanBarang>
     // print("ISI LENGTH: ${isi2[0]}");
 
     for (int i = 0; i < namaObat.length; i++) {
-      if (nomorBatchControllers[i].text.isNotEmpty && kadaluarsaControllers[i].text.isNotEmpty && jumlahControllers[i].text.isNotEmpty ) {
+      if (nomorBatchControllers[i].text.isNotEmpty &&
+          kadaluarsaControllers[i].text.isNotEmpty &&
+          jumlahControllers[i].text.isNotEmpty) {
         obatList.add({
           "id_detail_pembelian_penerimaan_obat": namaObat[i]!
               .idDetailPembelianPenerimaanObat, // contoh ID dummy, ganti sesuai logikamu
@@ -682,6 +687,7 @@ class pagePenerimaan extends State<PenerimaanBarang>
       print(response.body);
     }
   }
+
   void _editPenerimaan(PembelianBarangObat item) {
     setState(() {
       idPenerimaan = item.idPembelianBarangObat;
@@ -1472,7 +1478,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                           child: ElevatedButton(
                                             onPressed: () {
                                               Navigator.pop(context);
-                                              _alertInput("edit","mengedit", "edit");
+                                              _alertInput(
+                                                  "edit", "mengedit", "edit");
                                               // _alertDone(item, "diedit");
                                               // setState(() {});
                                               // _alertDone("diedit");
@@ -1789,7 +1796,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                       child: ElevatedButton(
                                         onPressed: () {
                                           Navigator.pop(context);
-                                          _alertInput("input", "menginput", "input");
+                                          _alertInput(
+                                              "input", "menginput", "input");
                                         },
                                         style: ElevatedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
@@ -1826,7 +1834,6 @@ class pagePenerimaan extends State<PenerimaanBarang>
           );
         });
   }
-
 
   void _alertDelete(PembelianBarangObat item) {
     showDialog(
@@ -2027,7 +2034,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                       Navigator.pop(context);
                                       _alertDone("diinput");
                                     } else if (condition == "edit") {
-                                      await putPenerimaan(nomorPembelianEdit.toString());
+                                      await putPenerimaan(
+                                          nomorPembelianEdit.toString());
                                       Navigator.pop(context);
                                       _alertDone("diedit");
                                     }
@@ -2646,18 +2654,6 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                       children: [
                                                         IconButton(
                                                             icon: Icon(
-                                                              Icons
-                                                                  .open_in_new_outlined,
-                                                              color: ColorStyle
-                                                                  .text_secondary,
-                                                              size: 24,
-                                                            ),
-                                                            onPressed: () {
-                                                              _viewDetails(
-                                                                  item);
-                                                            }),
-                                                        IconButton(
-                                                            icon: Icon(
                                                               Icons.add,
                                                               color: ColorStyle
                                                                   .text_secondary,
@@ -2677,6 +2673,18 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                             ),
                                                             onPressed: () {
                                                               _editPenerimaan(
+                                                                  item);
+                                                            }),
+                                                        IconButton(
+                                                            icon: Icon(
+                                                              Icons
+                                                                  .open_in_new_outlined,
+                                                              color: ColorStyle
+                                                                  .text_secondary,
+                                                              size: 24,
+                                                            ),
+                                                            onPressed: () {
+                                                              _viewDetails(
                                                                   item);
                                                             }),
                                                       ],

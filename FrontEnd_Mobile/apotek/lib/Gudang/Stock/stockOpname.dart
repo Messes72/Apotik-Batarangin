@@ -1132,19 +1132,20 @@ class stokPage extends State<stokopname> {
                               3; // ini halaman yang ditampilkan
                           global.selectedScreen = 1; // ini di sidebarnya
                         });
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MyApp()));
+                        Navigator.pushReplacement(context,
+                            MaterialPageRoute(builder: (context) => MyApp()));
                         // _inputStockOpname();
                       },
                       icon:
                           const Icon(Icons.add, color: Colors.white, size: 22),
-                      label: Text("Input Stock Opname",
-                          style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600)),
+                      label: Transform.translate(
+                        offset: Offset(-3, 0),
+                        child: Text("Input Stock Opname",
+                            style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600)),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColorStyle.hover.withOpacity(0.7),
                         shape: RoundedRectangleBorder(
@@ -1392,6 +1393,12 @@ class stokPage extends State<stokopname> {
                                                         global.selectedScreen =
                                                             1; // ini di sidebarnya
                                                       });
+                                                      Navigator.pushReplacement(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      MyApp()));
                                                       // _viewDetails(item);
                                                     }),
                                                 IconButton(
@@ -1408,6 +1415,12 @@ class stokPage extends State<stokopname> {
                                                         global.selectedScreen =
                                                             1; // ini di sidebarnya
                                                       });
+                                                      Navigator.pushReplacement(
+                                                          context,
+                                                          MaterialPageRoute(
+                                                              builder:
+                                                                  (context) =>
+                                                                      MyApp()));
                                                       // _editStockOpname(item);
                                                     }),
                                                 IconButton(

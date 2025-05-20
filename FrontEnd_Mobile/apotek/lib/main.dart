@@ -1,9 +1,5 @@
-import 'package:apotek/Gudang/Penerimaan/mencobaa.dart';
-import 'package:apotek/Gudang/Produk/Cobaaaa.dart';
 import 'package:apotek/Gudang/Produk/Kategori.dart';
-import 'package:apotek/Gudang/Produk/mencobaa.dart';
 import 'package:apotek/SideBar.dart';
-import 'package:apotek/SideBarApotek.dart';
 import 'package:apotek/login.dart';
 import 'package:flutter/material.dart';
 
