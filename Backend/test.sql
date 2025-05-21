@@ -459,13 +459,20 @@ CREATE TABLE transaksi (
      id_status                   TINYINT NOT NULL,               
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at           DATETIME,
+        id_kustomer                 VARCHAR(15) NULL
+               
     CONSTRAINT fk_transaksi_karyawan
         FOREIGN KEY (id_karyawan)
         REFERENCES Karyawan(id_karyawan),
 
     CONSTRAINT fk_transaksi_status
         FOREIGN KEY (id_status)
-        REFERENCES status_transaksi(id_status)
+        REFERENCES status_transaksi(id_status),
+
+    CONSTRAINT fk_dtp_kustomer
+        FOREIGN KEY (id_kustomer)
+        REFERENCES Kustomer(id_kustomer)    
+
 );
 
 
@@ -504,8 +511,7 @@ CREATE TABLE detail_transaksi_penjualan_obat (
     id_cara_pakai               VARCHAR(50),                
     id_keterangan_pakai         VARCHAR(50),             
     id_nomor_batch              VARCHAR(100) NOT NULL,   
-    id_kustomer                 VARCHAR(15) NULL, 
-               
+
     total_harga                 DECIMAL(15,2) UNSIGNED NOT NULL,
     kadaluarsa                  DATE NOT NULL,
     jumlah                      INT UNSIGNED NOT NULL,
@@ -520,12 +526,7 @@ CREATE TABLE detail_transaksi_penjualan_obat (
 
     CONSTRAINT fk_dtp_nomor_batch
         FOREIGN KEY (id_nomor_batch)
-        REFERENCES nomor_batch(id_nomor_batch),
-
-    CONSTRAINT fk_dtp_kustomer
-        FOREIGN KEY (id_kustomer)
-        REFERENCES Kustomer(id_kustomer)    
-
+        REFERENCES nomor_batch(id_nomor_batch)
     
 );
 
