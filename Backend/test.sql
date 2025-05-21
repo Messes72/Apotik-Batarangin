@@ -459,7 +459,7 @@ CREATE TABLE transaksi (
      id_status                   TINYINT NOT NULL,               
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at           DATETIME,
-        id_kustomer                 VARCHAR(15) NULL
+    id_kustomer                 VARCHAR(15) NULL,
                
     CONSTRAINT fk_transaksi_karyawan
         FOREIGN KEY (id_karyawan)

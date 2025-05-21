@@ -227,7 +227,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 
 	const (
 		statusberhasil = 1
-		statuscancel   = 5
+		statuscancel   = 2
 	)
 	log.Println("IDkaryawan ; ", idkaryawan)
 
