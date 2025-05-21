@@ -229,6 +229,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 		statusberhasil = 1
 		statuscancel   = 2
 	)
+	log.Println("IDkaryawan ; ", idkaryawan)
 
 	querytransaksi := `INSERT INTO transaksi (id_transaksi, id_karyawan, total_harga, metode_pembayaran,id_status, created_at, id_kustomer) VALUES (?,?,0,?,?,NOW(),?)`
 	_, err = tx.ExecContext(ctx, querytransaksi, newidtransaksi, idkaryawan, bayar.MetodeBayar, statuscancel, idkustomer)
