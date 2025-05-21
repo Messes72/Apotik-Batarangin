@@ -467,7 +467,7 @@ CREATE TABLE transaksi (
 
     CONSTRAINT fk_transaksi_status
         FOREIGN KEY (id_status)
-        REFERENCES status_transaksi(id_status),
+        REFERENCES status(id_status),
 
     CONSTRAINT fk_dtp_kustomer
         FOREIGN KEY (id_kustomer)
