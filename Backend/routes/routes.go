@@ -57,6 +57,11 @@ func Init() *echo.Echo {
 	routeKustomer.PUT("/:id_kustomer/edit", controller.UpdateKustomer)
 	routeKustomer.PUT("/:id_kustomer/delete", controller.DeleteKustomer)
 
+	routeSupplier := e.Group("/supplier")
+	routeSupplier.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeSupplier.POST("/create", controller.AddSupplier)
+	routeSupplier.DELETE("/:id_supplier/delete", controller.DeleteSupplier)
+
 	routeKategori := e.Group("/category")
 	routeKategori.Use(middleware.CheckAPIKey)
 	routeKategori.Use(middleware.JWTMiddleware)

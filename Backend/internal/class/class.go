@@ -463,3 +463,15 @@ type ReturBarangDetail struct {
 	Catatan             *string                `json:"catatan,omitempty"`
 	Batch               []ReturBarangObatBatch `json:"batches"`
 }
+
+type Supplier struct {
+	ID         int        `json:"id"`
+	IDSupplier string     `json:"id_supplier"`
+	Nama       string     `json:"nama"`
+	Alamat     string     `json:"alamat"`
+	NoTelp     string     `json:"no_telp"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
+	Catatan    *string    `json:"catatan,omitempty"`
+}

@@ -189,6 +189,11 @@ CREATE TABLE IF NOT EXISTS batchdetaildistribusicounter (
 );
 INSERT IGNORE INTO batchdetaildistribusicounter (count) VALUES (1)
 
+CREATE TABLE IF NOT EXISTS suppliercounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO suppliercounter (count) VALUES (1)
+
 -- Depo Table
 CREATE TABLE Depo (
     id INT PRIMARY KEY AUTO_INCREMENT,  -- PK and Auto-incrementing (A.I.)
@@ -430,6 +435,7 @@ CREATE TABLE supplier (
     created_at DATETIME NOT NULL,
     updated_at DATETIME NULL,
     deleted_at DATETIME,
+    alasan_delete VARCHAR(255) NULL,
     keterangan VARCHAR(255)
 );
 
