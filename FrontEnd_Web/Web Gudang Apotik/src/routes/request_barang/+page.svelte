@@ -77,31 +77,38 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'ID Distribusi'],
+					['children', 'Status'],
+					['children', 'Keterangan'],
 					['children', 'Action']
 				]}
+				column_widths={['20%', '15%', '45%', '20%']}
+				text_align={['center', 'center', 'justify']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'ID Distribusi'}
+						<div>{body.id_distribusi}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
-						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
+					{#if head === 'Status'}
+						{#if body.id_status === '0'}
+							<span class="rounded-lg bg-blue-500 px-2 py-1 text-[14px] text-white">DIPESAN</span>
+						{:else if body.id_status === '1'}
+							<span class="rounded-lg bg-green-500 px-2 py-1 text-[14px] text-white">DITERIMA</span>
+						{:else if body.id_status === '2'}
+							<span class="rounded-lg bg-orange-500 px-2 py-1 text-[14px] text-white">DIPROSES</span
+							>
+						{:else if body.id_status === '4'}
+							<span class="rounded-lg bg-yellow-500 px-2 py-1 text-[14px] text-white">DIEDIT</span>
+						{:else}
+							<span class="rounded-lg bg-red-500 px-2 py-1 text-[14px] text-white">BATAL</span>
+						{/if}
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
-					{/if}
-
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Keterangan'}
+						<div>{body.keterangan}</div>
 					{/if}
 
 					{#if head === 'Action'}
@@ -122,52 +129,43 @@
 							class="rounded-full p-2 hover:bg-gray-200"
 							on:click={() => (isModalAlasanTerimaOpen = true)}
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="25"
-								height="24"
-								viewBox="0 0 25 24"
-								fill="none"
+							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
+								><mask
+									id="a"
+									width="24"
+									height="24"
+									x="2"
+									y="2"
+									maskUnits="userSpaceOnUse"
+									style="mask-type:alpha"><path fill="#D9D9D9" d="M2 2h24v24H2z" /></mask
+								><g mask="url(#a)"
+									><path
+										fill="#35353A"
+										d="M7 21h1.261l10.237-10.237-1.261-1.261L7 19.738V21Zm-.596 1.5a.874.874 0 0 1-.644-.26.874.874 0 0 1-.26-.644v-1.733a1.801 1.801 0 0 1 .527-1.275L18.69 5.931a1.7 1.7 0 0 1 .501-.319 1.5 1.5 0 0 1 .575-.112c.2 0 .395.036.583.107.188.07.354.184.499.34l1.221 1.236c.155.145.266.311.332.5.066.188.099.377.099.565 0 .201-.034.393-.103.576-.069.183-.178.35-.328.501L9.411 21.973a1.801 1.801 0 0 1-1.274.527H6.403Zm11.452-12.356-.62-.642 1.262 1.261-.642-.62Z"
+									/></g
+								></svg
 							>
-								<g id="tabler:check">
-									<path
-										id="Vector"
-										d="M5.5 12L10.5 17L20.5 7"
-										stroke="black"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</g>
-							</svg>
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
 							on:click={() => (isModalAlasanTolakOpen = true)}
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="25"
-								height="24"
-								viewBox="0 0 25 24"
-								fill="none"
+							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
+								><mask
+									id="a"
+									width="24"
+									height="24"
+									x="2"
+									y="2"
+									maskUnits="userSpaceOnUse"
+									style="mask-type:alpha"><path fill="#D9D9D9" d="M2 2h24v24H2z" /></mask
+								><g mask="url(#a)"
+									><path
+										fill="#35353A"
+										d="M9.308 22.5a1.74 1.74 0 0 1-1.277-.531 1.74 1.74 0 0 1-.531-1.277V8h-.25a.726.726 0 0 1-.534-.216.726.726 0 0 1-.216-.534c0-.213.072-.391.216-.535A.726.726 0 0 1 7.25 6.5H11a.85.85 0 0 1 .259-.626.853.853 0 0 1 .626-.259h4.23a.85.85 0 0 1 .626.26A.852.852 0 0 1 17 6.5h3.75c.212 0 .39.072.534.216a.726.726 0 0 1 .216.534.726.726 0 0 1-.216.535.726.726 0 0 1-.534.215h-.25v12.692c0 .497-.177.923-.531 1.277a1.74 1.74 0 0 1-1.277.531H9.308ZM19 8H9v12.692a.3.3 0 0 0 .087.221.3.3 0 0 0 .22.087h9.385a.3.3 0 0 0 .221-.087.3.3 0 0 0 .087-.22V8Zm-6.846 11c.213 0 .39-.072.534-.216a.726.726 0 0 0 .216-.534v-7.5a.726.726 0 0 0-.216-.534.726.726 0 0 0-.535-.216.725.725 0 0 0-.534.216.726.726 0 0 0-.215.534v7.5c0 .212.072.39.216.534a.726.726 0 0 0 .534.216Zm3.692 0a.726.726 0 0 0 .535-.216.726.726 0 0 0 .215-.534v-7.5a.726.726 0 0 0-.216-.534.726.726 0 0 0-.534-.216.725.725 0 0 0-.534.216.726.726 0 0 0-.216.534v7.5c0 .212.072.39.216.534a.727.727 0 0 0 .534.216Z"
+									/></g
+								></svg
 							>
-								<g id="x">
-									<path
-										id="Vector"
-										d="M18.5 6L6.5 18"
-										stroke="black"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-									<path
-										id="Vector_2"
-										d="M6.5 6L18.5 18"
-										stroke="black"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</g>
-							</svg>
 						</button>
 					{/if}
 				{/snippet}
@@ -175,7 +173,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalDetailOpen}
 		<div
@@ -217,7 +215,10 @@
 		bind:isOpen={isModalAlasanTerimaOpen}
 		bind:isKonfirmTerimaRequestOpen={isModalKonfirmTerimaOpen}
 	/>
-	<KonfirmTerimaRequest bind:isOpen={isModalKonfirmTerimaOpen} bind:isSuccess={isModalSuccessTerimaOpen} />
+	<KonfirmTerimaRequest
+		bind:isOpen={isModalKonfirmTerimaOpen}
+		bind:isSuccess={isModalSuccessTerimaOpen}
+	/>
 	<TerimaRequest bind:isOpen={isModalSuccessTerimaOpen} />
 
 	<!-- Modal Tolak -->
@@ -225,7 +226,10 @@
 		bind:isOpen={isModalAlasanTolakOpen}
 		bind:isKonfirmTolakRequestOpen={isModalKonfirmTolakOpen}
 	/>
-	<KonfirmTolakRequest bind:isOpen={isModalKonfirmTolakOpen} bind:isSuccess={isModalSuccessTolakOpen} />
+	<KonfirmTolakRequest
+		bind:isOpen={isModalKonfirmTolakOpen}
+		bind:isSuccess={isModalSuccessTolakOpen}
+	/>
 	<TolakRequest bind:isOpen={isModalSuccessTolakOpen} />
 </div>
 

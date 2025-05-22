@@ -3,8 +3,8 @@
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
-	import AlasanDeleteRoleKaryawan from '$lib/modals/delete/AlasanDeleteRoleKaryawan.svelte';
-	import KonfirmDeleteRoleKaryawan from '$lib/modals/delete/KonfirmDeleteRoleKaryawan.svelte';
+	import AlasanDeleteKategori from '$lib/modals/delete/AlasanDeleteKategori.svelte';
+	import KonfirmDeleteKategori from '$lib/modals/delete/KonfirmDeleteKategori.svelte';
 	import KonfirmEdit from '$lib/modals/konfirmasi/KonfirmEdit.svelte';
 	import KonfirmInput from '$lib/modals/konfirmasi/KonfirmInput.svelte';
 	import Edit from '$lib/modals/success/Edit.svelte';
@@ -37,14 +37,13 @@
 	let currentKetegori = $state<any>(null);
 	let currentDeleteKetegoriId = $state<string>('');
 	let alasanDeleteKategori = $state<string>('');
-
-	let selectedDepos = $state<string[]>([]);
+	let selectedDepo = $state<string>('');
 	
 	interface Kategori {
 		id_kategori: string;
 		nama: string;
 		catatan: string;
-		depo: Array<{ id_depo: string }>;
+		id_depo: string;
 	}
 	
 	let currentDetailKategori = $state<Kategori | null>(null);
@@ -52,20 +51,20 @@
 	let inputForm = $state({
 		nama: '',
 		catatan: '',
-		depo: [] as string[]
+		id_depo: ''
 	});
 
 	let inputErrors = $state({
 		nama: '',
 		catatan: '',
-		depo: '',
+		id_depo: '',
 		general: ''
 	});
 
 	let editErrors = $state({
 		nama: '',
 		catatan: '',
-		depo: '',
+		id_depo: '',
 		general: ''
 	});
 
@@ -73,79 +72,63 @@
 
 	function setKategoriForEdit(kategori: any) {
 		currentKetegori = kategori;
-		selectedDepos = kategori.depo?.map((depo: { id_depo: string }) => depo.id_depo) || [];
+		selectedDepo = kategori.id_depo || '';
 		isModalEditOpen = true;
+	}
+
+	function showDetailKategori(kategori: any) {
+		currentKetegori = kategori;
+		currentDetailKategori = {
+			id_kategori: kategori.id_kategori || '',
+			nama: kategori.nama || '',
+			catatan: kategori.catatan || '',
+			id_depo: kategori.id_depo || ''
+		};
+		isModalDetailOpen = true;
+	}
+
+	function handleDepoChange(event: Event) {
+		const select = event.target as HTMLSelectElement;
+		const selectedValue = select.value;
+		selectedDepo = selectedValue;
+		inputForm.id_depo = selectedValue;
 	}
 
 	$effect(() => {
 		if (form?.values) {
-			const getStringValue = (key: string): string => {
-				try {
-					const formDataObject = form.values as Record<string, FormDataEntryValue>;
-					const value = formDataObject[key];
-					return typeof value === 'string' ? value : '';
-				} catch {
-					return '';
-				}
-			};
-
-			const getArrayValue = (key: string): string[] => {
-				try {
-					const formDataObject = form.values as Record<string, FormDataEntryValue>;
-					const value = formDataObject[key];
-
-					if (Array.isArray(value)) return value;
-					if (typeof value === 'string') {
-						try {
-							return JSON.parse(value) || [];
-						} catch {
-							return value ? [value] : [];
-						}
-					}
-					return [];
-				} catch {
-					return [];
-				}
-			};
-
 			try {
-				inputForm.nama = getStringValue('nama');
-				inputForm.catatan = getStringValue('catatan');
-				inputForm.depo = getArrayValue('depo');
+				inputForm.nama = String((form.values as any)['nama'] || '');
+				inputForm.catatan = String((form.values as any)['catatan'] || '');
+				inputForm.id_depo = String((form.values as any)['id_depo'] || '');
 			} catch (e) {}
 		}
 
-		if (form?.error) {
-			inputErrors = {
+		if (form?.error && form.message) {
+			const errorMsg = form.message || '';
+			
+			const newInputErrors = {
 				nama: '',
 				catatan: '',
-				depo: '',
+				id_depo: '',
 				general: ''
 			};
 			
-			const errorMsg = form.message || '';
-			
-			
-			if (errorMsg.toLowerCase().includes('depo')) {
-				inputErrors.depo = errorMsg;
+			if (errorMsg.toLowerCase().includes('depo') || errorMsg.toLowerCase().includes('id_depo')) {
+				newInputErrors.id_depo = errorMsg;
 			} else if (errorMsg.toLowerCase().includes('nama')) {
-				inputErrors.nama = errorMsg;
+				newInputErrors.nama = errorMsg;
 			} else {
-				inputErrors.general = errorMsg;
+				newInputErrors.general = errorMsg;
 			}
-
-			const formHasKategoriId = form.values && 'id_kategori' in (form.values as Record<string, unknown>);
-			const formHasAlasanDelete = form.values && 'alasan_delete' in (form.values as Record<string, unknown>);
-
-			if (formHasKategoriId) {
-				editErrors = {
-					nama: inputErrors.nama,
-					catatan: inputErrors.catatan,
-					depo: inputErrors.depo,
-					general: inputErrors.general
-				};
+			
+			inputErrors = newInputErrors;
+			
+			const formValues = form.values as Record<string, unknown> | undefined;
+			
+			if (formValues && 'id_kategori' in formValues) {
+				editErrors = { ...newInputErrors };
 				isModalEditOpen = true;
-			} else if (formHasAlasanDelete) {
+			} else if (formValues && 'alasan_delete' in formValues) {
 				deleteError = errorMsg;
 				isModalKonfirmDeleteOpen = true;
 			} else {
@@ -210,10 +193,7 @@
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => {
-								currentKetegori = body;
-								isModalDetailOpen = true;
-							}}
+							on:click={() => showDetailKategori(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -314,8 +294,9 @@
 								inputForm = {
 									nama: '',
 									catatan: '',
-									depo: [],
+									id_depo: ''
 								};
+								selectedDepo = '';
 								setTimeout(() => {
 									window.location.reload();
 								}, 2500);
@@ -350,76 +331,20 @@
 					{/if}
 					<div class="flex flex-col gap-2">
 						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
-						<div class="relative">
-							<button
-								type="button"
-								id="depo_button"
-								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-								on:click|stopPropagation={() => {
-									document.getElementById('depo_dropdown')?.classList.toggle('hidden');
-								}}
-							>
-								<span>
-									{inputForm.depo.length > 0
-										? inputForm.depo
-												.map((id) => {
-													const depo = data?.depos?.find((d) => d.id_depo === id);
-													return depo?.nama || id;
-												})
-												.join(', ')
-										: 'Pilih Depo'}
-								</span>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="12"
-									height="8"
-									viewBox="0 0 12 8"
-									fill="none"
-								>
-									<path
-										d="M1 1.5L6 6.5L11 1.5"
-										stroke="#1E1E1E"
-										stroke-width="1.5"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							</button>
-							<div
-								id="depo_dropdown"
-								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
-								style="max-height: 200px; z-index: 10;"
-							>
-								{#if data?.depos}
-									{#each data.depos as depo (depo.id_depo)}
-										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
-											<input
-												type="checkbox"
-												id={`depo_${depo.id_depo}`}
-												value={depo.id_depo}
-												checked={inputForm.depo.includes(depo.id_depo)}
-												on:change={(e) => {
-													const target = e.target as HTMLInputElement;
-													if (target.checked) {
-														inputForm.depo = [...inputForm.depo, depo.id_depo];
-													} else {
-														inputForm.depo = inputForm.depo.filter((id) => id !== depo.id_depo);
-													}
-												}}
-												class="mr-2 h-4 w-4"
-											/>
-											<label
-												for={`depo_${depo.id_depo}`}
-												class="font-inter w-full cursor-pointer text-[13px]"
-											>
-												{depo.nama}
-											</label>
-										</div>
-									{/each}
-								{/if}
-							</div>
-							<input type="hidden" name="depo" value={JSON.stringify(inputForm.depo)} />
-						</div>
+						<select
+							id="depo"
+							name="id_depo"
+							class="h-10 rounded-md border border-[#AFAFAF] px-2 py-1 font-inter text-[14px] text-[#515151]"
+							on:change={handleDepoChange}
+						>
+							<option value="">-- Pilih Depo --</option>
+							{#each data.depos as depo}
+								<option value={depo.id_depo}>{depo.nama}</option>
+							{/each}
+						</select>
+						{#if inputErrors.id_depo}
+							<div class="text-xs text-red-500">{inputErrors.id_depo}</div>
+						{/if}
 					</div>
 					{#if inputErrors.general}
 						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.general}</div>
@@ -427,29 +352,27 @@
 					<div class="flex items-center justify-end">
 						<button
 							type="button"
-							class="font-intersemi h-10 w-[130px] rounded-md border-2 border-[#329B0D] bg-white text-[#329B0D] hover:bg-[#329B0D] hover:text-white"
+							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
 							on:click={() => {
 								inputErrors = {
 									nama: '',
 									catatan: '',
-									depo: '',
+									id_depo: '',
 									general: ''
 								};
+
 								let isValid = true;
 
 								if (!inputForm.nama) {
-									inputErrors.nama = 'Nama Kategori tidak boleh kosong';
+									inputErrors.nama = 'Nama Kategori diperlukan';
 									isValid = false;
 								}
 
-								if (!inputForm.catatan) {
-									inputErrors.catatan = 'Catatan Kategori tidak boleh kosong';
+								if (!selectedDepo) {
+									inputErrors.id_depo = 'Depo diperlukan';
 									isValid = false;
-								}
-
-								if (inputForm.depo.length === 0) {
-									inputErrors.depo = 'Pilih minimal satu depo karyawan';
-									isValid = false;
+								} else {
+									inputForm.id_depo = selectedDepo;
 								}
 
 								if (isValid) {
@@ -459,7 +382,7 @@
 						>
 							KONFIRMASI
 						</button>
-						<button type="submit" id="hiddenSubmitDepo" class="hidden">Submit</button>
+						<button type="submit" id="hiddenSubmitKategori" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -533,77 +456,21 @@
 						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
 					{/if}
 					<div class="flex flex-col gap-2">
-						<label for="depo" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
-						<div class="relative">
-							<button
-								type="button"
-								id="depo_button_edit"
-								class="font-inter flex h-10 w-full items-center justify-between rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
-								on:click|stopPropagation={() => {
-									document.getElementById('depo_dropdown_edit')?.classList.toggle('hidden');
-								}}
-							>
-								<span>
-									{selectedDepos.length > 0
-										? selectedDepos
-												.map((id) => {
-													const depo = data?.depos?.find((d) => d.id_depo === id);
-													return depo?.nama || id;
-												})
-												.join(', ')
-										: 'Pilih Depo'}
-								</span>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="12"
-									height="8"
-									viewBox="0 0 12 8"
-									fill="none"
-								>
-									<path
-										d="M1 1.5L6 6.5L11 1.5"
-										stroke="#1E1E1E"
-										stroke-width="1.5"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</svg>
-							</button>
-							<div
-								id="depo_dropdown_edit"
-								class="absolute mt-1 hidden w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
-								style="max-height: 200px; z-index: 10;"
-							>
-								{#if data?.depos}
-									{#each data.depos as depo (depo.id_depo)}
-										<div class="flex items-center px-4 py-2 hover:bg-gray-100">
-											<input
-												type="checkbox"
-												id={`depo_edit_${depo.id_depo}`}
-												value={depo.id_depo}
-												checked={selectedDepos.includes(depo.id_depo)}
-												on:change={(e) => {
-													const target = e.target as HTMLInputElement;
-													if (target.checked) {
-														selectedDepos = [...selectedDepos, depo.id_depo];
-													} else {
-														selectedDepos = selectedDepos.filter((id) => id !== depo.id_depo);
-													}
-												}}
-												class="mr-2 h-4 w-4"
-											/>
-											<label
-												for={`depo_edit_${depo.id_depo}`}
-												class="font-inter w-full cursor-pointer text-[13px]"
-											>
-												{depo.nama}
-											</label>
-										</div>
-									{/each}
-								{/if}
-							</div>
-							<input type="hidden" name="depo" value={JSON.stringify(selectedDepos)} />
-						</div>
+						<label for="depo_edit" class="font-intersemi text-[16px] text-[#1E1E1E]">Depo</label>
+						<select
+							id="depo_edit"
+							name="id_depo"
+							class="h-10 rounded-md border border-[#AFAFAF] px-2 py-1 font-inter text-[14px] text-[#515151]"
+							bind:value={selectedDepo}
+						>
+							<option value="">-- Pilih Depo --</option>
+							{#each data.depos as depo}
+								<option value={depo.id_depo}>{depo.nama}</option>
+							{/each}
+						</select>
+						{#if editErrors.id_depo}
+							<div class="text-xs text-red-500">{editErrors.id_depo}</div>
+						{/if}
 					</div>
 					{#if editErrors.general}
 						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
@@ -611,28 +478,23 @@
 					<div class="flex items-center justify-end">
 						<button
 							type="button"
-							class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
+							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
 							on:click={() => {
 								editErrors = {
 									nama: '',
 									catatan: '',
-									depo: '',
+									id_depo: '',
 									general: ''
 								};
 								let isValid = true;
 
 								if (!currentKetegori?.nama) {
-									editErrors.nama = 'Nama Kategori tidak boleh kosong';
+									editErrors.nama = 'Nama Kategori diperlukan';
 									isValid = false;
 								}
 
-								if (!currentKetegori?.catatan) {
-									editErrors.catatan = 'Catatan Kategori tidak boleh kosong';
-									isValid = false;
-								}
-
-								if (selectedDepos.length === 0) {
-									editErrors.depo = 'Pilih minimal satu depo';
+								if (!selectedDepo) {
+									editErrors.id_depo = 'Depo diperlukan';
 									isValid = false;
 								}
 
@@ -672,18 +534,19 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						{#if currentKetegori}
-							<Detail label="ID Kategori" value={currentKetegori.id_kategori || '-'} />
-							<Detail label="Nama Kategori" value={currentKetegori.nama || '-'} />
-							<Detail label="Catatan Kategori" value={currentKetegori.catatan || '-'} />
+						{#if currentDetailKategori}
+							<Detail label="ID Kategori" value={currentDetailKategori.id_kategori || '-'} />
+							<Detail label="Nama Kategori" value={currentDetailKategori.nama || '-'} />
+							<Detail label="Catatan Kategori" value={currentDetailKategori.catatan || '-'} />
 							<Detail
-								label="Depo Karyawan"
-								value={currentDetailKategori.depo
-									?.map((d) => {
-										const depoInfo = data?.depos?.find((depo) => depo.id_depo === d.id_depo);
-										return depoInfo?.nama || d.id_depo;
-									})
-									.join(', ') || '-'}
+								label="Depo"
+								value={(() => {
+									if (!currentDetailKategori.id_depo) return '-';
+									const depoInfo = data?.depos?.find(
+										(depo: { id_depo: string }) => depo.id_depo === currentDetailKategori?.id_depo
+									);
+									return depoInfo?.nama || currentDetailKategori.id_depo;
+								})()}
 							/>
 						{:else}
 							<p>Memuat data...</p>
@@ -723,19 +586,19 @@
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->
-	<AlasanDeleteRoleKaryawan
+	<AlasanDeleteKategori
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
-		bind:roleId={currentDeleteKetegoriId}
+		bind:kategoriId={currentDeleteKetegoriId}
 		bind:alasanValue={alasanDeleteKategori}
 		on:reason={(e) => {
 			alasanDeleteKategori = e.detail;
 		}}
 	/>
-	<KonfirmDeleteRoleKaryawan
+	<KonfirmDeleteKategori
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
-		roleId={currentDeleteKetegoriId}
+		kategoriId={currentDeleteKetegoriId}
 		alasanDelete={alasanDeleteKategori}
 		on:confirm={() => {
 			currentDeleteKetegoriId = '';

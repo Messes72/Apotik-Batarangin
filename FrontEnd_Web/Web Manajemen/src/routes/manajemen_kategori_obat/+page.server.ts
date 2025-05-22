@@ -89,25 +89,9 @@ export const actions: Actions = {
 
 			const nama = formData.get('nama') as string;
 			const catatan = formData.get('catatan') as string;
-			const depoIdJson = formData.get('depo') as string;
+			const id_depo = formData.get('id_depo') as string;
 
-			const payload = {
-				nama: nama || '',
-				catatan: catatan || '',
-				depo: [] as Array<{ id_depo: string; }>
-			};
-
-			if (depoIdJson) {
-				try {
-					const depoIds = JSON.parse(depoIdJson);
-					if (Array.isArray(depoIds) && depoIds.length > 0) {
-						payload.depo = depoIds.map(id => ({
-							id_depo: id
-						}));
-					}
-				} catch (e) {}
-			}
-
+			// Validasi input
 			if (!nama) {
 				return fail(400, {
 					error: true,
@@ -115,6 +99,22 @@ export const actions: Actions = {
 					values: Object.fromEntries(formData)
 				});
 			}
+
+			if (!id_depo) {
+				return fail(400, {
+					error: true,
+					message: 'Depo diperlukan.',
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			const payload = {
+				nama: nama || '',
+				catatan: catatan || '',
+				id_depo: id_depo
+			};
+
+			console.log('Payload yang dikirim ke API:', payload);
 
 			const response = await fetchWithAuth(
 				`${env.BASE_URL3}/category/create`,
@@ -131,8 +131,19 @@ export const actions: Actions = {
 
 			let result;
 			try {
-				result = await response.json();
+				const responseText = await response.text();
+				console.log('API response text:', responseText);
+				
+				if (responseText) {
+					try {
+						result = JSON.parse(responseText);
+					} catch (e) {
+						console.error('Error parsing JSON response:', e);
+						result = { message: responseText };
+					}
+				}
 			} catch (e) {
+				console.error('Error reading response:', e);
 				return fail(500, {
 					error: true,
 					message: 'Gagal memproses respons dari server',
@@ -141,45 +152,68 @@ export const actions: Actions = {
 			}
 
 			if (!response.ok) {
+				const errorMessage = result?.message || `Gagal membuat Kategori (Status: ${response.status})`;
 				return fail(response.status, {
 					error: true,
-					message: 'Gagal membuat Kategori',
+					message: errorMessage,
 					values: Object.fromEntries(formData)
 				});
 			}
 
 			return { success: true };
 		} catch (err) {
-			return {
+			console.error('Error creating kategori:', err);
+			return fail(500, {
 				success: false,
-				message: 'Failed to create Kategori'
-			};
+				message: err instanceof Error ? err.message : 'Gagal membuat Kategori',
+				values: {}
+			});
 		}
 	},
 
-	editRole: async ({ request, fetch, locals }) => {
+	editKategori: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
 
-			const roleId = formData.get('role_id') as string;
-			if (!roleId) {
+			const kategoriId = formData.get('id_kategori') as string;
+			if (!kategoriId) {
 				return fail(400, {
 					error: true,
-					message: 'ID Role diperlukan',
+					message: 'ID Kategori diperlukan',
 					values: Object.fromEntries(formData)
 				});
 			}
 
 			const nama = formData.get('nama') as string;
 			const catatan = formData.get('catatan') as string;
+			const id_depo = formData.get('id_depo') as string;
+
+			if (!nama) {
+				return fail(400, {
+					error: true,
+					message: 'Nama Kategori diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
+
+			if (!id_depo) {
+				return fail(400, {
+					error: true,
+					message: 'Depo diperlukan',
+					values: Object.fromEntries(formData)
+				});
+			}
 
 			const payload = {
 				nama: nama || '',
-				catatan: catatan || ''
+				catatan: catatan || '',
+				id_depo: id_depo
 			};
 
+			console.log('Payload edit yang dikirim ke API:', payload);
+
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/role/${roleId}/edit`,
+				`${env.BASE_URL3}/category/${kategoriId}/edit`,
 				{
 					method: 'PUT',
 					headers: {
@@ -193,8 +227,19 @@ export const actions: Actions = {
 
 			let result;
 			try {
-				result = await response.json();
+				const responseText = await response.text();
+				console.log('API edit response:', responseText);
+				
+				if (responseText) {
+					try {
+						result = JSON.parse(responseText);
+					} catch (e) {
+						console.error('Error parsing JSON response:', e);
+						result = { message: responseText };
+					}
+				}
 			} catch (e) {
+				console.error('Error reading response:', e);
 				return fail(500, {
 					error: true,
 					message: 'Gagal memproses respons dari server',
@@ -203,15 +248,17 @@ export const actions: Actions = {
 			}
 
 			if (!response.ok) {
+				const errorMessage = result?.message || `Gagal mengedit kategori (Status: ${response.status})`;
 				return fail(response.status, {
 					error: true,
-					message: 'Gagal mengedit role',
+					message: errorMessage,
 					values: Object.fromEntries(formData)
 				});
 			}
 
 			return { success: true };
 		} catch (err) {
+			console.error('Error editing kategori:', err);
 			return fail(500, {
 				error: true,
 				message: err instanceof Error ? err.message : 'Terjadi kesalahan pada server saat mengedit',
@@ -220,17 +267,17 @@ export const actions: Actions = {
 		}
 	},
 
-	deleteRole: async ({ request, fetch, locals }) => {
+	deleteKategori: async ({ request, fetch, locals }) => {
 		try {
 			const formData = await request.formData();
 
-			const roleId = formData.get('role_id');
+			const kategoriId = formData.get('kategori_id');
 			const alasanDelete = formData.get('alasan_delete') as string;
 
-			if (!roleId) {
+			if (!kategoriId) {
 				return fail(400, {
 					error: true,
-					message: 'ID Role diperlukan',
+					message: 'ID Kategori diperlukan',
 					values: Object.fromEntries(formData)
 				});
 			}
@@ -247,9 +294,9 @@ export const actions: Actions = {
 			apiFormData.append('alasandelete', alasanDelete);
 
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/role/${roleId}/delete`,
+				`${env.BASE_URL3}/category/${kategoriId}/delete`,
 				{
-					method: 'PUT',
+					method: 'DELETE',
 					body: apiFormData
 				},
 				locals.token,
@@ -278,7 +325,7 @@ export const actions: Actions = {
 			if (!response.ok) {
 				return fail(response.status, {
 					error: true,
-					message: result.message || `Gagal menghapus role (Status: ${response.status})`,
+					message: result.message || `Gagal menghapus Kategori (Status: ${response.status})`,
 					values: Object.fromEntries(formData)
 				});
 			}

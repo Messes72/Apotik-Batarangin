@@ -156,7 +156,7 @@ export const actions: Actions = {
 			const response = await fetchWithAuth(
 				`${env.BASE_URL3}/product/${productId}/edit`, 
 				{
-					method: 'PUT',
+					method: 'POST',
 					body: formData,
 				}, 
 				locals.token,

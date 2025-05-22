@@ -59,7 +59,6 @@
 						on:click={() => {
 							dispatch('confirm');
 							isOpen = false;
-							isSuccess = true;
 						}}>Iya, edit</button
 					>
 				</div>

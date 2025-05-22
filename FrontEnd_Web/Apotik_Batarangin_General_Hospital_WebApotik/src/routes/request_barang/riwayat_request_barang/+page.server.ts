@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ fetch, url }) => {
 	const apiUrl = env.BASE_URL + `/master/nakes?keyword=${keyword}&limit=${limit}&offset=${offset}`;
 
 	try {
-		console.log('Attempting to fetch from:', apiUrl);
 		const response = await fetch(apiUrl);
 		
 		if (!response.ok) {

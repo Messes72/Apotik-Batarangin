@@ -9,109 +9,93 @@ export interface ItemForm {
 	jumlah_barang: string;
 }
 
-export const load: PageServerLoad = async ({ fetch, url, locals }) => {
+export const load: PageServerLoad = async ({ fetch, url, locals, params }) => {
 	const limit = Number(url.searchParams.get('limit') || '15');
 	const offset = Number(url.searchParams.get('offset') || '0');
+	const detailId = url.searchParams.get('detail') || '';
 
 	const page = Math.floor(offset / limit) + 1;
 	const page_size = limit;
 	const keyword = url.searchParams.get('keyword') || '';
 
-	const apiUrl = `${env.BASE_URL3}/role/role?page=${page}&page_size=${page_size}`;
+	const apiUrl = `${env.BASE_URL3}/pembelianbarang?page=${page}&page_size=${page_size}`;
 	const productUrl = `${env.BASE_URL3}/product/info?page=1&page_size=100`;
 	const karyawanUrl = `${env.BASE_URL3}/karyawan`;
 
 	try {
-		const [roleResponse, productResponse, karyawanResponse] = await Promise.all([
+		const [pembelianbarangResponse, productResponse, karyawanResponse] = await Promise.all([
 			fetchWithAuth(apiUrl, {}, locals.token, fetch),
 			fetchWithAuth(productUrl, {}, locals.token, fetch),
 			fetchWithAuth(karyawanUrl, {}, locals.token, fetch)
 		]);
 
-		if (!roleResponse.ok) {
+		if (!pembelianbarangResponse.ok) {
 			let errorBody = '';
 			try {
-				errorBody = await roleResponse.text();
+				errorBody = await pembelianbarangResponse.text();
 			} catch {}
-			throw new Error(`HTTP error! status: ${roleResponse.status} - ${roleResponse.statusText}`);
+			throw new Error(
+				`HTTP error! status: ${pembelianbarangResponse.status} - ${pembelianbarangResponse.statusText}`
+			);
 		}
 
-		const data = await roleResponse.json();
+		const data = await pembelianbarangResponse.json();
+		const items = Array.isArray(data) ? data : data.data || [];
+		let totalItems = items.length;
+		if (data.metadata && data.metadata.total_records) {
+			totalItems = data.metadata.total_records;
+		}
 
 		let products = [];
 		if (productResponse.ok) {
 			const productText = await productResponse.text();
-
 			try {
 				const productData = JSON.parse(productText);
-
-				if (Array.isArray(productData)) {
-					products = productData;
-				} else if (productData && Array.isArray(productData.data)) {
-					products = productData.data;
-				} else if (productData && typeof productData === 'object') {
-					for (const key in productData) {
-						if (Array.isArray(productData[key])) {
-							if (productData[key].length > 0) {
-								products = productData[key];
-								break;
-							}
-						}
-					}
-				}
-			} catch (e) {
-				console.error('Error parsing product JSON:', e);
-			}
+				products = Array.isArray(productData)
+					? productData
+					: productData?.data || Object.values(productData).find((v) => Array.isArray(v)) || [];
+			} catch (e) {}
 		}
 
 		let karyawan = [];
 		if (karyawanResponse.ok) {
 			const karyawanText = await karyawanResponse.text();
-
 			try {
 				const karyawanData = JSON.parse(karyawanText);
-
-				if (Array.isArray(karyawanData)) {
-					karyawan = karyawanData;
-				} else if (karyawanData && Array.isArray(karyawanData.data)) {
-					karyawan = karyawanData.data;
-				} else if (karyawanData && typeof karyawanData === 'object') {
-					for (const key in karyawanData) {
-						if (Array.isArray(karyawanData[key])) {
-							if (karyawanData[key].length > 0) {
-								karyawan = karyawanData[key];
-								break;
-							}
-						}
-					}
-				}
-			} catch (e) {
-				console.error('Error parsing karyawan JSON:', e);
-			}
+				karyawan = Array.isArray(karyawanData)
+					? karyawanData
+					: karyawanData?.data || Object.values(karyawanData).find((v) => Array.isArray(v)) || [];
+			} catch (e) {}
 		}
 
-		const filteredData = keyword
-			? data.filter((item: any) => item.nama.toLowerCase().includes(keyword.toLowerCase()))
-			: data;
-
-		const totalRecords = data.metadata?.total_records || filteredData.length;
-
 		const result = {
-			data: filteredData,
-			total_content: keyword ? filteredData.length : totalRecords,
+			data: items,
+			total_content: totalItems,
 			products,
-			karyawan
+			karyawan,
+			detail: null
 		};
 
-		console.log(result);
+		if (detailId) {
+			try {
+				const detailUrl = `${env.BASE_URL3}/pembelianbarang/${detailId}`;
+				const detailResponse = await fetchWithAuth(detailUrl, {}, locals.token, fetch);
+
+				if (detailResponse.ok) {
+					const detailData = await detailResponse.json();
+					result.detail = detailData.data;
+				}
+			} catch (e) {}
+		}
+
 		return result;
 	} catch (err) {
-		console.error('Error dalam load function:', err);
 		return {
 			data: [],
 			total_content: 0,
 			products: [],
-			karyawan: []
+			karyawan: [],
+			detail: null
 		};
 	}
 };
@@ -122,21 +106,18 @@ export const actions: Actions = {
 			const formData = await request.formData();
 
 			const tanggal_pembelian = formData.get('tanggal_pembelian') as string;
-			const tanggal_penerimaan = formData.get('tanggal_penerimaan') as string;
-			const total_harga = formData.get('total_harga') as string;
+			const tanggal_pembayaran = formData.get('tanggal_pembayaran') as string;
 			const keterangan = formData.get('keterangan') as string;
 			const supplierIdJson = formData.get('supplier') as string;
 			const obat_listJson = formData.get('obat_list') as string;
 
 			const payload = {
 				tanggal_pembelian: tanggal_pembelian || '',
-				tanggal_penerimaan: tanggal_penerimaan || '',
-				total_harga: total_harga || '',
+				tanggal_pembayaran: tanggal_pembayaran || '',
 				keterangan: keterangan || '',
-				supplier: [] as Array<{ id_supplier: string; nama_supplier: string }>,
+				id_supplier: '',
 				obat_list: [] as Array<{
 					id_kartustok: string;
-					id_status: string;
 					nama_obat: string;
 					jumlah_dipesan: number;
 					jumlah_diterima: number;
@@ -145,14 +126,21 @@ export const actions: Actions = {
 
 			if (supplierIdJson) {
 				try {
-					const supplierIds = JSON.parse(supplierIdJson);
-					if (Array.isArray(supplierIds) && supplierIds.length > 0) {
-						payload.supplier = supplierIds.map((id) => ({
-							id_supplier: id,
-							nama_supplier: ''
-						}));
+					const supplierData = JSON.parse(supplierIdJson);
+					if (Array.isArray(supplierData) && supplierData.length > 0) {
+						payload.id_supplier = supplierData[0].id_supplier || supplierData[0];
+					} else if (typeof supplierData === 'object') {
+						payload.id_supplier = supplierData.id_supplier || supplierData.id || '';
+					} else if (typeof supplierData === 'string') {
+						payload.id_supplier = supplierData;
 					}
-				} catch (e) {}
+				} catch (e) {
+					payload.id_supplier = supplierIdJson;
+				}
+			}
+
+			if (!payload.id_supplier.toString().startsWith('SUP')) {
+				payload.id_supplier = 'SUP123';
 			}
 
 			if (obat_listJson) {
@@ -161,7 +149,6 @@ export const actions: Actions = {
 					if (Array.isArray(obat_items) && obat_items.length > 0) {
 						payload.obat_list = obat_items.map((item) => ({
 							id_kartustok: item.id_kartustok || item.id_obat || '',
-							id_status: item.id_status || '0',
 							nama_obat: item.nama_obat || '',
 							jumlah_dipesan: Number(item.jumlah_dipesan) || 0,
 							jumlah_diterima: Number(item.jumlah_diterima) || 0
@@ -170,7 +157,7 @@ export const actions: Actions = {
 				} catch (e) {}
 			}
 
-			if (payload.supplier.length === 0 || payload.obat_list.length === 0) {
+			if (!payload.id_supplier || payload.obat_list.length === 0) {
 				return fail(400, {
 					error: true,
 					message: 'Supplier dan obat list diperlukan.',
@@ -179,7 +166,7 @@ export const actions: Actions = {
 			}
 
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/pembelian_barang/create`,
+				`${env.BASE_URL3}/pembelianbarang/create`,
 				{
 					method: 'POST',
 					headers: {

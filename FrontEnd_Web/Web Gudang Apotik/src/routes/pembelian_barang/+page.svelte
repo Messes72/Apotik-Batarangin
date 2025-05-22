@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import Dropdown from '$lib/dropdown/Dropdown.svelte';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
+	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
 	import KonfirmInput from '$lib/modals/konfirmasi/KonfirmInput.svelte';
 	import Inputt from '$lib/modals/success/Inputt.svelte';
 	import TerimaPembelian from '$lib/modals/success/TerimaPembelian.svelte';
@@ -16,7 +18,7 @@
 	import Table from '$lib/table/Table.svelte';
 	import type { ItemForm } from './+page.server.js';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalOpen = $state(false);
@@ -35,10 +37,13 @@
 
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
+	let currentDetailId = $state('');
 
 	let active_button = $state('pembelian_barang');
 
-	let selectedStatus = '';
+	let selectedStatus = $state('');
+	let selectedItemDetail = $state<any>(null);
+	let selectedSupplier = $state('');
 
 	const statusOptions = [
 		{ value: 'selesai', label: 'Selesai' },
@@ -46,31 +51,179 @@
 		{ value: 'proses', label: 'Proses' }
 	];
 
-	let items = $state<ItemForm[]>([{ id: 1, nama_obat: '', jumlah_barang: '' }]);
+	// Definisi interface untuk data detail pembelian
+	interface DetailPembelian {
+		id_pembelian_penerimaan_obat: string;
+		id_supplier: string;
+		nama_supplier: string;
+		tanggal_pembelian: string;
+		tanggal_pembayaran: string;
+		tanggal_penerimaan?: string;
+		pemesan: string;
+		penerima?: string;
+		total_harga: number;
+		keterangan: string;
+		obat_list: ObatItem[];
+	}
+
+	interface ObatItem {
+		id_detail_pembelian_penerimaan_obat?: string;
+		nama_obat: string;
+		jumlah_dipesan: number;
+		jumlah_diterima: number;
+		nomor_batch?: string;
+		kadaluarsa?: string;
+		id_status?: string;
+	}
+
+	interface ItemObat {
+		id: number;
+		id_kartustok?: string;
+		nama_obat: string;
+		jumlah_dipesan: number;
+		jumlah_diterima: number;
+	}
+
+	let inputForm = $state({
+		tanggal_pembelian: '',
+		tanggal_pembayaran: '',
+		supplier: '',
+		keterangan: '',
+		obat_list: [] as ItemObat[]
+	});
+
+	let inputErrors = $state({
+		tanggal_pembelian: '',
+		tanggal_pembayaran: '',
+		supplier: '',
+		keterangan: '',
+		obat_list: '',
+		general: ''
+	});
+
+	// Inisialisasi form untuk obat
+	let obat_items = $state<ItemObat[]>([
+		{ id: 1, nama_obat: '', jumlah_dipesan: 0, jumlah_diterima: 0 }
+	]);
 	let nextId = $state(2);
-	let savedItems = $state<ItemForm[]>([]);
 
 	const addItem = () => {
-		items = [...items, { id: nextId, nama_obat: '', jumlah_barang: '' }];
+		obat_items = [
+			...obat_items,
+			{ id: nextId, nama_obat: '', jumlah_dipesan: 0, jumlah_diterima: 0 }
+		];
 		nextId++;
 	};
 
 	const removeItem = (id: number) => {
-		items = items.filter((item) => item.id !== id);
+		obat_items = obat_items.filter((item) => item.id !== id);
 	};
 
 	const resetForm = () => {
-		items = [{ id: 1, nama_obat: '', jumlah_barang: '' }];
+		inputForm = {
+			tanggal_pembelian: '',
+			tanggal_pembayaran: '',
+			supplier: '',
+			keterangan: '',
+			obat_list: []
+		};
+		selectedSupplier = '';
+		obat_items = [{ id: 1, nama_obat: '', jumlah_dipesan: 0, jumlah_diterima: 0 }];
 		nextId = 2;
 	};
 
-	const handleKonfirmasi = () => {
-		savedItems = [...items];
-		isModalOpen = false;
-		isModalKonfirmInputOpen = true;
-	};
+	function handleSupplierChange(event: Event) {
+		const select = event.target as HTMLSelectElement;
+		const selectedValue = select.value;
+		selectedSupplier = selectedValue;
+		inputForm.supplier = selectedValue;
+	}
 
-	$inspect(data);
+	function openDetail(id: string) {
+		currentDetailId = id;
+		isModalDetailOpen = true;
+		goto(`/pembelian_barang?detail=${id}`, { replaceState: true });
+	}
+
+	// Reset saat halaman di-refresh
+	let isPageInitialized = $state(false);
+	$effect(() => {
+		if (!isPageInitialized && typeof window !== 'undefined') {
+			// Periksa apakah ini adalah refresh halaman atau navigasi langsung dengan parameter detail
+			if (performance.navigation && performance.navigation.type === 1) {
+				// Page refresh (type 1)
+				if (window.location.search.includes('detail=')) {
+					// Redirect ke halaman utama tanpa parameter detail
+					window.location.href = '/pembelian_barang';
+					return;
+				}
+			}
+			isPageInitialized = true;
+		}
+	});
+
+	$effect(() => {
+		if (form?.values) {
+			try {
+				inputForm.tanggal_pembelian = String((form.values as any)['tanggal_pembelian'] || '');
+				inputForm.tanggal_pembayaran = String((form.values as any)['tanggal_pembayaran'] || '');
+				inputForm.supplier = String((form.values as any)['supplier'] || '');
+				inputForm.keterangan = String((form.values as any)['keterangan'] || '');
+
+				const obatListStr = (form.values as any)['obat_list'];
+				if (obatListStr) {
+					try {
+						const obatList = JSON.parse(obatListStr);
+						if (Array.isArray(obatList) && obatList.length > 0) {
+							obat_items = obatList.map((item, index) => ({
+								id: index + 1,
+								id_kartustok: item.id_kartustok || '',
+								nama_obat: item.nama_obat || '',
+								jumlah_dipesan: Number(item.jumlah_dipesan) || 0,
+								jumlah_diterima: Number(item.jumlah_diterima) || 0
+							}));
+							nextId = obat_items.length + 1;
+						}
+					} catch (e) {}
+				}
+			} catch (e) {}
+		}
+
+		if (form?.error) {
+			inputErrors = {
+				tanggal_pembelian: '',
+				tanggal_pembayaran: '',
+				supplier: '',
+				keterangan: '',
+				obat_list: '',
+				general: ''
+			};
+
+			const errorMsg = form.message || '';
+			inputErrors.general = errorMsg;
+			isModalOpen = true;
+		}
+	});
+
+	$effect(() => {
+		if (isPageInitialized) {
+			const url = new URL(window.location.href);
+			const detailId = url.searchParams.get('detail');
+			if (detailId) {
+				currentDetailId = detailId;
+				isModalDetailOpen = true;
+			} else {
+				isModalDetailOpen = false;
+				currentDetailId = '';
+			}
+		}
+	});
+
+	$effect(() => {
+		if (data) {
+			// Tidak perlu melakukan apa-apa
+		}
+	});
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -137,35 +290,45 @@
 			<Table
 				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'Nomor Pembelian'],
+					['children', 'Nama Supplier'],
+					['children', 'Tanggal Pembelian'],
+					['children', 'Total Harga'],
 					['children', 'Action']
 				]}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'Nomor Pembelian'}
+						<div>{body.id_pembelian_penerimaan_obat}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
-						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
+					{#if head === 'Nama Supplier'}
+						<div>
+							{#if body.id_supplier}
+								{#if body.id_supplier.startsWith('SUP')}
+									{body.supplier?.nama || 'Supplier'}
+								{:else}
+									{data.karyawan.find((k: any) => k.id_karyawan === body.id_supplier)?.nama ||
+										body.id_supplier}
+								{/if}
+							{:else}
+								-
+							{/if}
+						</div>
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
+					{#if head === 'Tanggal Pembelian'}
+						<div>{body.tanggal_pembelian}</div>
 					{/if}
 
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Total Harga'}
+						<div>IDR {new Intl.NumberFormat('id-ID').format(body.total_harga)}</div>
 					{/if}
 
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={() => openDetail(body.id_pembelian_penerimaan_obat)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -237,7 +400,9 @@
 	</div>
 	{#if isModalOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
@@ -253,33 +418,92 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8" on:submit|preventDefault>
+				<form
+					method="POST"
+					action="?/createPembelianBarang"
+					class="my-6 px-8"
+					use:enhance={() => {
+						isModalOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								resetForm();
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								await update();
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="pembelianForm"
+				>
 					<div class="mt-2 flex flex-col gap-2">
 						<Input
-							id="tanggal_pemesanan"
+							id="tanggal_pembelian"
+							name="tanggal_pembelian"
 							type="date"
 							label="Tanggal Pemesanan"
 							placeholder="Tanggal Pemesanan"
+							bind:value={inputForm.tanggal_pembelian}
 						/>
+						{#if inputErrors.tanggal_pembelian}
+							<div class="text-xs text-red-500">{inputErrors.tanggal_pembelian}</div>
+						{/if}
+
 						<div class="flex flex-col gap-[6px]">
 							<Input
-								id="tanggal_penerimaan"
+								id="tanggal_pembayaran"
+								name="tanggal_pembayaran"
 								type="date"
 								label="Tanggal Penerimaan"
 								placeholder="Tanggal Penerimaan"
+								bind:value={inputForm.tanggal_pembayaran}
 							/>
 							<div class="font-inter text-[12px] text-[#515151]">
 								Ketik (-) jika tidak ada catatan tambahan
 							</div>
 						</div>
 
-						<Input id="nama_supplier" label="Nama Supplier" placeholder="Nama Supplier" />
+						<div class="flex flex-col gap-[6px]">
+							<label for="supplier" class="font-intersemi text-[16px] text-[#515151]">
+								Nama Supplier
+							</label>
+							<select
+								id="supplier"
+								name="supplier"
+								class="font-inter h-10 rounded-md border border-[#AFAFAF] px-2 py-1 text-[14px] text-[#515151]"
+								on:change={handleSupplierChange}
+							>
+								<option value="">-- Pilih Supplier --</option>
+								{#each data.karyawan as supplier}
+									<option value={supplier.id_karyawan || supplier.nik}>{supplier.nama}</option>
+								{/each}
+							</select>
+							{#if inputErrors.supplier}
+								<div class="text-xs text-red-500">{inputErrors.supplier}</div>
+							{/if}
+						</div>
+
+						<TextArea
+							id="keterangan"
+							name="keterangan"
+							label="Keterangan"
+							placeholder="Keterangan pembelian barang"
+							bind:value={inputForm.keterangan}
+						/>
+
 						<div class="flex w-full flex-col items-center justify-center gap-4">
 							<div class="mt-3 h-0.5 w-full bg-[#AFAFAF]"></div>
 							<div class="flex w-full items-center justify-between">
 								<div class="font-montserrat text-[20px] text-[#515151]">Daftar Barang</div>
 								<div class="flex gap-2">
 									<button
+										type="button"
 										class="flex items-center justify-center rounded-md border-2 border-[#FFB300] bg-[#F9F9F9] px-4 py-1 shadow-md"
 										on:click={resetForm}
 									>
@@ -305,6 +529,7 @@
 										>
 									</button>
 									<button
+										type="button"
 										class="flex items-center justify-center rounded-md border-2 border-[#515151] bg-[#F9F9F9] px-4 py-1 shadow-md"
 										on:click={addItem}
 									>
@@ -330,27 +555,47 @@
 									</button>
 								</div>
 							</div>
+							{#if inputErrors.obat_list}
+								<div class="text-xs text-red-500">{inputErrors.obat_list}</div>
+							{/if}
+
 							<!-- Fungsi untuk menambah form -->
-							{#each items as item (item.id)}
+							{#each obat_items as item (item.id)}
 								<div class="flex w-full justify-center gap-4">
 									<div class="flex-1">
-										<Input
+										<label
+											for="nama_obat_{item.id}"
+											class="font-intersemi text-[16px] text-[#515151]"
+										>
+											Nama Obat
+										</label>
+										<select
 											id="nama_obat_{item.id}"
-											label="Nama Obat"
-											placeholder="Nama Obat"
+											class="font-inter h-10 w-full rounded-md border border-[#AFAFAF] px-2 py-1 text-[14px] text-[#515151]"
 											bind:value={item.nama_obat}
-										/>
+										>
+											<option value="">-- Pilih Obat --</option>
+											{#each data.products as product}
+												<option value={product.nama_obat}>{product.nama_obat}</option>
+											{/each}
+										</select>
 									</div>
 									<div class="w-2/5">
-										<Input
+										<label
+											for="jumlah_barang_{item.id}"
+											class="font-intersemi text-[16px] text-[#515151]"
+										>
+											Jumlah Barang yang Dipesan
+										</label>
+										<input
 											id="jumlah_barang_{item.id}"
-											label="Jumlah Barang yang Dipesan"
-											placeholder="Jumlah Barang yang Dipesan"
 											type="number"
-											bind:value={item.jumlah_barang}
+											placeholder="Jumlah Barang yang Dipesan"
+											class="font-inter h-10 w-full rounded-md border border-[#AFAFAF] px-2 py-1 text-[14px] text-[#515151]"
+											bind:value={item.jumlah_dipesan}
 										/>
 									</div>
-									{#if items.length > 1}
+									{#if obat_items.length > 1}
 										<button type="button" class="mt-8" on:click={() => removeItem(item.id)}>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -385,30 +630,114 @@
 								</div>
 							{/each}
 						</div>
+
+						{#if inputErrors.general}
+							<div class="mt-2 text-xs text-red-500">{inputErrors.general}</div>
+						{/if}
 					</div>
 					<div class="mt-6 flex justify-end">
 						<button
+							type="button"
 							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
-							on:click={handleKonfirmasi}
+							on:click={() => {
+								inputErrors = {
+									tanggal_pembelian: '',
+									tanggal_pembayaran: '',
+									supplier: '',
+									keterangan: '',
+									obat_list: '',
+									general: ''
+								};
+
+								let valid = true;
+
+								if (!inputForm.tanggal_pembelian) {
+									inputErrors.tanggal_pembelian = 'Tanggal pembelian wajib diisi';
+									valid = false;
+								}
+
+								console.log('Selected supplier:', selectedSupplier);
+								if (!selectedSupplier) {
+									inputErrors.supplier = 'Supplier wajib dipilih';
+									valid = false;
+								} else {
+									inputForm.supplier = selectedSupplier; // Pastikan nilai tersimpan
+								}
+
+								const validObatItems = obat_items.filter(
+									(item) => item.nama_obat.trim() !== '' && item.jumlah_dipesan > 0
+								);
+
+								if (validObatItems.length === 0) {
+									inputErrors.obat_list = 'Minimal satu obat harus ditambahkan';
+									valid = false;
+								}
+
+								if (valid) {
+									const obatListForSubmit = validObatItems.map((item) => {
+										const product = data.products.find((p: any) => p.nama_obat === item.nama_obat);
+										return {
+											id_kartustok: product?.id_obat || '',
+											nama_obat: item.nama_obat,
+											jumlah_dipesan: item.jumlah_dipesan,
+											jumlah_diterima: 0
+										};
+									});
+
+									const obatListInput = document.createElement('input');
+									obatListInput.type = 'hidden';
+									obatListInput.name = 'obat_list';
+									obatListInput.value = JSON.stringify(obatListForSubmit);
+
+									const supplierInput = document.createElement('input');
+									supplierInput.type = 'hidden';
+									supplierInput.name = 'supplier';
+									supplierInput.value = selectedSupplier;
+
+									const form = document.getElementById('pembelianForm');
+									const oldSupplierInput = form?.querySelector('input[name="supplier"]');
+									if (oldSupplierInput) {
+										form?.removeChild(oldSupplierInput);
+									}
+									const oldObatListInput = form?.querySelector('input[name="obat_list"]');
+									if (oldObatListInput) {
+										form?.removeChild(oldObatListInput);
+									}
+
+									form?.appendChild(obatListInput);
+									form?.appendChild(supplierInput);
+
+									isModalKonfirmInputOpen = true;
+								}
+							}}
 						>
 							KONFIRMASI
 						</button>
+						<button type="submit" id="hiddenSubmitPembelian" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
 		</div>
 	{/if}
-	{#if isModalDetailOpen}
+
+	<!-- Modal Detail -->
+	{#if isModalDetailOpen && data.detail}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-5"
-			on:click={() => (isModalDetailOpen = false)}
+			on:click={() => {
+				isModalDetailOpen = false;
+				goto('/pembelian_barang', { replaceState: true });
+			}}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-					<div class="font-montserrat text-[26px] text-white">Informasi Data Stock Opname</div>
+					<div class="font-montserrat text-[26px] text-white">Detail Pembelian Barang</div>
 					<button
 						class="rounded-xl hover:bg-gray-100/20"
-						on:click={() => (isModalDetailOpen = false)}
+						on:click={() => {
+							isModalDetailOpen = false;
+							goto('/pembelian_barang', { replaceState: true });
+						}}
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -419,33 +748,116 @@
 					</button>
 				</div>
 				<div class="my-6 px-8">
-					<form class="mt-2 flex flex-col gap-2" on:submit|preventDefault>
-						<Detail label="Tanggal Pemesanan" value="12/05/2025" />
-						<Detail label="Tanggal Penerimaan" value="20/05/2025" />
-						<Detail label="Nama Supplier" value="PT Prima Pharma" />
-						<div class="mt-3 h-0.5 w-full bg-[#AFAFAF]"></div>
-						<div class="mt-2">
-							<div class="font-montserrat mb-4 text-[20px] text-[#515151]">Daftar Barang</div>
-							{#each savedItems as item}
-								<div class="mb-4 flex gap-4">
-									<div class="flex-1">
-										<div class="font-intersemi text-[16px]">Nama Obat</div>
-										<div class="text-[14px]">{item.nama_obat}</div>
-									</div>
-									<div class="flex-1">
-										<div class="font-intersemi text-[16px]">Jumlah Barang</div>
-										<div class="text-[14px]">{item.jumlah_barang}</div>
-									</div>
+					{#if data.detail !== null}
+						{@const detail = data.detail as unknown as DetailPembelian}
+						<div class="mt-2 flex flex-col gap-2">
+							<Detail label="Nomor Pembelian" value={detail.id_pembelian_penerimaan_obat || ''} />
+							<Detail
+								label="Nama Supplier"
+								value={detail.nama_supplier ||
+									(data.karyawan &&
+										data.karyawan.find((k: any) => k.id_karyawan === detail.id_supplier)?.nama) ||
+									detail.id_supplier ||
+									''}
+							/>
+							<Detail label="Tanggal Pembelian" value={detail.tanggal_pembelian || ''} />
+							<Detail label="Tanggal Pembayaran" value={detail.tanggal_pembayaran || ''} />
+							<Detail
+								label="Pemesan"
+								value={(data.karyawan &&
+									data.karyawan.find((k: any) => k.id_karyawan === detail.pemesan)?.nama) ||
+									detail.pemesan ||
+									''}
+							/>
+							<Detail
+								label="Total Harga"
+								value={`IDR ${new Intl.NumberFormat('id-ID').format(detail.total_harga || 0)}`}
+							/>
+							<Detail label="Keterangan" value={detail.keterangan || ''} />
+
+							<div class="mt-3 h-0.5 w-full bg-[#AFAFAF]"></div>
+							<div class="mt-2">
+								<div class="font-montserrat mb-4 text-[20px] text-[#515151]">Daftar Obat</div>
+								<div class="overflow-x-auto">
+									<table class="w-full border-collapse">
+										<thead>
+											<tr class="bg-gray-100">
+												<th class="border border-gray-300 p-2">Nama Obat</th>
+												<th class="border border-gray-300 p-2">Jumlah Dipesan</th>
+												<th class="border border-gray-300 p-2">Jumlah Diterima</th>
+												<th class="border border-gray-300 p-2">Nomor Batch</th>
+												<th class="border border-gray-300 p-2">Tanggal Kadaluarsa</th>
+												<th class="border border-gray-300 p-2">Status</th>
+											</tr>
+										</thead>
+										<tbody>
+											{#if detail.obat_list && Array.isArray(detail.obat_list)}
+												{#each detail.obat_list as obat}
+													<tr>
+														<td class="border border-gray-300 p-2">{obat.nama_obat}</td>
+														<td class="border border-gray-300 p-2 text-center"
+															>{obat.jumlah_dipesan}</td
+														>
+														<td class="border border-gray-300 p-2 text-center"
+															>{obat.jumlah_diterima}</td
+														>
+														<td class="border border-gray-300 p-2 text-center"
+															>{obat.nomor_batch || '-'}</td
+														>
+														<td class="border border-gray-300 p-2 text-center"
+															>{obat.kadaluarsa || '-'}</td
+														>
+														<td class="border border-gray-300 p-2 text-center">
+															{#if obat.id_status === '1'}
+																<span
+																	class="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700"
+																	>Selesai</span
+																>
+															{:else if obat.id_status === '2'}
+																<span
+																	class="rounded-full bg-yellow-100 px-2 py-1 text-xs text-yellow-700"
+																	>Sebagian</span
+																>
+															{:else if obat.id_status === '3'}
+																<span class="rounded-full bg-red-100 px-2 py-1 text-xs text-red-700"
+																	>Ditolak</span
+																>
+															{:else}
+																<span
+																	class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700"
+																	>Proses</span
+																>
+															{/if}
+														</td>
+													</tr>
+												{/each}
+											{:else}
+												<tr>
+													<td colspan="6" class="border border-gray-300 p-2 text-center"
+														>Data obat tidak tersedia</td
+													>
+												</tr>
+											{/if}
+										</tbody>
+									</table>
 								</div>
-							{/each}
+							</div>
 						</div>
-					</form>
+					{/if}
 				</div>
 			</div>
 		</div>
 	{/if}
-	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={(e) => {
+			document.getElementById('hiddenSubmitPembelian')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Terima -->
@@ -453,7 +865,10 @@
 		bind:isOpen={isModalAlasanTerimaOpen}
 		bind:isKonfirmTerimaPembelianOpen={isModalKonfirmTerimaOpen}
 	/>
-	<KonfirmTerimaPembelian bind:isOpen={isModalKonfirmTerimaOpen} bind:isSuccess={isModalSuccessTerimaOpen} />
+	<KonfirmTerimaPembelian
+		bind:isOpen={isModalKonfirmTerimaOpen}
+		bind:isSuccess={isModalSuccessTerimaOpen}
+	/>
 	<TerimaPembelian bind:isOpen={isModalSuccessTerimaOpen} />
 
 	<!-- Modal Tolak -->
@@ -461,7 +876,10 @@
 		bind:isOpen={isModalAlasanTolakOpen}
 		bind:isKonfirmTolakPembelianOpen={isModalKonfirmTolakOpen}
 	/>
-	<KonfirmTolakPembelian bind:isOpen={isModalKonfirmTolakOpen} bind:isSuccess={isModalSuccessTolakOpen} />
+	<KonfirmTolakPembelian
+		bind:isOpen={isModalKonfirmTolakOpen}
+		bind:isSuccess={isModalSuccessTolakOpen}
+	/>
 	<TolakPembelian bind:isOpen={isModalSuccessTolakOpen} />
 </div>
 

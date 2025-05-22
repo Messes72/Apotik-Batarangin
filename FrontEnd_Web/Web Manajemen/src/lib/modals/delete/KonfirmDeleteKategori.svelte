@@ -5,8 +5,9 @@
 	export let isOpen = false;
 	export let width = 'w-[606px]';
 	export let isSuccess = false;
-	export let requestId = '';
-	
+	export let kategoriId = '';
+	export let alasanDelete = '';
+
 	const dispatch = createEventDispatcher();
 </script>
 
@@ -43,46 +44,45 @@
 				</div>
 				<div class="font-montserrat text-center text-[26px] text-black">
 					Apakah anda yakin <br />
-					akan menghapus request ini?
+					akan menghapus data ini?
 				</div>
-				<div class="flex flex-row items-center justify-center gap-6">
-					<button
-						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
-						on:click={() => {
+				<form
+					method="POST"
+					action="?/deleteKategori"
+					use:enhance={() => {
+						return async ({ result }) => {
 							isOpen = false;
-							dispatch('closed');
-						}}>Tidak</button
-					>
-					<form 
-						method="POST"
-						action="?/deleteRequestBarang"
-						use:enhance={() => {
-							isOpen = false;
-							
-							return async ({ result }) => {
-								if (result.type === 'success') {
-									isSuccess = true;
-									dispatch('success');
-									setTimeout(() => {
-										window.location.reload();
-									}, 2500);
-								} else if (result.type === 'failure') {
-									if (result.data && typeof result.data === 'object' && 'message' in result.data) {
-										dispatch('error', { message: result.data.message });
-									} else {
-										dispatch('error', { message: 'Gagal membatalkan request barang' });
-									}
-								}
-							};
-						}}
-					>
-						<input type="hidden" name="id_request_obat" value={requestId} />
+
+							if (result.type === 'success') {
+								isSuccess = true;
+								dispatch('confirm');
+
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							}
+						};
+					}}
+					id="deleteKategoriForm"
+				>
+					<input type="hidden" name="kategori_id" value={kategoriId} />
+					<input type="hidden" name="alasan_delete" value={alasanDelete} />
+					<div class="flex flex-row items-center justify-center gap-6">
+						<button
+							type="button"
+							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
+							on:click={() => {
+								isOpen = false;
+								dispatch('closed');
+							}}>Tidak</button
+						>
 						<button
 							type="submit"
 							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#FF3B30] text-center text-[16px] text-white"
-							>Iya, hapus</button>
-					</form>
-				</div>
+							>Iya, hapus</button
+						>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>
