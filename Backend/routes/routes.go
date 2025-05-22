@@ -59,7 +59,10 @@ func Init() *echo.Echo {
 
 	routeSupplier := e.Group("/supplier")
 	routeSupplier.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeSupplier.GET("", controller.GetAllSupplier)
+	routeSupplier.GET("/:id_supplier/info", controller.GetSupplier)
 	routeSupplier.POST("/create", controller.AddSupplier)
+	routeSupplier.PUT("/:id_supplier/edit", controller.EditSupplier)
 	routeSupplier.DELETE("/:id_supplier/delete", controller.DeleteSupplier)
 
 	routeKategori := e.Group("/category")
