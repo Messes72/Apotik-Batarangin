@@ -459,7 +459,7 @@ CREATE TABLE transaksi (
      id_status                   TINYINT NOT NULL,               
     created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at           DATETIME,
-    id_kustomer                 VARCHAR(15) NULL,
+        id_kustomer                 VARCHAR(15) NULL,
                
     CONSTRAINT fk_transaksi_karyawan
         FOREIGN KEY (id_karyawan)
@@ -467,7 +467,7 @@ CREATE TABLE transaksi (
 
     CONSTRAINT fk_transaksi_status
         FOREIGN KEY (id_status)
-        REFERENCES status(id_status),
+        REFERENCES status_transaksi(id_status),
 
     CONSTRAINT fk_dtp_kustomer
         FOREIGN KEY (id_kustomer)
@@ -475,6 +475,25 @@ CREATE TABLE transaksi (
 
 );
 
+CREATE TABLE batch_penjualan (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_batch_penjualan VARCHAR(100) NOT NULL UNIQUE,  
+    id_detail_transaksi_penjualan VARCHAR(50) NOT NULL,
+    id_nomor_batch VARCHAR(100) NOT NULL,
+    jumlah_dijual INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_batch_detail 
+        FOREIGN KEY (id_detail_transaksi_penjualan)
+        REFERENCES detail_transaksi_penjualan_obat(id_detail_transaksi_penjualan),
+    CONSTRAINT fk_nomor_batch 
+        FOREIGN KEY (id_nomor_batch)
+        REFERENCES nomor_batch(id_nomor_batch)
+);
+
+CREATE TABLE IF NOT EXISTS batch_penjualancounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO batch_penjualancounter (count) VALUES (1);
 
 CREATE TABLE aturan_pakai (
     id               INT AUTO_INCREMENT PRIMARY KEY,
@@ -503,14 +522,15 @@ CREATE TABLE keterangan_pakai (
 );
 
 CREATE TABLE detail_transaksi_penjualan_obat (
-    id                          INT AUTO_INCREMENT PRIMARY KEY,   
+    id                          INT AUTO_INCREMENT PRIMARY KEY, 
+    id_detail_transaksi_penjualan VARCHAR(100) NOT NULL UNIQUE,  
     id_kartustok                VARCHAR(100) NOT NULL,   
-    id_e_resep                  VARCHAR(50),             
+    id_e_resep                  VARCHAR(50),  
+    id_obat_racik               VARCHAR(100) NULL,           
     id_transaksi                VARCHAR(100)  NOT NULL,   
     id_aturan_pakai             VARCHAR(50),
     id_cara_pakai               VARCHAR(50),                
-    id_keterangan_pakai         VARCHAR(50),             
-    id_nomor_batch              VARCHAR(100) NOT NULL,   
+    id_keterangan_pakai         VARCHAR(50),               
 
     total_harga                 DECIMAL(15,2) UNSIGNED NOT NULL,
     kadaluarsa                  DATE NOT NULL,
@@ -522,13 +542,16 @@ CREATE TABLE detail_transaksi_penjualan_obat (
 
     CONSTRAINT fk_dtp_transaksi
         FOREIGN KEY (id_transaksi)
-        REFERENCES transaksi(id_transaksi),
+        REFERENCES transaksi(id_transaksi)
 
-    CONSTRAINT fk_dtp_nomor_batch
-        FOREIGN KEY (id_nomor_batch)
-        REFERENCES nomor_batch(id_nomor_batch)
+    CONSTRAINT fk_obatracik FOREIGN KEY (id_obat_racik) REFERENCES obat_racik(id_obat_racik)
     
 );
+
+CREATE TABLE IF NOT EXISTS detail_transaksi_penjualan_obatcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO detail_transaksi_penjualan_obatcounter (count) VALUES (1);
 
 
 
@@ -761,5 +784,48 @@ CREATE TABLE IF NOT EXISTS batch_retur_barangcounter (
     count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
 );
 INSERT IGNORE INTO batch_retur_barangcounter (count) VALUES (1);
+
+
+
+CREATE TABLE  obat_racik (
+    id  INT AUTO_INCREMENT PRIMARY KEY,
+    id_obat_racik VARCHAR(100) NOT NULL,
+    nama_racik    VARCHAR(100)       NOT NULL UNIQUE,
+    catatan       VARCHAR(255)       NULL,
+    created_at    DATETIME            NOT NULL,
+    updated_at    DATETIME          NULL,
+    deleted_at    DATETIME   NULL
+                                  
+);
+
+CREATE TABLE detail_obat_racik (
+    id_detail_obat_racik VARCHAR(100) NOT NULL,
+    id_obat_racik   VARCHAR(100)  NOT NULL,
+    id_obat        VARCHAR(100)  NOT NULL,
+    dosis_decimal  DECIMAL(10,3) NOT NULL,      
+    id_satuan   VARCHAR(10)   NOT NULL,
+    
+
+    CONSTRAINT fk_racik_head
+        FOREIGN KEY (id_obat_racik)
+        REFERENCES obat_racik(id_obat_racik),
+
+    CONSTRAINT fk_racik_detail
+        FOREIGN KEY (id_obat)
+        REFERENCES obat_jadi(id_obat),
+        
+
+    CONSTRAINT fk_obat_satuan 
+        FOREIGN KEY (id_satuan) 
+        REFERENCES satuan(id_satuan)
+
+
+    
+);
+
+
+
+
+
 
 /home/rs/farmasi/backend/Apotik-Batarangin/Backend

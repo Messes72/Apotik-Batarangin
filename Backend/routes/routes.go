@@ -116,6 +116,8 @@ func Init() *echo.Echo {
 	routeStokOpname.GET("/batch", controller.GetNomorBatch)
 	routeStokOpname.GET("/all/:depo", controller.GetAllStokOpname)
 	routeStokOpname.GET("/:id_stokopname", controller.GetDetailStokOpname)
+	routeStokOpname.GET("/stok/:id_depo", controller.GetSystemStokNow)
+	// get stok sekarang untuk saat crate stok opname
 
 	routeReturBarang := e.Group("/retur")
 	routeReturBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)

@@ -34,8 +34,9 @@ func cariCatatan(batches []class.RequestStokOpnameObatBatch, nomorbatch string) 
 
 func counterEntryDetailKartuStok(tx *sql.Tx, idstokopname, depo, kartu, batch string, selisih int) error {
 	var saldo int
-	queryselect := `SELECT sisa FROM detail_kartustok WHERE id_kartustok = ? AND id_nomor_batch = ? AND id_depo = ? ORDER BY id DESC LIMIT 1`
-	err := tx.QueryRow(queryselect, kartu, batch, depo).Scan(&saldo)
+	var id string
+	queryselect := `SELECT sisa,id_batch_penerimaan FROM detail_kartustok WHERE id_kartustok = ? AND id_nomor_batch = ? AND id_depo = ? ORDER BY id DESC LIMIT 1`
+	err := tx.QueryRow(queryselect, kartu, batch, depo).Scan(&saldo, &id)
 	if err == sql.ErrNoRows {
 		saldo = 0 // batch baru, saldo sistem 0
 	} else if err != nil {
@@ -59,9 +60,9 @@ func counterEntryDetailKartuStok(tx *sql.Tx, idstokopname, depo, kartu, batch st
 		log.Println("Error saat membuat counter detail kartustok", err)
 		return err
 	}
-	querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_stokopname, id_nomor_batch, masuk, keluar, sisa, created_at, id_depo)
-		VALUES (?,?,?,?,?,?,?,NOW(),?)`
-	_, err = tx.Exec(querydetailkartustok, iddetailkartustok, kartu, idstokopname, batch, masuk, keluar, newSaldo, depo)
+	querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_stokopname, id_nomor_batch, masuk, keluar, sisa, created_at, id_depo,id_batch_penerimaan)
+		VALUES (?,?,?,?,?,?,?,NOW(),?,?)`
+	_, err = tx.Exec(querydetailkartustok, iddetailkartustok, kartu, idstokopname, batch, masuk, keluar, newSaldo, depo, id)
 
 	return err
 
@@ -589,4 +590,80 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 		StokOpname: headerstokopname,
 		Items:      list,
 	}}, nil
+}
+
+func GetSystemStokNow(iddepo string) (class.Response, error) {
+
+	con := db.GetDBCon()
+
+	query := `SELECT ks.id_kartustok, oj.nama_obat, ks.stok_barang, dks.id_nomor_batch, dks.sisa
+	FROM kartu_stok ks 
+	JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
+	LEFT JOIN (
+	SELECT 
+	dk.id_kartustok,
+	dk.id_nomor_batch,
+	dk.sisa,
+	dk.id_depo,
+	ROW_NUMBER() OVER (PARTITION BY dk.id_kartustok ,dk.id_nomor_batch
+    ORDER BY dk.id DESC) AS rn
+	FROM
+	detail_kartustok dk
+	WHERE 
+	dk.id_depo = ? 
+	) AS dks ON dks.id_kartustok = ks.id_kartustok
+	AND ks.id_depo = dks.id_depo
+	AND dks.rn = 1
+	ORDER BY ks.id_kartustok ,dks.id_nomor_batch`
+
+	rows, err := con.Query(query, iddepo)
+	if err != nil {
+		log.Println("Error saat query data stok sistem", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
+	}
+	defer rows.Close()
+
+	mapobat := make(map[string]*class.StokOpnameGET)
+
+	for rows.Next() {
+		var obat class.StokOpnameGET
+		var batch class.StokOpnameGETBatch
+		var idnomorbatch sql.NullString
+		var kuantitassitem sql.NullInt64
+
+		err := rows.Scan(&obat.IDKartuStok, &obat.NamaObat, &obat.KuantitasSistemTotal, &idnomorbatch, &kuantitassitem)
+		if err != nil {
+			log.Println("ERror saat scan rows data stok sistem", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
+		}
+		if idnomorbatch.Valid {
+			batch.IdNomorBatch = idnomorbatch.String
+		}
+
+		if kuantitassitem.Valid {
+			batch.KuantitasSistem = int(kuantitassitem.Int64)
+		}
+
+		if obatexist, exist := mapobat[obat.IDKartuStok]; exist { //cek apakah obat sudah ada di map
+			if len(obatexist.Batches) == 0 || obatexist.Batches[len(obatexist.Batches)-1].IdNomorBatch != batch.IdNomorBatch {
+				obatexist.Batches = append(obatexist.Batches, batch)
+			} //kalo iya maka masukin batchnya ke list batch obat itu
+		} else { //kalai tidak ada maka buatkan entry baru untuk obat dan batch baru nya
+			obat.Batches = []class.StokOpnameGETBatch{batch}
+			mapobat[obat.IDKartuStok] = &obat
+		}
+
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error saat looping rows get data stok obat", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok System"}, err
+	}
+
+	var result []class.StokOpnameGET
+	for _, obat := range mapobat {
+		result = append(result, *obat)
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: result}, nil
 }

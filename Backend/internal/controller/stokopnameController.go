@@ -93,3 +93,16 @@ func GetDetailStokOpname(c echo.Context) error {
 	}
 	return c.JSON(result.Status, result)
 }
+
+func GetSystemStokNow(c echo.Context) error {
+	iddepo := c.Param("id_depo")
+	if iddepo == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Terjadi kesalahan pada parameter program"})
+	}
+
+	result, err := model.GetSystemStokNow(iddepo)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}

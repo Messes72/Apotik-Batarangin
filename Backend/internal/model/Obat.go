@@ -367,3 +367,5 @@ func DeleteObat(ctx context.Context, idobat, idkaryawan, keteranganhapus string)
 
 	return class.Response{Status: http.StatusOK, Message: "berhasil menghapus data obat", Data: nil}, nil
 }
+
+// func CreateObatRacik()

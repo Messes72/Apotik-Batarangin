@@ -279,6 +279,12 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 			log.Println("error saat counter carapakai")
 		}
 
+		iddetailtransaksi, err := nextBizID(tx, "detail_transaksi_penjualan_obatcounter", "DDTP")
+		if err != nil {
+			tx.Rollback()
+			log.Println("error saat counter detail transaksi")
+		}
+
 		queryaturanpakai := `INSERT INTO aturan_pakai (id_aturan_pakai, aturan_pakai, created_at) VALUES (?,?, NOW())`
 
 		_, err = tx.ExecContext(ctx, queryaturanpakai, idAtp, obat.AturanPakai)
@@ -314,10 +320,10 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 
 		grandtotal += totalhargathisobat
 
-		querydetailtransaksi := `INSERT INTO detail_transaksi_penjualan_obat (id_kartustok, id_transaksi, id_aturan_pakai, id_cara_pakai
-		, id_keterangan_pakai , id_nomor_batch, total_harga, kadaluarsa, jumlah ) VALUES (?,?,?,?,?,?,?,?,?)`
+		querydetailtransaksi := `INSERT INTO detail_transaksi_penjualan_obat (id_detail_transaksi_penjualan,id_kartustok, id_transaksi, id_aturan_pakai, id_cara_pakai
+		, id_keterangan_pakai , total_harga, jumlah ) VALUES (?,?,?,?,?,?,?,?)`
 
-		_, err = tx.ExecContext(ctx, querydetailtransaksi, idkartu, newidtransaksi, idAtp, idCrp, idKrp, batchs[0].IDNomorBatch, totalhargathisobat, batchs[0].Kadaluarsa, obat.Kuantitas)
+		_, err = tx.ExecContext(ctx, querydetailtransaksi, iddetailtransaksi, idkartu, newidtransaksi, idAtp, idCrp, idKrp, totalhargathisobat, obat.Kuantitas)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat insert detail transaksi", err)
@@ -325,6 +331,20 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 		}
 
 		for _, indivudalbatch := range batchs { //loop untuk tiap batch
+			idbatchpenjualan, err := nextBizID(tx, "batch_penjualancounter", "BTP")
+			if err != nil {
+				tx.Rollback()
+				log.Println("error saat counter batch penjualan")
+			}
+			querybatchpenjualan := `INSERT INTO batch_penjualan (id_batch_penjualan, id_detail_transaksi_penjualan, id_nomor_batch , jumlah_dijual, created_At)
+			VALUES (?,?,?,?,NOW())`
+			_, err = tx.ExecContext(ctx, querybatchpenjualan, idbatchpenjualan, iddetailtransaksi, indivudalbatch.IDNomorBatch, indivudalbatch.Alokasi)
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat insert batch penjualan", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
+			}
+
 			err = moveOut(tx, idkaryawan, idkartu, newidtransaksi, "20", indivudalbatch, indivudalbatch.Alokasi)
 			if err != nil {
 				tx.Rollback()
@@ -394,11 +414,13 @@ func GetTransaksi(ctx context.Context, idtransaksi, idkaryawan string) (class.Re
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Transaksi", Data: nil}, err
 	}
 
-	queryperobat := `SELECT d.id_kartustok, o.nama_obat , d.jumlah, d.total_harga, nb.no_batch, nb.kadaluarsa, ap.aturan_pakai, cp.nama_cara_pakai, kp.nama_keterangan_pakai
+	queryperobat := `SELECT d.id_kartustok, o.nama_obat , bp.jumlah_dijual, d.total_harga, nb.no_batch, nb.kadaluarsa, ap.aturan_pakai, cp.nama_cara_pakai, kp.nama_keterangan_pakai
 	
 	
-	FROM detail_transaksi_penjualan_obat d JOIN obat_jadi o ON d.id_kartustok = o.id_obat
-	JOIN nomor_batch nb on d.id_nomor_batch = nb.id_nomor_batch
+	FROM detail_transaksi_penjualan_obat d 
+	JOIN obat_jadi o ON d.id_kartustok = o.id_obat
+	JOIN batch_penjualan bp ON bp.id_detail_transaksi_penjualan = d.id_detail_transaksi_penjualan
+	JOIN nomor_batch nb on bp.id_nomor_batch = nb.id_nomor_batch
 	LEFT JOIN aturan_pakai ap ON d.id_aturan_pakai = ap.id_aturan_pakai
 	LEFT JOIN cara_pakai cp ON d.id_cara_pakai = cp.id_cara_pakai
 	LEFT JOIN keterangan_pakai kp ON d.id_keterangan_pakai = kp.id_keterangan_pakai

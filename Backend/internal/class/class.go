@@ -406,6 +406,18 @@ type StokOpnameGetResult struct {
 	Items      []StokOpnameObat `json:"items"`
 }
 
+type StokOpnameGETBatch struct {
+	IdNomorBatch    string `json:"id_nomor_batch"`
+	KuantitasSistem int    `json:"kuantitas_sistem"`
+}
+
+type StokOpnameGET struct {
+	IDKartuStok          string               `json:"id_kartustok"`
+	NamaObat             string               `json:"nama_obat"`
+	KuantitasSistemTotal int                  `json:"kuantitas_sistem"`
+	Batches              []StokOpnameGETBatch `json:"batches"`
+}
+
 type ReturBarangObatBatch struct {
 	IDNomorBatch string  `json:"id_nomor_batch"`
 	NomorBatch   string  `json:"nomor_batch"`
