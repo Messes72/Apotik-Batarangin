@@ -291,3 +291,80 @@ func DeleteObat(c echo.Context) error {
 	return c.JSON(result.Status, result)
 
 }
+
+func CreateObatRacik(c echo.Context) error {
+	var requestBody class.ObatRacik
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Bad JSON",
+		})
+	}
+
+	if requestBody.NamaRacik == "" || len(requestBody.Ingredients) == 0 {
+		return c.JSON(http.StatusBadRequest, class.Response{Status: http.StatusBadRequest, Message: "Invalid Request"})
+	}
+
+	result, err := model.CreateObatRacik(c.Request().Context(), requestBody)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+
+	return c.JSON(result.Status, result)
+
+}
+
+func GetObatRacik(c echo.Context) error {
+
+	idobatracik := c.Param("id_obat_racik")
+	if idobatracik == "" {
+		c.JSON(http.StatusBadGateway, class.Response{Status: http.StatusBadRequest, Message: "Parameter Invalid"})
+	}
+	result, err := model.GetObatRacik(idobatracik)
+	if err != nil {
+		return c.JSON(result.Status, result)
+
+	}
+	return c.JSON(result.Status, result)
+}
+
+func GetAllObatRacik(c echo.Context) error {
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+	result, err := model.GetAllObatRacik(c.Request().Context(), page, pageSize)
+	if err != nil {
+		return c.JSON(result.Status, result)
+
+	}
+	return c.JSON(result.Status, result)
+}
+
+func DeleteObatRacik(c echo.Context) error {
+
+	iddelete := c.Param("id_obat_racik")
+	if iddelete == "" {
+		c.JSON(http.StatusBadGateway, class.Response{Status: http.StatusBadRequest, Message: "Parameter Invalid"})
+	}
+
+	result, err := model.DeleteObatRacik(c.Request().Context(), iddelete)
+	if err != nil {
+		return c.JSON(result.Status, result)
+
+	}
+	return c.JSON(result.Status, result)
+
+}

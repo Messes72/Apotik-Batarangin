@@ -475,3 +475,21 @@ type Supplier struct {
 	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
 	Catatan    *string    `json:"catatan,omitempty"`
 }
+
+type ObatRacik struct {
+	IDObatRacik string            `json:"id_obat_racik"`
+	NamaRacik   string            `json:"nama_racik"`
+	Catatan     *string           `json:"catatan,omitempty"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   *time.Time        `json:"updated_at"`
+	Ingredients []DetailObatRacik `json:"bahan"`
+}
+
+type DetailObatRacik struct {
+	IDDetailObatRacik string    `json:"id_detail_obat_racik"`
+	IDObatRacik       string    `json:"id_obat_racik"`
+	IDObat            string    `json:"id_obat"`
+	NamaObat          string    `json:"nama_obat"`
+	Catatan           *string   `json:"catatan,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+}

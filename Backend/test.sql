@@ -537,10 +537,12 @@ CREATE TABLE detail_transaksi_penjualan_obat (
     id_aturan_pakai             VARCHAR(50),
     id_cara_pakai               VARCHAR(50),                
     id_keterangan_pakai         VARCHAR(50),               
-
     total_harga                 DECIMAL(15,2) UNSIGNED NOT NULL,
-    kadaluarsa                  DATE NOT NULL,
     jumlah                      INT UNSIGNED NOT NULL,
+    Dosis                       VARCHAR(50),
+    jumlah_racik                INT,
+    satuan_racik                VARCHAR(10),
+    satuan_dosis                VARCHAR(10),
 
     CONSTRAINT fk_dtp_kartustok
         FOREIGN KEY (id_kartustok)
@@ -548,7 +550,10 @@ CREATE TABLE detail_transaksi_penjualan_obat (
 
     CONSTRAINT fk_dtp_transaksi
         FOREIGN KEY (id_transaksi)
-        REFERENCES transaksi(id_transaksi)
+        REFERENCES transaksi(id_transaksi),
+    
+    CONSTRAINT fk_obat_satuanracik FOREIGN KEY (satuan_dosis) REFERENCES satuan(id_satuan),
+    CONSTRAINT fk_obat_satuandosis FOREIGN KEY (satuan_racik) REFERENCES satuan(id_satuan),
 
     CONSTRAINT fk_obatracik FOREIGN KEY (id_obat_racik) REFERENCES obat_racik(id_obat_racik)
     
@@ -791,12 +796,22 @@ CREATE TABLE IF NOT EXISTS batch_retur_barangcounter (
 );
 INSERT IGNORE INTO batch_retur_barangcounter (count) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS detail_obat_racikcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO detail_obat_racikcounter (count) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS obat_racikcounter (
+    count BIGINT NOT NULL DEFAULT 1 PRIMARY KEY
+);
+INSERT IGNORE INTO obat_racikcounter (count) VALUES (1);
+
 
 
 CREATE TABLE  obat_racik (
     id  INT AUTO_INCREMENT PRIMARY KEY,
-    id_obat_racik VARCHAR(100) NOT NULL,
-    nama_racik    VARCHAR(100)       NOT NULL UNIQUE,
+    id_obat_racik VARCHAR(100) NOT NULL UNIQUE,
+    nama_racik    VARCHAR(100)       NOT NULL,
     catatan       VARCHAR(255)       NULL,
     created_at    DATETIME            NOT NULL,
     updated_at    DATETIME          NULL,
@@ -805,11 +820,14 @@ CREATE TABLE  obat_racik (
 );
 
 CREATE TABLE detail_obat_racik (
-    id_detail_obat_racik VARCHAR(100) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_detail_obat_racik VARCHAR(100) NOT NULL UNIQUE,
     id_obat_racik   VARCHAR(100)  NOT NULL,
     id_obat        VARCHAR(100)  NOT NULL,
-    dosis_decimal  DECIMAL(10,3) NOT NULL,      
-    id_satuan   VARCHAR(10)   NOT NULL,
+    dosis         DECIMAL(10,3) NOT NULL,      
+    catatan VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
     
 
     CONSTRAINT fk_racik_head
@@ -818,15 +836,7 @@ CREATE TABLE detail_obat_racik (
 
     CONSTRAINT fk_racik_detail
         FOREIGN KEY (id_obat)
-        REFERENCES obat_jadi(id_obat),
-        
-
-    CONSTRAINT fk_obat_satuan 
-        FOREIGN KEY (id_satuan) 
-        REFERENCES satuan(id_satuan)
-
-
-    
+        REFERENCES obat_jadi(id_obat)
 );
 
 

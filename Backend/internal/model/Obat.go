@@ -368,4 +368,258 @@ func DeleteObat(ctx context.Context, idobat, idkaryawan, keteranganhapus string)
 	return class.Response{Status: http.StatusOK, Message: "berhasil menghapus data obat", Data: nil}, nil
 }
 
-// func CreateObatRacik()
+func CreateObatRacik(ctx context.Context, obatracik class.ObatRacik) (class.Response, error) {
+
+	con := db.GetDBCon()
+
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+	}
+
+	var exist string
+	querycek := `SELECT nama_racik FROM obat_racik WHERE nama_racik = ? AND deleted_at IS NULL LIMIT 1`
+	err = tx.QueryRowContext(ctx, querycek, obatracik.NamaRacik).Scan(&exist)
+	if err == nil {
+		//supplier duplikat
+		log.Println("obat racik baru sudah pernah ada (duplikat)")
+		return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("Obat Racik dengan Nama : %s sudah ada", obatracik.NamaRacik)}, nil
+	}
+	if err != sql.ErrNoRows {
+		log.Println("Error saat query cek duplikat Obat Racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menambahkan Obat Racik baru"}, err
+	}
+	if exist != "" {
+		log.Println("Obar Racik baru sudah pernah ada (duplikat)")
+		return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("Obat Racik dengan Nama : %s sudah ada", obatracik.NamaRacik)}, nil
+	}
+
+	queryobatjadi := `INSERT INTO obat_racik (id_obat_racik, nama_racik, catatan, created_at)
+	VALUES(?,?,?,NOW())`
+	idobatracik, err := nextBizID(tx, "obat_racikcounter", "MDCR")
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat buat counter obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menambahkan Obat Racik baru"}, err
+	}
+	_, err = tx.ExecContext(ctx, queryobatjadi, idobatracik, obatracik.NamaRacik, obatracik.Catatan)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat insert data obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menambahkan Obat Racik baru"}, err
+	}
+
+	querydetail := `INSERT INTO detail_obat_racik (id_detail_obat_racik, id_obat_racik, id_obat, catatan, created_at)
+	VALUES (?,?,?,?,NOW())`
+
+	for _, bahan := range obatracik.Ingredients {
+		iddetailobatracik, err := nextBizID(tx, "detail_obat_racikcounter", "DMDCR")
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat buat counter detail obat racik", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menambahkan Obat Racik baru"}, err
+		}
+		_, err = tx.ExecContext(ctx, querydetail, iddetailobatracik, idobatracik, bahan.IDObat, bahan.Catatan)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat insert detail obat racik", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menambahkan Obat Racik baru"}, err
+		}
+
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success"}, nil
+}
+
+func GetObatRacik(idobatracik string) (class.Response, error) {
+
+	con := db.GetDBCon()
+
+	var exist bool
+	querycek := `SELECT EXISTS(SELECT id_obat_racik FROM obat_racik WHERE id_obat_racik = ? AND deleted_at IS NULL LIMIT 1)`
+	err := con.QueryRow(querycek, idobatracik).Scan(&exist)
+	if err != nil {
+		log.Println("Error saat cek apakah id Obat Racik valid ", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Error saat menghapus data Obat Racik"}, err
+	}
+	if !exist {
+		log.Println("Obat Racik tidak ditemukan", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Obat Racik tidak ditemukan"}, err
+	}
+	var catatan sql.NullString
+	var obatracik class.ObatRacik
+	var updatedat sql.NullTime
+	query := `SELECT id_obat_racik, nama_racik, catatan, created_at, updated_at FROM obat_racik WHERE id_obat_racik = ?`
+	err = con.QueryRow(query, idobatracik).Scan(&obatracik.IDObatRacik, &obatracik.NamaRacik, &catatan, &obatracik.CreatedAt, &updatedat)
+	if err != nil {
+		log.Println("Error saat query obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Obat Racik"}, err
+	}
+	if catatan.Valid {
+		obatracik.Catatan = &catatan.String
+	}
+	if updatedat.Valid {
+		obatracik.UpdatedAt = &updatedat.Time
+	} else {
+		obatracik.UpdatedAt = nil
+	}
+
+	querydetail := `SELECT dr.id_detail_obat_racik, dr.id_obat_racik, dr.id_obat,oj.nama_obat, dr.catatan, dr.created_at 
+	FROM detail_obat_racik dr 
+	JOIN obat_jadi oj ON dr.id_obat = oj.id_obat 
+	WHERE id_obat_racik = ?`
+
+	rows, err := con.Query(querydetail, idobatracik)
+	if err != nil {
+		log.Println("Error saat query detail obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Obat Racik"}, err
+	}
+	defer rows.Close()
+	var list []class.DetailObatRacik
+	for rows.Next() {
+		var catatan sql.NullString
+		var obatracik class.DetailObatRacik
+
+		err := rows.Scan(&obatracik.IDDetailObatRacik, &obatracik.IDObatRacik, &obatracik.IDObat, &obatracik.NamaObat, &catatan, &obatracik.CreatedAt)
+		if err != nil {
+			log.Println("Error saat scan detail obat racik", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Obat Racik"}, err
+		}
+
+		if catatan.Valid {
+			obatracik.Catatan = &catatan.String
+		}
+
+		list = append(list, obatracik)
+
+	}
+
+	err = rows.Err()
+
+	if err != nil {
+		log.Println("Error rows ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Obat Racik"}, err
+	}
+
+	obatracik.Ingredients = list
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: obatracik}, nil
+
+}
+
+func GetAllObatRacik(ctx context.Context, page, pagesize int) (class.Response, error) {
+	con := db.GetDBCon()
+	if page <= 0 { //biar aman aja ini gak bisa masukin aneh2
+		page = 1
+	}
+	if pagesize <= 0 {
+		pagesize = 10
+	}
+	offset := (page - 1) * pagesize
+
+	query := `SELECT id_obat_racik, nama_racik, catatan, created_at, updated_at FROM obat_racik WHERE deleted_at IS NULL ORDER BY nama_racik LIMIT ? OFFSET ? `
+	rows, err := con.QueryContext(ctx, query, pagesize, offset)
+	if err != nil {
+		log.Println("Error saat query semua obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Obat Racik"}, err
+	}
+
+	defer rows.Close()
+	var list []class.ObatRacik
+
+	for rows.Next() {
+		var catatan sql.NullString
+		var obatracik class.ObatRacik
+		var updatedat sql.NullTime
+		err := rows.Scan(&obatracik.IDObatRacik, &obatracik.NamaRacik, &catatan, &obatracik.CreatedAt, &updatedat)
+		if err != nil {
+			log.Println("Error saat scan rows get all obat racik", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Obat Racik"}, err
+		}
+
+		if catatan.Valid {
+			obatracik.Catatan = &catatan.String
+		}
+		if updatedat.Valid {
+			obatracik.UpdatedAt = &updatedat.Time
+		} else {
+			obatracik.UpdatedAt = nil
+		}
+		list = append(list, obatracik)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error rows ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil semua data Obat Racik"}, err
+	}
+
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM obat_racik WHERE deleted_at IS NULL`
+	err = con.QueryRow(countrecordquery).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("gagal menghitung jumlah entry table supplier ")
+		return class.Response{Status: http.StatusInternalServerError, Message: "Metadata Error"}, nil
+	}
+
+	totalpage := (totalrecord + pagesize - 1) / pagesize //bisa juga pakai total/pagesize tp kan nanti perlu di bulatkan keatas pakai package math dimana dia perlu type floating point yg membuat performa hitung lebih lambat
+	metadata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pagesize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metadata}, nil
+}
+
+func DeleteObatRacik(ctx context.Context, idobatracik string) (class.Response, error) {
+	con := db.GetDBCon()
+
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+	}
+	var exist bool
+	querycek := `SELECT EXISTS(SELECT id_obat_racik FROM obat_racik WHERE id_obat_racik = ? AND deleted_at IS NULL LIMIT 1)`
+	err = tx.QueryRowContext(ctx, querycek, idobatracik).Scan(&exist)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat cek apakah id Obat Racik valid ", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Error saat menghapus data Obat Racik"}, err
+	}
+	if !exist {
+		tx.Rollback()
+		log.Println("Obat Racik tidak ditemukan", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Obat Racik tidak ditemukan"}, err
+	}
+
+	querydeleteobatracik := `UPDATE obat_racik SET deleted_at = NOW() WHERE id_obat_racik = ? AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, querydeleteobatracik, idobatracik)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat delete obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghapus Obat Racik"}, err
+	}
+
+	querydeletedetailobatracik := `UPDATE detail_obat_racik SET deleted_at = NOW() WHERE id_obat_racik = ? AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, querydeletedetailobatracik, idobatracik)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat delete detail obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghapus Obat Racik"}, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success"}, nil
+}

@@ -489,7 +489,7 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 
 	queryheader := `SELECT so.id_stokopname, so.id_depo, so.tanggal_stokopname, d.nama,IFNULL(so.catatan,'') AS catatan,so.created_at, k.nama
 	FROM stok_opname so 
-	JOIN depo d ON d.id_depo = so.id_depo
+	JOIN Depo d ON d.id_depo = so.id_depo
 	JOIN Karyawan k ON k.id_karyawan = so.created_by
 	WHERE id_stokopname = ?
 	ORDER BY so.created_at`
