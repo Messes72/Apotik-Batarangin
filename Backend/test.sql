@@ -827,6 +827,7 @@ CREATE TABLE detail_obat_racik (
     dosis         DECIMAL(10,3) NOT NULL,      
     catatan VARCHAR(255) NULL,
     created_at DATETIME NOT NULL,
+    updated_at DATETIME NULL,
     deleted_at DATETIME NULL,
     
 

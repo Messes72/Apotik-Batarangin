@@ -93,6 +93,7 @@ func Init() *echo.Echo {
 	routeProduk.GET("/racik/:id_obat_racik", controller.GetObatRacik)
 	routeProduk.GET("/racik", controller.GetAllObatRacik)
 	routeProduk.DELETE("/racik/:id_obat_racik/delete", controller.DeleteObatRacik)
+	routeProduk.PUT("/racik/:id_obat_racik/edit", controller.EditObatRacik)
 
 	routePembelianPenjualan := e.Group("/pembelianbarang")
 	routePembelianPenjualan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)

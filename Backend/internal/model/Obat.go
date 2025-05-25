@@ -578,6 +578,130 @@ func GetAllObatRacik(ctx context.Context, page, pagesize int) (class.Response, e
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metadata}, nil
 }
 
+func EditObatRacik(ctx context.Context, idedit string, data class.ObatRacik) (class.Response, error) {
+	con := db.GetDBCon()
+
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+	}
+	var exist bool
+	querycek := `SELECT EXISTS(SELECT id_obat_racik FROM obat_racik WHERE id_obat_racik = ? AND deleted_at IS NULL LIMIT 1)`
+	err = tx.QueryRowContext(ctx, querycek, idedit).Scan(&exist)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat cek apakah id Obat Racik valid ", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Error saat Mengubah data Obat Racik"}, err
+	}
+	if !exist {
+		tx.Rollback()
+		log.Println("Obat Racik tidak ditemukan", err)
+		return class.Response{Status: http.StatusBadRequest, Message: "Obat Racik tidak ditemukan"}, err
+	}
+
+	queryobatracik := `UPDATE obat_racik SET nama_racik = ?, catatan= ? ,updated_at = NOW() WHERE id_obat_racik = ?`
+	_, err = tx.ExecContext(ctx, queryobatracik, data.NamaRacik, data.Catatan, idedit)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error saat update obat racik", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+	}
+
+	mapexisting := map[string]struct{}{}
+
+	queryexistingdetail := `SELECT id_detail_obat_racik FROM detail_obat_racik WHERE id_obat_racik = ? AND deleted_at IS NULL`
+	rows, err := tx.QueryContext(ctx, queryexistingdetail, idedit)
+	if err != nil {
+		tx.Rollback()
+		log.Println("Error loading existing details:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memuat detail"}, err
+	}
+
+	for rows.Next() {
+		var id string
+		err := rows.Scan(&id)
+		if err != nil {
+			tx.Rollback()
+			log.Println("Error saat scan id detail obar racik", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+		}
+		mapexisting[id] = struct{}{}
+	}
+	defer rows.Close()
+
+	err = rows.Err()
+	if err != nil {
+		log.Println("Error rows ", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+	}
+
+	mappakai := map[string]struct{}{}
+	for _, detail := range data.Ingredients {
+
+		iddetail := detail.IDDetailObatRacik
+		if iddetail != "" {
+			if _, dupl := mappakai[iddetail]; dupl {
+				return class.Response{Status: http.StatusBadRequest, Message: "ID detail duplikat" + iddetail}, nil
+			}
+			mappakai[iddetail] = struct{}{}
+		}
+		if iddetail == "" {
+			iddetail, err = nextBizID(tx, "detail_obat_racikcounter", "DMDCR")
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat create counter")
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+			}
+			queryinsert := `INSERT INTO detail_obat_racik (id_detail_obat_racik, id_obat_racik, id_obat, catatan, created_at)
+			VALUES (?,?,?,?,NOW())`
+			_, err := tx.ExecContext(ctx, queryinsert, iddetail, idedit, detail.IDObat, detail.Catatan)
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat insert data detail obat racik", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+			}
+
+		} else {
+			if _, ok := mapexisting[iddetail]; !ok {
+				tx.Rollback()
+				return class.Response{Status: http.StatusBadRequest, Message: "Detail ID tidak dikenal"}, nil
+			}
+
+			queryupdatedetail := `UPDATE detail_obat_racik SET catatan = ?, updated_at = NOW() WHERE id_detail_obat_racik = ? `
+			_, err := tx.ExecContext(ctx, queryupdatedetail, detail.Catatan, iddetail)
+
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat update detail obat racik", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+			}
+		}
+
+		mappakai[iddetail] = struct{}{}
+
+	}
+
+	for id := range mapexisting {
+		if _, ok := mappakai[id]; !ok {
+			querydelete := `UPDATE detail_obat_racik SET deleted_at = NOW() WHERE id_detail_obat_racik = ?`
+			_, err := tx.ExecContext(ctx, querydelete, id)
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat delete  data lama detail obat racik", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat Mengubah data Obat Racik"}, err
+			}
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Failed to commit transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction commit error", Data: nil}, err
+	}
+	return class.Response{Status: http.StatusOK, Message: "Success"}, nil
+}
+
 func DeleteObatRacik(ctx context.Context, idobatracik string) (class.Response, error) {
 	con := db.GetDBCon()
 

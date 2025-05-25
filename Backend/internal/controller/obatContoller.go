@@ -353,6 +353,33 @@ func GetAllObatRacik(c echo.Context) error {
 	return c.JSON(result.Status, result)
 }
 
+func EditObatRacik(c echo.Context) error {
+	idedit := c.Param("id_obat_racik")
+	if idedit == "" {
+		return c.JSON(http.StatusBadRequest, class.Response{Status: http.StatusBadRequest, Message: "Parameter Invalid"})
+	}
+
+	var requestBody class.ObatRacik
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Bad JSON",
+		})
+	}
+
+	if requestBody.NamaRacik == "" || len(requestBody.Ingredients) == 0 {
+		return c.JSON(http.StatusBadRequest, class.Response{Status: http.StatusBadRequest, Message: "Invalid Request"})
+	}
+
+	result, err := model.EditObatRacik(c.Request().Context(), idedit, requestBody)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+
+	return c.JSON(result.Status, result)
+
+}
+
 func DeleteObatRacik(c echo.Context) error {
 
 	iddelete := c.Param("id_obat_racik")
