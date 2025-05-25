@@ -259,20 +259,29 @@ func CreatePenerimaan(ctx context.Context, penerimaan class.PembelianPenerimaan,
 		querydetailkartustok := `INSERT INTO detail_kartustok (id_detail_kartu_stok, id_kartustok, id_batch_penerimaan , id_nomor_batch, masuk, keluar, sisa, created_at, id_depo)
 			VALUES (?,?,?,?,?,0,?,NOW(),'10')`
 
-		var stoklama int
-		querystoklama := `SELECT stok_barang FROM kartu_stok WHERE id_kartustok= ?`
-		err = tx.QueryRowContext(ctx, querystoklama, obat.IDKartuStok).Scan(&stoklama)
-		if err != nil {
+		var saldoBatchLama int
+		iddepo := "10"
+		qrySaldo := `
+		SELECT sisa
+		FROM   detail_kartustok
+		WHERE  id_kartustok = ? AND id_nomor_batch = ? AND id_depo = ?
+		ORDER  BY id DESC
+		LIMIT  1`
+		err = tx.QueryRowContext(ctx, qrySaldo,
+			obat.IDKartuStok, newidbatch, iddepo).
+			Scan(&saldoBatchLama)
+		if err == sql.ErrNoRows {
+			saldoBatchLama = 0 // batch baru
+		} else if err != nil {
 			tx.Rollback()
-			log.Println("Failed to get stok lama from stok barang", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung stok barang", Data: nil}, err
+			log.Println("failed getting last batch saldo:", err)
+			return class.Response{Status: 500, Message: "db error"}, err
 		}
 
-		stokbaru := stoklama + obat.JumlahDiterima
-		iddepo := "10"
+		stokbaru := saldoBatchLama + obat.JumlahDiterima
 
-		queryupdatekartustok := `UPDATE kartu_stok SET stok_barang = ? WHERE id_kartustok = ? AND id_depo = ?`
-		_, err = tx.ExecContext(ctx, queryupdatekartustok, stokbaru, obat.IDKartuStok, iddepo)
+		queryupdatekartustok := `UPDATE kartu_stok SET stok_barang =stok_barang + ? WHERE id_kartustok = ? AND id_depo = ?`
+		_, err = tx.ExecContext(ctx, queryupdatekartustok, obat.JumlahDiterima, obat.IDKartuStok, iddepo)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat update kartu stok mengenai stok barang baru", err)
@@ -467,9 +476,12 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 	}
 
-	queryupdatebatchpenerimaan := `UPDATE batch_penerimaan bp JOIN detail_pembelian_penerimaan d ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat SET bp.jumlah_diterima = ? WHERE bp.id_batch_penerimaan = ? AND d.id_pembelian_penerimaan_obat = ?`
+	queryupdatebatchpenerimaan := `UPDATE batch_penerimaan bp JOIN detail_pembelian_penerimaan d 
+	ON bp.id_detail_pembelian_penerimaan = d.id_detail_pembelian_penerimaan_obat 
+	SET bp.jumlah_diterima = ? WHERE bp.id_batch_penerimaan = ? AND d.id_pembelian_penerimaan_obat = ?`
 
 	querygetlastinserteddatadetailkartustok := `SELECT sisa FROM detail_kartustok WHERE id_kartustok = ?
+	AND id_nomor_batch = ? AND id_depo = ?
 	ORDER BY id DESC LIMIT 1`
 
 	querygetjumlahditerima := `SELECT jumlah_diterima FROM batch_penerimaan WHERE id_batch_penerimaan = ?`
@@ -516,10 +528,10 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 			log.Println("Error saat update batch penerimaan", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
 		}
-
+		depo := "10"
 		//get last inserted data dari detail kartu stok untuk per id batch penerimaan
 		var lastsisa int
-		err = tx.QueryRowContext(ctx, querygetlastinserteddatadetailkartustok, batch.IDKartuStok).Scan(&lastsisa)
+		err = tx.QueryRowContext(ctx, querygetlastinserteddatadetailkartustok, batch.IDKartuStok, batch.IDNomorBatch, depo).Scan(&lastsisa)
 		if err != nil && err != sql.ErrNoRows {
 			tx.Rollback()
 			log.Println("Error saat mengambil data detail kartu stok", err)
@@ -567,10 +579,10 @@ func EditPenerimaan(ctx context.Context, idKaryawan string, obatbatch []class.De
 
 		const updKartuStokQ = `
 		UPDATE kartu_stok
-		   SET stok_barang = ?, updated_at = NOW(), updated_by = ?
+		   SET stok_barang = stok_barang + ?, updated_at = NOW(), updated_by = ?
 		 WHERE id_kartustok = ? AND id_depo = "10"`
 		if _, err = tx.ExecContext(ctx, updKartuStokQ,
-			newisisa,   // the fresh running balance
+			selisih,    // the fresh running balance
 			idKaryawan, // who edited
 			batch.IDKartuStok,
 		); err != nil {
