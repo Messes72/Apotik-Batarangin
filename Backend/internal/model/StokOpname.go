@@ -500,6 +500,7 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 		log.Println("Error saat mengambil header stok opname", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok Opname"}, err
 	}
+
 	if catatan.Valid {
 		headerstokopname.Catatan = &catatan.String
 	}
@@ -595,28 +596,26 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 func GetSystemStokNow(iddepo string) (class.Response, error) {
 
 	con := db.GetDBCon()
-
+	log.Println("id depo", iddepo)
 	query := `SELECT ks.id_kartustok, oj.nama_obat, ks.stok_barang, dks.id_nomor_batch, dks.sisa
-	FROM kartu_stok ks 
-	JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
-	LEFT JOIN (
-	SELECT 
-	dk.id_kartustok,
-	dk.id_nomor_batch,
-	dk.sisa,
-	dk.id_depo,
-	ROW_NUMBER() OVER (PARTITION BY dk.id_kartustok ,dk.id_nomor_batch
-    ORDER BY dk.id DESC) AS rn
-	FROM
-	detail_kartustok dk
-	WHERE 
-	dk.id_depo = ? 
-	) AS dks ON dks.id_kartustok = ks.id_kartustok
-	AND ks.id_depo = dks.id_depo
-	AND dks.rn = 1
-	ORDER BY ks.id_kartustok ,dks.id_nomor_batch`
+FROM kartu_stok ks
+JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
+LEFT JOIN (
+    SELECT 
+        dk.id_kartustok,
+        dk.id_nomor_batch,
+        dk.sisa,
+        dk.id_depo,
+        ROW_NUMBER() OVER (PARTITION BY dk.id_kartustok, dk.id_nomor_batch ORDER BY dk.created_at DESC) AS rn
+    FROM detail_kartustok dk
+    WHERE dk.id_depo = ? 
+) AS dks ON dks.id_kartustok = ks.id_kartustok
+AND ks.id_depo = dks.id_depo
+AND dks.rn = 1
+WHERE ks.id_depo = ?
+ORDER BY ks.id_kartustok, dks.id_nomor_batch`
 
-	rows, err := con.Query(query, iddepo)
+	rows, err := con.Query(query, iddepo, iddepo)
 	if err != nil {
 		log.Println("Error saat query data stok sistem", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
@@ -633,9 +632,10 @@ func GetSystemStokNow(iddepo string) (class.Response, error) {
 
 		err := rows.Scan(&obat.IDKartuStok, &obat.NamaObat, &obat.KuantitasSistemTotal, &idnomorbatch, &kuantitassitem)
 		if err != nil {
-			log.Println("ERror saat scan rows data stok sistem", err)
+			log.Println("Error saat scan rows data stok sistem", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
 		}
+
 		if idnomorbatch.Valid {
 			batch.IdNomorBatch = idnomorbatch.String
 		}
@@ -644,15 +644,17 @@ func GetSystemStokNow(iddepo string) (class.Response, error) {
 			batch.KuantitasSistem = int(kuantitassitem.Int64)
 		}
 
-		if obatexist, exist := mapobat[obat.IDKartuStok]; exist { //cek apakah obat sudah ada di map
+		// Check if the obat already exists in map
+		if obatexist, exist := mapobat[obat.IDKartuStok]; exist {
+			// If the batch doesn't already exist for this obat, append the batch
 			if len(obatexist.Batches) == 0 || obatexist.Batches[len(obatexist.Batches)-1].IdNomorBatch != batch.IdNomorBatch {
 				obatexist.Batches = append(obatexist.Batches, batch)
-			} //kalo iya maka masukin batchnya ke list batch obat itu
-		} else { //kalai tidak ada maka buatkan entry baru untuk obat dan batch baru nya
+			}
+		} else {
+			// If the obat doesn't exist, create a new entry with the batch
 			obat.Batches = []class.StokOpnameGETBatch{batch}
 			mapobat[obat.IDKartuStok] = &obat
 		}
-
 	}
 
 	err = rows.Err()
