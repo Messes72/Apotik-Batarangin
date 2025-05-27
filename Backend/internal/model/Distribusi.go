@@ -406,7 +406,7 @@ func FulfilRequestApotik(ctx context.Context, idkarayawan string, distribusi cla
 			return class.Response{Status: http.StatusBadRequest, Message: fmt.Sprintf("Tidak boleh melebihi jumlah yang diminta untuk obat : %s", idobat)}, err
 		}
 
-		_, batch, err := AlocateBatchObat(ctx, idobat, depoGudang, obat.JumlahDikirim)
+		_, batch, err := AlocateBatchObat(tx, ctx, idobat, depoGudang, obat.JumlahDikirim)
 		if err != nil {
 			log.Println("Error saat alokasi batch obat", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses transaksi", Data: nil}, err

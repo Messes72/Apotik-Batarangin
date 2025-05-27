@@ -527,6 +527,16 @@ CREATE TABLE keterangan_pakai (
     keterangan             VARCHAR(255)
 );
 
+ALTER table detail_transaksi_penjualan_obat
+add COLUMN Dosis                       VARCHAR(50),
+add COLUMN jumlah_racik                INT,
+add COLUMN satuan_racik                VARCHAR(10),
+add COLUMN satuan_dosis                varchar(10),
+add CONSTRAINT fk_obat_satuanracik FOREIGN KEY (satuan_dosis) REFERENCES satuan(id_satuan), 
+add CONSTRAINT fk_obat_satuandosis FOREIGN KEY (satuan_racik) REFERENCES satuan(id_satuan),
+
+add CONSTRAINT fk_obatracik FOREIGN KEY (id_obat_racik) REFERENCES obat_racik(id_obat_racik)
+
 CREATE TABLE detail_transaksi_penjualan_obat (
     id                          INT AUTO_INCREMENT PRIMARY KEY, 
     id_detail_transaksi_penjualan VARCHAR(100) NOT NULL UNIQUE,  
@@ -543,6 +553,7 @@ CREATE TABLE detail_transaksi_penjualan_obat (
     jumlah_racik                INT,
     satuan_racik                VARCHAR(10),
     satuan_dosis                VARCHAR(10),
+    created_at                  DATETIME null,
 
     CONSTRAINT fk_dtp_kartustok
         FOREIGN KEY (id_kartustok)
@@ -553,7 +564,7 @@ CREATE TABLE detail_transaksi_penjualan_obat (
         REFERENCES transaksi(id_transaksi),
     
     CONSTRAINT fk_obat_satuanracik FOREIGN KEY (satuan_dosis) REFERENCES satuan(id_satuan),
-    CONSTRAINT fk_obat_satuandosis FOREIGN KEY (satuan_racik) REFERENCES satuan(id_satuan),
+    -- CONSTRAINT fk_obat_satuandosis FOREIGN KEY (satuan_racik) REFERENCES satuan(id_satuan),
 
     CONSTRAINT fk_obatracik FOREIGN KEY (id_obat_racik) REFERENCES obat_racik(id_obat_racik)
     

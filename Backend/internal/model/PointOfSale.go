@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
 )
 
-func AlocateBatchObat(ctx context.Context, idobat, iddepo string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
+func AlocateBatchObat(tx *sql.Tx, ctx context.Context, idobat, iddepo string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
 
-	con := db.GetDBCon()
+	// con := db.GetDBCon()
 
 	querylatestentryperbatch := ` 
 		WITH latest AS (
@@ -41,7 +42,7 @@ SELECT l.id_batch_penerimaan,
 	// SELECT l.id_batch_penerimaan, l.id_nomor_batch, nb.no_batch, nb.kadaluarsa, l.sisa FROM latest l JOIN nomor_batch nb ON nb.id_nomor_batch = l.id_nomor_batch
 	// WHERE l.rn = 1 AND l.sisa > 0 ORDER BY nb.kadaluarsa ASC `
 
-	rows, err := con.QueryContext(ctx, querylatestentryperbatch, idobat, iddepo)
+	rows, err := tx.QueryContext(ctx, querylatestentryperbatch, idobat, iddepo)
 	if err != nil {
 		log.Println("Error di rows query get alokasi obat ", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, nil, err
@@ -93,10 +94,17 @@ SELECT l.id_batch_penerimaan,
 
 func AlokasiMassalObat(ctx context.Context, request []class.RequestAlokasi) (class.Response, error) {
 
+	con := db.GetDBCon()
+	tx, err := con.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to start transaction: %v\n", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Transaction start error", Data: nil}, err
+
+	}
 	var hasil []class.AlokasiObatResult
 	iddepo := "20"
 	for _, obat := range request {
-		resp, result, err := AlocateBatchObat(ctx, obat.IDObat, iddepo, obat.Kuantitas)
+		resp, result, err := AlocateBatchObat(tx, ctx, obat.IDObat, iddepo, obat.Kuantitas)
 		if err != nil {
 			log.Println("Error di function alokasi batch per obat ", err)
 			return class.Response{Status: resp.Status, Message: resp.Message}, err
@@ -229,7 +237,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 		statusberhasil = 1
 		statuscancel   = 2
 	)
-	log.Println("IDkaryawan ; ", idkaryawan)
+	// log.Println("IDkaryawan ; ", idkaryawan)
 
 	querytransaksi := `INSERT INTO transaksi (id_transaksi, id_karyawan, total_harga, metode_pembayaran,id_status, created_at, id_kustomer) VALUES (?,?,0,?,?,NOW(),?)`
 	_, err = tx.ExecContext(ctx, querytransaksi, newidtransaksi, idkaryawan, bayar.MetodeBayar, statuscancel, idkustomer)
@@ -242,24 +250,6 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 	grandtotal := 0.0
 	iddepo := "20"
 	for _, obat := range listobat {
-		_, batchs, err := AlocateBatchObat(ctx, obat.IDObat, iddepo, obat.Kuantitas)
-		if err != nil {
-			tx.Rollback()
-			log.Println("Error saat call alocatebatchobat di looping", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data alokasi batch", Data: nil}, err
-		}
-
-		if SumAlokasi(batchs) < obat.Kuantitas {
-			tx.Rollback()
-			log.Printf("Stok %s tidak cukup", obat.IDObat)
-			return class.Response{Status: http.StatusInternalServerError, Message: fmt.Sprintf("Stok %s tidak cukup", obat.IDObat), Data: nil}, err
-		}
-
-		harga, err := GetHargaJual(ctx, obat.IDObat)
-		if err != nil {
-			tx.Rollback()
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
-		}
 
 		idAtp, err := nextBizID(tx, "aturanpakaicounter", "ATP")
 		if err != nil {
@@ -279,16 +269,11 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 			log.Println("error saat counter carapakai")
 		}
 
-		iddetailtransaksi, err := nextBizID(tx, "detail_transaksi_penjualan_obatcounter", "DDTP")
-		if err != nil {
-			tx.Rollback()
-			log.Println("error saat counter detail transaksi")
-		}
-
 		queryaturanpakai := `INSERT INTO aturan_pakai (id_aturan_pakai, aturan_pakai, created_at) VALUES (?,?, NOW())`
 
 		_, err = tx.ExecContext(ctx, queryaturanpakai, idAtp, obat.AturanPakai)
 		if err != nil {
+			tx.Rollback()
 			log.Println("Error saat insert aturan pakai", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat input aturan pakai"}, err
 		}
@@ -297,6 +282,7 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 
 		_, err = tx.ExecContext(ctx, querycarapakai, idCrp, obat.CaraPakai)
 		if err != nil {
+			tx.Rollback()
 			log.Println("Error saat insert cara pakai", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat input cara pakai"}, err
 		}
@@ -305,51 +291,155 @@ func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []c
 
 		_, err = tx.ExecContext(ctx, queryketeranganpakai, idKrp, obat.KeteranganPakai)
 		if err != nil {
+			tx.Rollback()
 			log.Println("Error saat insert keterangan pakai", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat input keterangan pakai"}, err
 		}
 
-		idkartu, err := getKartuStokID(tx, obat.IDObat, "20")
-		if err != nil {
-			tx.Rollback()
-			log.Println("Error saat query kartu stok sesuai id depo apotik", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
+		isracik := len(obat.Ingredients) > 0
+		// var (
+		// 	idracik                  sql.NullString
+		// 	dosis                    sql.NullString
+		// 	jumlahracik              sql.NullInt64
+		// 	satuandosis, satuanracik sql.NullString
+		// )
+		if !isracik {
+			harga, err := GetHargaJual(ctx, obat.IDObat)
+			if err != nil {
+				tx.Rollback()
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data", Data: nil}, err
+			}
+			totalhargathisobat := harga * float64(obat.Kuantitas)
+
+			grandtotal += totalhargathisobat
+
+			_, batchs, err := AlocateBatchObat(tx, ctx, obat.IDObat, iddepo, obat.Kuantitas)
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat call alocatebatchobat di looping", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data alokasi batch", Data: nil}, err
+			}
+
+			if SumAlokasi(batchs) < obat.Kuantitas {
+				tx.Rollback()
+				log.Printf("Stok %s tidak cukup", obat.IDObat)
+				return class.Response{Status: http.StatusInternalServerError, Message: fmt.Sprintf("Stok %s tidak cukup", obat.IDObat), Data: nil}, err
+			}
+
+			idkartu, err := getKartuStokID(tx, obat.IDObat, "20")
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat query kartu stok sesuai id depo apotik", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
+			}
+			iddetailtransaksi, _ := nextBizID(tx, "detail_transaksi_penjualan_obatcounter", "DDTP")
+			querydetailtransaksi := `INSERT INTO detail_transaksi_penjualan_obat (id_detail_transaksi_penjualan,id_kartustok, id_transaksi, id_aturan_pakai, id_cara_pakai
+			, id_keterangan_pakai , total_harga, jumlah, created_at ) VALUES (?,?,?,?,?,?,?,?,NOW())`
+
+			_, err = tx.ExecContext(ctx, querydetailtransaksi, iddetailtransaksi, idkartu, newidtransaksi, idAtp, idCrp, idKrp, totalhargathisobat, obat.Kuantitas)
+			if err != nil {
+				tx.Rollback()
+				log.Println("Error saat insert detail transaksi", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
+			}
+
+			for _, indivudalbatch := range batchs { //loop untuk tiap batch
+				idbatchpenjualan, err := nextBizID(tx, "batch_penjualancounter", "BTP")
+				if err != nil {
+					tx.Rollback()
+					log.Println("error saat counter batch penjualan")
+				}
+				querybatchpenjualan := `INSERT INTO batch_penjualan (id_batch_penjualan, id_detail_transaksi_penjualan, id_nomor_batch , jumlah_dijual, created_At)
+				VALUES (?,?,?,?,NOW())`
+				_, err = tx.ExecContext(ctx, querybatchpenjualan, idbatchpenjualan, iddetailtransaksi, indivudalbatch.IDNomorBatch, indivudalbatch.Alokasi)
+				if err != nil {
+					tx.Rollback()
+					log.Println("Error saat insert batch penjualan", err)
+					return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
+				}
+
+				err = moveOut(tx, idkaryawan, idkartu, newidtransaksi, "20", indivudalbatch, indivudalbatch.Alokasi)
+				if err != nil {
+					tx.Rollback()
+					log.Println("Error saat memproses perpindahan stok", err)
+					return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data stok", Data: nil}, err
+				}
+			}
+			continue
 		}
 
-		totalhargathisobat := harga * float64(obat.Kuantitas)
+		totalRacik := 0.0
+		for _, comp := range obat.Ingredients {
 
-		grandtotal += totalhargathisobat
+			pu, err := GetHargaJual(ctx, comp.IDObat)
+			if err != nil {
+				tx.Rollback()
+				return class.Response{Status: http.StatusInternalServerError,
+					Message: "Error fetching price for ingredient " + comp.IDObat}, err
+			}
 
-		querydetailtransaksi := `INSERT INTO detail_transaksi_penjualan_obat (id_detail_transaksi_penjualan,id_kartustok, id_transaksi, id_aturan_pakai, id_cara_pakai
-		, id_keterangan_pakai , total_harga, jumlah ) VALUES (?,?,?,?,?,?,?,?)`
+			unitterpakai := int(math.Ceil(comp.JumlahDecimal * float64(obat.Kuantitas)))
+			totalRacik += pu * float64(unitterpakai)
+		}
+		grandtotal += totalRacik
+		masterLineID, _ := nextBizID(tx, "detail_transaksi_penjualan_obatcounter", "DDTP")
+		querydetailtransaksi := `INSERT INTO detail_transaksi_penjualan_obat (id_detail_transaksi_penjualan, id_transaksi, id_aturan_pakai, id_cara_pakai
+			, id_keterangan_pakai , total_harga, id_obat_racik, jumlah_racik, satuan_racik, created_at ) VALUES (?,?,?,?,?,?,?,?,?,NOW())`
 
-		_, err = tx.ExecContext(ctx, querydetailtransaksi, iddetailtransaksi, idkartu, newidtransaksi, idAtp, idCrp, idKrp, totalhargathisobat, obat.Kuantitas)
+		_, err = tx.ExecContext(ctx, querydetailtransaksi, masterLineID, newidtransaksi, idAtp, idCrp, idKrp, totalRacik, obat.IDObat, obat.Kuantitas, obat.SatuanRacik)
 		if err != nil {
 			tx.Rollback()
 			log.Println("Error saat insert detail transaksi", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
 		}
 
-		for _, indivudalbatch := range batchs { //loop untuk tiap batch
-			idbatchpenjualan, err := nextBizID(tx, "batch_penjualancounter", "BTP")
+		for _, ing := range obat.Ingredients {
+			pakai := int(math.Ceil(ing.JumlahDecimal * float64(obat.Kuantitas)))
+			kartuid, err := getKartuStokID(tx, ing.IDObat, "20")
 			if err != nil {
 				tx.Rollback()
-				log.Println("error saat counter batch penjualan")
+				log.Println("Error sat get karrtu stok id di query ing , range obat.ingredients", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
 			}
-			querybatchpenjualan := `INSERT INTO batch_penjualan (id_batch_penjualan, id_detail_transaksi_penjualan, id_nomor_batch , jumlah_dijual, created_At)
-			VALUES (?,?,?,?,NOW())`
-			_, err = tx.ExecContext(ctx, querybatchpenjualan, idbatchpenjualan, iddetailtransaksi, indivudalbatch.IDNomorBatch, indivudalbatch.Alokasi)
+			_, batches, err := AlocateBatchObat(tx, ctx, ing.IDObat, "20", pakai)
 			if err != nil {
 				tx.Rollback()
-				log.Println("Error saat insert batch penjualan", err)
+				log.Println("Error sat alokasi batch obat ing , range obat.ingredients", err)
 				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
 			}
 
-			err = moveOut(tx, idkaryawan, idkartu, newidtransaksi, "20", indivudalbatch, indivudalbatch.Alokasi)
+			ingdetailtransaksiid, _ := nextBizID(tx, "detail_transaksi_penjualan_obatcounter", "DDTP")
+			querydetailtransaksi2 := `INSERT INTO detail_transaksi_penjualan_obat (id_detail_transaksi_penjualan,id_kartustok, id_transaksi,
+				total_harga, jumlah, id_obat_racik,Dosis, jumlah_racik, satuan_racik, qty_decimal, created_at ) VALUES (?,?,?,?,?,?,?,?,?,?,NOW())`
+
+			_, err = tx.ExecContext(ctx, querydetailtransaksi2, ingdetailtransaksiid, kartuid, newidtransaksi, 0.0, pakai, obat.IDObat, ing.Dosis, obat.Kuantitas, obat.SatuanRacik, ing.JumlahDecimal)
 			if err != nil {
 				tx.Rollback()
-				log.Println("Error saat memproses perpindahan stok", err)
-				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data stok", Data: nil}, err
+				log.Println("Error saat insert detail transaksi 2", err)
+				return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi", Data: nil}, err
+			}
+
+			for _, indivudalbatch := range batches { //loop untuk tiap batch
+				idbatchpenjualan, err := nextBizID(tx, "batch_penjualancounter", "BTP")
+				if err != nil {
+					tx.Rollback()
+					log.Println("error saat counter batch penjualan")
+				}
+				querybatchpenjualan := `INSERT INTO batch_penjualan (id_batch_penjualan, id_detail_transaksi_penjualan, id_nomor_batch , jumlah_dijual, created_At)
+				VALUES (?,?,?,?,NOW())`
+				_, err = tx.ExecContext(ctx, querybatchpenjualan, idbatchpenjualan, ingdetailtransaksiid, indivudalbatch.IDNomorBatch, indivudalbatch.Alokasi)
+				if err != nil {
+					tx.Rollback()
+					log.Println("Error saat insert batch penjualan", err)
+					return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data transaksi"}, err
+				}
+
+				err = moveOut(tx, idkaryawan, kartuid, newidtransaksi, "20", indivudalbatch, indivudalbatch.Alokasi)
+				if err != nil {
+					tx.Rollback()
+					log.Println("Error saat memproses perpindahan stok", err)
+					return class.Response{Status: http.StatusInternalServerError, Message: "Error saat memproses data stok", Data: nil}, err
+				}
 			}
 		}
 

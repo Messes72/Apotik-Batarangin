@@ -224,14 +224,24 @@ type AlokasiObatResult struct {
 	IDObat                 string         `json:"id_obat"`
 	Listbatchteralokasikan []AlokasiBatch `json:"list_alokasi"`
 }
-
+type IngredientSale struct {
+	IDObat        string  `json:"id_obat"`        // obat_jadi ID
+	JumlahDecimal float64 `json:"jumlah_decimal"` // e.g. 3.5
+	Dosis         string  `json:"dosis"`          // e.g. "tablet"
+}
 type PenjualanObat struct {
-	IDObat          string `json:"id_obat"`
+	IDObat string `json:"id_obat"`
+	// IDRacik         string `json:"id_obat_racik"`
 	Kuantitas       int    `json:"kuantitas"`
 	IdDepo          string `json:"id_depo"`
 	AturanPakai     string `json:"aturan_pakai,omitempty"`
 	CaraPakai       string `json:"cara_pakai,omitempty"`
 	KeteranganPakai string `json:"keterangan_pakai,omitempty"`
+	// Dosis           string `json:"dosis,omitempty"`
+	Ingredients []IngredientSale `json:"ingredients"`
+	// JumlahRacik     int    `json:"jumlah_racik,omitempty"`
+	SatuanRacik string `json:"satuan_racik,omitempty"`
+	// SatuanDosis     string `json:"satuan_dosis,omitempty"`
 }
 
 type MetodeBayar struct {
