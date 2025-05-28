@@ -488,10 +488,10 @@ CREATE TABLE batch_penjualan (
     id_nomor_batch VARCHAR(100) NOT NULL,
     jumlah_dijual INT UNSIGNED NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_batch_detail 
+    CONSTRAINT fk_batch_detail_penjualan
         FOREIGN KEY (id_detail_transaksi_penjualan)
         REFERENCES detail_transaksi_penjualan_obat(id_detail_transaksi_penjualan),
-    CONSTRAINT fk_nomor_batch 
+    CONSTRAINT fk_nomor_batch_penjualan
         FOREIGN KEY (id_nomor_batch)
         REFERENCES nomor_batch(id_nomor_batch)
 );

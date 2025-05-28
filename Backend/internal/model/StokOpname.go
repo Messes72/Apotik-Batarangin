@@ -377,7 +377,6 @@ func GetNomorBatch(ctx context.Context, idkartsok, iddepo string) (class.Respons
 	FROM latest l
 	JOIN nomor_batch nb ON nb.id_nomor_batch = l.id_nomor_batch
 	WHERE l.rn = 1
-	AND l.sisa > 0
 	ORDER BY nb.kadaluarsa ASC;`
 
 	rows, err := con.QueryContext(ctx, query, idkartsok, iddepo)
@@ -594,9 +593,9 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 }
 
 func GetSystemStokNow(iddepo string) (class.Response, error) {
-
 	con := db.GetDBCon()
 	log.Println("id depo", iddepo)
+
 	query := `SELECT ks.id_kartustok, oj.nama_obat, ks.stok_barang, dks.id_nomor_batch, dks.sisa
 FROM kartu_stok ks
 JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
@@ -613,59 +612,75 @@ LEFT JOIN (
 AND ks.id_depo = dks.id_depo
 AND dks.rn = 1
 WHERE ks.id_depo = ?
-ORDER BY ks.id_kartustok, dks.id_nomor_batch`
+ORDER BY oj.nama_obat ASC, ks.id_kartustok ASC, dks.id_nomor_batch ASC` // Adjusted ORDER BY
 
 	rows, err := con.Query(query, iddepo, iddepo)
 	if err != nil {
-		log.Println("Error saat query data stok sistem", err)
+		log.Println("Error saat query data stok sistem:", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
 	}
 	defer rows.Close()
 
-	mapobat := make(map[string]*class.StokOpnameGET)
+	var result []class.StokOpnameGET
+	var currentObat *class.StokOpnameGET // pointer to the current obat being processed for grouping
 
 	for rows.Next() {
-		var obat class.StokOpnameGET
-		var batch class.StokOpnameGETBatch
-		var idnomorbatch sql.NullString
-		var kuantitassitem sql.NullInt64
+		var obatIDKartuStok string
+		var obatNamaObat string
+		var obatKuantitasSistemTotal int
+		var idNomorBatch sql.NullString
+		var kuantitasSistem sql.NullInt64
 
-		err := rows.Scan(&obat.IDKartuStok, &obat.NamaObat, &obat.KuantitasSistemTotal, &idnomorbatch, &kuantitassitem)
+		err := rows.Scan(
+			&obatIDKartuStok,
+			&obatNamaObat,
+			&obatKuantitasSistemTotal,
+			&idNomorBatch,
+			&kuantitasSistem,
+		)
 		if err != nil {
-			log.Println("Error saat scan rows data stok sistem", err)
+			log.Println("Error saat scan rows data stok sistem:", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data stok sistem"}, err
 		}
 
-		if idnomorbatch.Valid {
-			batch.IdNomorBatch = idnomorbatch.String
-		}
-
-		if kuantitassitem.Valid {
-			batch.KuantitasSistem = int(kuantitassitem.Int64)
-		}
-
-		// Check if the obat already exists in map
-		if obatexist, exist := mapobat[obat.IDKartuStok]; exist {
-			// If the batch doesn't already exist for this obat, append the batch
-			if len(obatexist.Batches) == 0 || obatexist.Batches[len(obatexist.Batches)-1].IdNomorBatch != batch.IdNomorBatch {
-				obatexist.Batches = append(obatexist.Batches, batch)
+		// cek apakah
+		if currentObat == nil || currentObat.IDKartuStok != obatIDKartuStok {
+			// If there was a previous 'obat' being built, append it to the final result slice
+			if currentObat != nil {
+				result = append(result, *currentObat)
 			}
-		} else {
-			// If the obat doesn't exist, create a new entry with the batch
-			obat.Batches = []class.StokOpnameGETBatch{batch}
-			mapobat[obat.IDKartuStok] = &obat
+			// Start a new 'obat' entry
+			currentObat = &class.StokOpnameGET{
+				IDKartuStok:          obatIDKartuStok,
+				NamaObat:             obatNamaObat,
+				KuantitasSistemTotal: obatKuantitasSistemTotal,
+				Batches:              []class.StokOpnameGETBatch{}, // Initialize the batches slice for the new obat
+			}
+		}
+
+		// Add batch details to the current 'obat' if valid
+		if idNomorBatch.Valid {
+			batch := class.StokOpnameGETBatch{
+				IdNomorBatch: idNomorBatch.String,
+			}
+			if kuantitasSistem.Valid {
+				batch.KuantitasSistem = int(kuantitasSistem.Int64)
+			}
+			currentObat.Batches = append(currentObat.Batches, batch)
 		}
 	}
 
+	// After the loop finishes, append the very last 'obat' that was being processed
+	if currentObat != nil {
+		result = append(result, *currentObat)
+	}
+
+	// Check for any errors that occurred during row iteration
 	err = rows.Err()
 	if err != nil {
-		log.Println("Error saat looping rows get data stok obat", err)
+		log.Println("Error saat looping rows get data stok obat:", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Stok System"}, err
 	}
 
-	var result []class.StokOpnameGET
-	for _, obat := range mapobat {
-		result = append(result, *obat)
-	}
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: result}, nil
 }
