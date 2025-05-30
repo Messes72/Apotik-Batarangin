@@ -90,7 +90,8 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 	filters = append(filters, "dk.id_depo = ?")
 	argumn = append(argumn, iddepo)
 	argumn = append(argumn, iddepo)
-	filters = append(filters, "dk.created_at BETWEEN ? AND ?")
+	filters = append(filters, "dk.created_at >= ? AND dk.created_at < ?")
+	enddate = enddate.AddDate(0, 0, 1)
 	argumn = append(argumn, startdate, enddate)
 
 	if idobat != "" { //by idobat
@@ -108,11 +109,10 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 		filters = append(filters, fmt.Sprintf(`(
 		CASE
 			WHEN dk.id_transaksi IS NOT NULL THEN 'Penjualan'
+			WHEN dk.id_retur IS NOT NULL THEN 'Retur'
+			WHEN dk.id_distribusi IS NOT NULL THEN 'Distribusi'
+			WHEN dk.id_stokopname IS NOT NULL THEN 'Stok Opname'
 			WHEN dk.id_batch_penerimaan IS NOT NULL THEN 'Pembelian Penerimaan'
-			WHEN dk.id_retur IS NOT NULL THEN 'Id Retur'
-			WHEN dk.masuk IS NOT NULL THEN 'Barang Masuk'
-			WHEN dk.keluar IS NOT NULL THEN 'Keluar'
-			WHEN dk.id_transaksi IS NOT NULL THEN 'Penjualan'
 		ELSE 'Lainnya'
 		END
 		) IN (%s)`, dummyquestionmark))
@@ -124,7 +124,7 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 
 	//berdasarkan no batch
 	if nobatch != "" {
-		filters = append(filters, "nb.no_batch = ?")
+		filters = append(filters, "dk.id_nomor_batch = ?")
 		argumn = append(argumn, nobatch)
 	}
 
@@ -139,30 +139,27 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 		dk.keluar,
 		dk.sisa AS sisa_batch,
 		(
-		SELECT COALESCE (sum(dk2.sisa),0)
-		from detail_kartustok dk2
-		JOIN kartu_stok ks2
-		ON dk2.id_kartustok = ks2.id_kartustok
-		AND dk2.id_depo = ks2.id_depo
-		WHERE ks2.id_obat = oj.id_obat
-		AND dk2.id_depo = ?
-		AND dk2.created_at <= dk.created_at 
+			SELECT SUM(COALESCE(dk2.masuk, 0) - COALESCE(dk2.keluar, 0))
+			FROM detail_kartustok dk2
+			JOIN kartu_stok ks2 ON dk2.id_kartustok = ks2.id_kartustok AND dk2.id_depo = ks2.id_depo
+			WHERE ks2.id_obat = oj.id_obat
+			AND dk2.id_depo = ?
+			AND dk2.created_at <= dk.created_at
 		) AS stoktotal,
 		CASE
 			WHEN dk.id_transaksi IS NOT NULL THEN 'Penjualan'
-			WHEN dk.id_batch_penerimaan IS NOT NULL THEN 'Pembelian Penerimaan'
 			WHEN dk.id_retur IS NOT NULL THEN 'Retur'
-			WHEN dk.masuk IS NOT NULL AND dk.masuk > 0  THEN 'Barang Masuk'
-			WHEN dk.keluar IS NOT NULL AND dk.keluar > 0 THEN  'Barang Keluar'
+			WHEN dk.id_distribusi IS NOT NULL THEN 'Distribusi'
 			WHEN dk.id_stokopname IS NOT NULL THEN 'Stok Opname'
+			WHEN dk.id_batch_penerimaan IS NOT NULL THEN 'Pembelian Penerimaan'
 		ELSE 'Lainnya'
 		END  AS jenistransaksi,
 		COALESCE (
 		dk.id_transaksi ,
-		dk.id_batch_penerimaan,
 		dk.id_stokopname,
 		dk.id_distribusi, 
-		dk.id_retur
+		dk.id_retur,
+		dk.id_batch_penerimaan
 		) AS referensi ,
 		 nb.no_batch, 
 		 nb.kadaluarsa
@@ -173,9 +170,6 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 		%s
 		ORDER BY dk.created_at DESC
 		LIMIT ? OFFSET ?
-		
-
-	
 	`
 
 	querydynamic := fmt.Sprintf(query, where)
@@ -217,15 +211,36 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 	}
 
 	var totalrecord int
-	countrecordquery := fmt.Sprintf(`SELECT COUNT(*) FROM detail_kartustok dk 
-	JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok AND dk.id_depo = ks.id_depo
-	LEFT JOIN nomor_batch nb ON dk.id_nomor_batch = nb.id_nomor_batch %s
-	`, where)
-	err = con.QueryRowContext(ctx, countrecordquery, iddepo, startdate, enddate).Scan(&totalrecord)
+	var (
+		countRecordQuery string
+		args             []interface{}
+	)
 
+	if nobatch != "" || len(jenislist) <= 0 {
+		countRecordQuery = `
+        SELECT COUNT(*)
+        FROM detail_kartustok dk
+        JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok
+        JOIN obat_jadi oj ON ks.id_obat = oj.id_obat
+        WHERE dk.id_depo = ? AND ks.id_depo = ? AND dk.created_at BETWEEN ? AND ?
+        AND dk.id_nomor_batch = ?
+    `
+		args = []interface{}{iddepo, iddepo, startdate, enddate, nobatch}
+	} else {
+		countRecordQuery = `
+        SELECT COUNT(*)
+        FROM detail_kartustok dk
+        JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok
+        JOIN obat_jadi oj ON ks.id_obat = oj.id_obat
+        WHERE dk.id_depo = ? AND dk.created_at BETWEEN ? AND ?
+    `
+		args = []interface{}{iddepo, startdate, enddate}
+	}
+
+	err = con.QueryRowContext(ctx, countRecordQuery, args...).Scan(&totalrecord)
 	if err != nil {
-		log.Println("gagal menghitung jumlah entry table stok opname , pada query di model stok opname", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "gagal menghitung jumlah record stok opname depo"}, nil
+		log.Println("count record query error:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat count total record"}, err
 	}
 
 	totalpage := (totalrecord + pageSize - 1) / pageSize
