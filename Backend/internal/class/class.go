@@ -503,3 +503,20 @@ type DetailObatRacik struct {
 	Catatan           *string   `json:"catatan,omitempty"`
 	CreatedAt         time.Time `json:"created_at"`
 }
+
+type LaporanMutasi struct {
+	Tanggal        time.Time `json:"tanggal"`
+	IdDepo         string    `json:"id_depo"`
+	NamaDepo       string    `json:"nama_depo"`
+	IDKartuStok    string    `json:"id_kartustok"`
+	IDObat         string    `json:"id_obat"`
+	NamaObat       string    `json:"nama_obat"`
+	QtyMasuk       int       `json:"qty_masuk"`
+	QtyKeluar      int       `json:"qty_keluar"`
+	StokBatch      int       `json:"stok_batch"`
+	StokAkhir      int       `json:"stok_akhir"`
+	JenisTransaksi string    `json:"jenis_transaksi"`
+	Referensi      string    `json:"referensi"`
+	NomorBatch     *string   `json:"nomor_batch,omitempty"`
+	Kadaluarsa     *string   `json:"kadaluarsa,omitempty"`
+}

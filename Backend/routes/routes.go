@@ -137,6 +137,10 @@ func Init() *echo.Echo {
 	routeReturBarang.POST("/create", controller.ReturObatApotik)
 	routeReturBarang.GET("/:id_depo", controller.GetAllRetur)
 	routeReturBarang.GET("/get", controller.GetReturById)
+
+	routelaporan := e.Group("/laporan")
+	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routelaporan.GET("", controller.Laporan)
 	return e
 
 }

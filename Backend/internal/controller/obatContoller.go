@@ -387,7 +387,9 @@ func DeleteObatRacik(c echo.Context) error {
 		c.JSON(http.StatusBadGateway, class.Response{Status: http.StatusBadRequest, Message: "Parameter Invalid"})
 	}
 
-	result, err := model.DeleteObatRacik(c.Request().Context(), iddelete)
+	alasandelete := c.FormValue("alasandelete")
+
+	result, err := model.DeleteObatRacik(c.Request().Context(), iddelete, alasandelete)
 	if err != nil {
 		return c.JSON(result.Status, result)
 

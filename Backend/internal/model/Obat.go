@@ -702,7 +702,7 @@ func EditObatRacik(ctx context.Context, idedit string, data class.ObatRacik) (cl
 	return class.Response{Status: http.StatusOK, Message: "Success"}, nil
 }
 
-func DeleteObatRacik(ctx context.Context, idobatracik string) (class.Response, error) {
+func DeleteObatRacik(ctx context.Context, idobatracik, alasan string) (class.Response, error) {
 	con := db.GetDBCon()
 
 	tx, err := con.BeginTx(ctx, nil)
@@ -724,8 +724,8 @@ func DeleteObatRacik(ctx context.Context, idobatracik string) (class.Response, e
 		return class.Response{Status: http.StatusBadRequest, Message: "Obat Racik tidak ditemukan"}, err
 	}
 
-	querydeleteobatracik := `UPDATE obat_racik SET deleted_at = NOW() WHERE id_obat_racik = ? AND deleted_at IS NULL`
-	_, err = tx.ExecContext(ctx, querydeleteobatracik, idobatracik)
+	querydeleteobatracik := `UPDATE obat_racik SET deleted_at = NOW(), alasandelete = ?  WHERE id_obat_racik = ? AND deleted_at IS NULL`
+	_, err = tx.ExecContext(ctx, querydeleteobatracik, alasan, idobatracik)
 	if err != nil {
 		tx.Rollback()
 		log.Println("Error saat delete obat racik", err)
