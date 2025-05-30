@@ -262,15 +262,15 @@ type RequestStokBarang struct {
 }
 
 type TransaksiItem struct { //detal transaksi
-	IDKartustok     string    `json:"id_kartustok"`
-	NamaObat        string    `json:"nama_obat"`
-	Jumlah          int       `json:"jumlah"`
-	Totalharga      float64   `json:"total_harga"`
-	NomorBatch      string    `json:"nomor_batch"`
-	Kadaluarsa      time.Time `json:"kadaluarsa"`
-	AturanPakai     string    `json:"aturan_pakai"`
-	CaraPakai       string    `json:"cara_pakai"`
-	KeteranganPakai string    `json:"keterangan_pakai"`
+	IDKartustok     string  `json:"id_kartustok"`
+	NamaObat        string  `json:"nama_obat"`
+	Jumlah          int     `json:"jumlah"`
+	Totalharga      float64 `json:"total_harga"`
+	NomorBatch      *string `json:"nomor_batch"`
+	Kadaluarsa      *string `json:"kadaluarsa"`
+	AturanPakai     *string `json:"aturan_pakai"`
+	CaraPakai       *string `json:"cara_pakai"`
+	KeteranganPakai *string `json:"keterangan_pakai"`
 }
 
 type TransactionDetail struct { //single transaction

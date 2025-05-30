@@ -540,8 +540,7 @@ add CONSTRAINT fk_obatracik FOREIGN KEY (id_obat_racik) REFERENCES obat_racik(id
 CREATE TABLE detail_transaksi_penjualan_obat (
     id                          INT AUTO_INCREMENT PRIMARY KEY, 
     id_detail_transaksi_penjualan VARCHAR(100) NOT NULL UNIQUE,  
-    id_kartustok                VARCHAR(100) NOT NULL,   
-    id_e_resep                  VARCHAR(50),  
+    id_kartustok                VARCHAR(100) NOT NULL,    
     id_obat_racik               VARCHAR(100) NULL,           
     id_transaksi                VARCHAR(100)  NOT NULL,   
     id_aturan_pakai             VARCHAR(50),

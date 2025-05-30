@@ -83,7 +83,7 @@ func GetTransaksi(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"message": "ID Transakai tidak boleh kosong"})
 	}
 
-	result, err := model.GetTransaksi(c.Request().Context(), idtransaksi, idKaryawan.(string))
+	result, err := model.GetTransaksi(c.Request().Context(), idtransaksi)
 
 	if err != nil {
 		return c.JSON(result.Status, result)

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
+	"time"
 )
 
 func AlocateBatchObat(tx *sql.Tx, ctx context.Context, idobat, iddepo string, quantitas int) (class.Response, []class.AlokasiBatch, error) {
@@ -484,64 +485,243 @@ func GetStokObat(ctx context.Context, idobat string) (class.Response, error) {
 	return class.Response{Status: http.StatusOK, Message: "Success", Data: stok}, nil
 }
 
-func GetTransaksi(ctx context.Context, idtransaksi, idkaryawan string) (class.Response, error) {
+type BatchUsage struct {
+	NoBatch    string `json:"no_batch"`
+	UsedQty    int    `json:"used_qty"`
+	Kadaluarsa string `json:"kadaluarsa"`
+}
+
+// Ingredient represents one component of a racikan
+type Ingredient struct {
+	ObatID     string       `json:"id_obat"`
+	NamaObat   string       `json:"nama_obat"`
+	Dosis      *string      `json:"dosis,omitempty"`
+	Catatan    *string      `json:"catatan,omitempty"`
+	BatchUsage []BatchUsage `json:"batch_usage"`
+}
+type TransaksiItem struct {
+	IDKartustok     string  `json:"id_kartustok"`
+	NamaObat        string  `json:"nama_obat"`
+	Jumlah          *int    `json:"jumlah,omitempty"`
+	Totalharga      float64 `json:"total_harga"`
+	NomorBatch      *string `json:"nomor_batch,omitempty"`
+	Kadaluarsa      *string `json:"kadaluarsa,omitempty"`
+	AturanPakai     *string `json:"aturan_pakai,omitempty"`
+	CaraPakai       *string `json:"cara_pakai,omitempty"`
+	KeteranganPakai *string `json:"keterangan_pakai,omitempty"`
+
+	// Racik-specific fields
+	IsRacikan   bool         `json:"is_racikan,omitempty"`
+	DosisRacik  *string      `json:"dosis,omitempty"` // from detail_transaksi_penjualan_obat
+	JumlahRacik *int         `json:"jumlah_racik,omitempty"`
+	SatuanRacik *string      `json:"satuan_racik,omitempty"`
+	Komposisi   []Ingredient `json:"komposisi,omitempty"`
+}
+
+// TransactionDetail is the header + all items
+type TransactionDetail struct {
+	IDTransaksi  string          `json:"id_transaksi"`
+	KasirID      string          `json:"id_karyawan"`
+	KasirNama    string          `json:"nama_karyawan"`
+	KustomerID   *string         `json:"id_kustomer,omitempty"`
+	KustomerNama *string         `json:"nama_kustomer,omitempty"`
+	TotalHarga   float64         `json:"total_harga"`
+	MetodeBayar  string          `json:"metode_bayar"`
+	Status       string          `json:"status"`
+	CreatedAt    time.Time       `json:"created_at"`
+	Items        []TransaksiItem `json:"items"`
+}
+
+func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, error) {
 	con := db.GetDBCon()
+	var td TransactionDetail
 
-	var get class.TransactionDetail
-
-	querytransaksi := `SELECT t.id_transaksi, t.id_karyawan, k.nama, t.total_harga,t.id_kustomer ,ku.nama, t.metode_pembayaran, t.id_status, t.created_at 
-	FROM transaksi t JOIN Karyawan k ON t.id_karyawan = k.id_karyawan LEFT JOIN Kustomer ku ON t.id_kustomer = ku.id_kustomer WHERE id_transaksi = ?`
-
-	err := con.QueryRowContext(ctx, querytransaksi, idtransaksi).Scan(&get.IDTransaksi, &get.KasirID, &get.KasirNama, &get.TotalHarga, &get.KustomerID, &get.KustomerNama, &get.MetodeBayar, &get.Status, &get.CreatedAt)
-
-	if err == sql.ErrNoRows {
-		log.Println("Transaksi tidak ditemukan ", err)
-		return class.Response{Status: http.StatusBadRequest, Message: "Transaksi tidak ditemukan ", Data: nil}, err
+	// 1) Load header
+	qHeader := `
+	SELECT
+	  t.id_transaksi, t.id_karyawan, k.nama,
+	  t.id_kustomer, ku.nama,
+	  t.total_harga, t.metode_pembayaran, st.nama_status, t.created_at
+	FROM transaksi t
+	JOIN karyawan k ON t.id_karyawan = k.id_karyawan
+	LEFT JOIN kustomer ku ON t.id_kustomer = ku.id_kustomer
+	JOIN status_transaksi st ON t.id_status = st.id_status
+	WHERE t.id_transaksi = ?
+	`
+	var (
+		kID   sql.NullString
+		kNama sql.NullString
+	)
+	if err := con.QueryRowContext(ctx, qHeader, idTransaksi).Scan(
+		&td.IDTransaksi,
+		&td.KasirID,
+		&td.KasirNama,
+		&kID,
+		&kNama,
+		&td.TotalHarga,
+		&td.MetodeBayar,
+		&td.Status,
+		&td.CreatedAt,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return class.Response{Status: http.StatusBadRequest, Message: "Transaksi tidak ditemukan"}, err
+		}
+		log.Println("Error loading header:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil transaksi"}, err
+	}
+	if kID.Valid {
+		td.KustomerID = &kID.String
+	}
+	if kNama.Valid {
+		td.KustomerNama = &kNama.String
 	}
 
-	if err != nil {
-		log.Println("Error saat query table transaksi ", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data Transaksi", Data: nil}, err
-	}
-
-	queryperobat := `SELECT d.id_kartustok, o.nama_obat , bp.jumlah_dijual, d.total_harga, nb.no_batch, nb.kadaluarsa, ap.aturan_pakai, cp.nama_cara_pakai, kp.nama_keterangan_pakai
-	
-	
-	FROM detail_transaksi_penjualan_obat d 
-	JOIN obat_jadi o ON d.id_kartustok = o.id_obat
-	JOIN batch_penjualan bp ON bp.id_detail_transaksi_penjualan = d.id_detail_transaksi_penjualan
-	JOIN nomor_batch nb on bp.id_nomor_batch = nb.id_nomor_batch
+	// 2) Load detail
+	qItems := `
+	SELECT
+		d.id_kartustok,
+		COALESCE(r.nama_racik, o.nama_obat) AS nama_obat,
+		d.jumlah,
+		d.total_harga,
+		ap.aturan_pakai,
+		cp.nama_cara_pakai,
+		kp.nama_keterangan_pakai,
+		d.id_obat_racik,
+		d.dosis,
+		d.jumlah_racik,
+		d.satuan_racik
+	FROM detail_transaksi_penjualan_obat d
+	LEFT JOIN obat_jadi o ON d.id_kartustok = o.id_obat
+	LEFT JOIN obat_racik r ON d.id_obat_racik = r.id_obat_racik
 	LEFT JOIN aturan_pakai ap ON d.id_aturan_pakai = ap.id_aturan_pakai
 	LEFT JOIN cara_pakai cp ON d.id_cara_pakai = cp.id_cara_pakai
 	LEFT JOIN keterangan_pakai kp ON d.id_keterangan_pakai = kp.id_keterangan_pakai
-	WHERE d.id_transaksi = ? ORDER BY d.id`
-
-	rows, err := con.QueryContext(ctx, queryperobat, idtransaksi)
+	WHERE d.id_transaksi = ?
+	ORDER BY d.id
+	`
+	rows, err := con.QueryContext(ctx, qItems, idTransaksi)
 	if err != nil {
-		log.Println("Error saat query detail obat dalam suatu transaksi", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data obat dalam transaksi ", Data: nil}, err
+		log.Println("Error loading detail rows:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil detail"}, err
 	}
 	defer rows.Close()
 
+	currentRacikIdx := -1
 	for rows.Next() {
-		var obat class.TransaksiItem
-		err := rows.Scan(&obat.IDKartustok, &obat.NamaObat, &obat.Jumlah, &obat.Totalharga, &obat.NomorBatch, &obat.Kadaluarsa, &obat.AturanPakai, &obat.CaraPakai, &obat.KeteranganPakai)
+		var (
+			rawKartustok sql.NullString
+			rawRacikID   sql.NullString
 
-		if err != nil {
-			log.Println("Error saat scan detail obat dalam transaksi", err)
-			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data obat dalam transaksi ", Data: nil}, err
+			ti          TransaksiItem
+			dbJumlah    sql.NullInt64
+			aturanP     sql.NullString
+			caraP       sql.NullString
+			ketP        sql.NullString
+			dosisRacik  sql.NullString
+			jumlahRacik sql.NullInt32
+			satuanRacik sql.NullString
+		)
+
+		if err := rows.Scan(
+			&rawKartustok,
+			&ti.NamaObat,
+			&dbJumlah,
+			&ti.Totalharga,
+			&aturanP,
+			&caraP,
+			&ketP,
+			&rawRacikID,
+			&dosisRacik,
+			&jumlahRacik,
+			&satuanRacik,
+		); err != nil {
+			log.Println("Error scanning detail:", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal memproses detail"}, err
 		}
 
-		get.Items = append(get.Items, obat)
+		isKartustokEmpty := !rawKartustok.Valid || rawKartustok.String == ""
+		isRacikRow := rawRacikID.Valid && rawRacikID.String != ""
 
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Println("Error pada row", err)
-		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data obat dalam transaksi", Data: nil}, err
-	}
-	return class.Response{Status: http.StatusOK, Message: "Success", Data: get}, nil
+		// 2a) Racikan header
+		if isKartustokEmpty && isRacikRow {
+			ti.IsRacikan = true
+			if dosisRacik.Valid {
+				ti.DosisRacik = &dosisRacik.String
+			}
+			if jumlahRacik.Valid {
+				v := int(jumlahRacik.Int32)
+				ti.JumlahRacik = &v
+			}
+			if satuanRacik.Valid {
+				ti.SatuanRacik = &satuanRacik.String
+			}
+			td.Items = append(td.Items, ti)
+			currentRacikIdx = len(td.Items) - 1
+			continue
+		}
 
+		// 2b) Komposisi line
+		if !isKartustokEmpty && isRacikRow && currentRacikIdx >= 0 {
+			master := &td.Items[currentRacikIdx]
+			ingID := rawKartustok.String
+
+			var ing = Ingredient{
+				ObatID:   ingID,
+				NamaObat: ti.NamaObat,
+			}
+
+			// Load batch usage
+			usageRows, err := con.QueryContext(ctx, `
+				SELECT nb.no_batch, dk.keluar, nb.kadaluarsa
+				FROM detail_kartustok dk
+				LEFT JOIN nomor_batch nb ON dk.id_nomor_batch = nb.id_nomor_batch
+				WHERE dk.id_transaksi = ? AND dk.id_kartustok = ? AND dk.keluar > 0 
+			`, idTransaksi, ingID)
+			if err != nil {
+				log.Println("error", err)
+			}
+			if err == nil {
+				for usageRows.Next() {
+					var bu BatchUsage
+					var kadaluarsa sql.NullTime
+					if err := usageRows.Scan(&bu.NoBatch, &bu.UsedQty, &kadaluarsa); err == nil {
+						if kadaluarsa.Valid {
+							bu.Kadaluarsa = kadaluarsa.Time.Format("2006-01-02")
+						}
+						ing.BatchUsage = append(ing.BatchUsage, bu)
+					}
+				}
+				usageRows.Close()
+			}
+			master.Komposisi = append(master.Komposisi, ing)
+			continue
+		}
+
+		// 2c) Plain obat
+		ti.IDKartustok = rawKartustok.String
+		if dbJumlah.Valid {
+			v := int(dbJumlah.Int64)
+			ti.Jumlah = &v
+		}
+		if aturanP.Valid {
+			ti.AturanPakai = &aturanP.String
+		}
+		if caraP.Valid {
+			ti.CaraPakai = &caraP.String
+		}
+		if ketP.Valid {
+			ti.KeteranganPakai = &ketP.String
+		}
+
+		td.Items = append(td.Items, ti)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Println("Row iteration error:", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Kesalahan iterasi detail"}, err
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: td}, nil
 }
 
 func GetHistoryTransaksi(ctx context.Context, page, pagesize int) (class.Response, error) {
