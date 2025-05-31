@@ -113,6 +113,7 @@ func Init() *echo.Echo {
 	routePOS.GET("/stok/:id_obat", controller.GetStokObat)
 	routePOS.GET("/:id_transaksi", controller.GetTransaksi)
 	routePOS.GET("/transaksi", controller.GetHistoryTransaksi)
+	routePOS.POST("/calculateharga", controller.CalculateObatRacik)
 
 	routeRequestBarang := e.Group("/requestbarang")
 	routeRequestBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
@@ -141,7 +142,7 @@ func Init() *echo.Echo {
 	routelaporan := e.Group("/laporan")
 	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routelaporan.GET("", controller.Laporan)
-	// routelaporan.GET("/dashboard", controller.Dashboard)
+	routelaporan.GET("/dashboard-management", controller.DashboardManagement)
 	return e
 
 }

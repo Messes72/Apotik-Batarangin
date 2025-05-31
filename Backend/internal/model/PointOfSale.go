@@ -227,7 +227,10 @@ func CalculateObatRacik(ctx context.Context, req class.RequestCalculateHargaRaci
 		list = append(list, item)
 
 	}
-	return class.Response{Status: http.StatusOK, Message: "Suceess", Data: list}, nil
+	return class.Response{Status: http.StatusOK, Message: "Suceess", Data: class.CalculateObatRacikResponse{
+		TotalHarga: total,
+		Details:    list,
+	}}, nil
 
 }
 

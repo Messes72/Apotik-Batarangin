@@ -58,10 +58,12 @@ func CalculateObatRacik(c echo.Context) error {
 
 	var requestBody class.RequestCalculateHargaRacik
 	if err := c.Bind(&requestBody); err != nil {
+		log.Println("Error di statiun", err)
 		return c.JSON(http.StatusBadRequest, class.Response{
 			Status:  http.StatusBadRequest,
 			Message: "Bad JSON",
 		})
+
 	}
 
 	if len(requestBody.Ingredients) <= 0 {

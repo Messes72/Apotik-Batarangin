@@ -233,6 +233,11 @@ type RequestCalculateHargaRacik struct {
 	Kuantitas   int              `json:"kuantitas"`
 	Ingredients []IngredientSale `json:"ingredients"`
 }
+
+type CalculateObatRacikResponse struct {
+	TotalHarga float64            `json:"total_harga"`
+	Details    []IngredientDetail `json:"items"`
+}
 type IngredientDetail struct {
 	IDObat         string  `json:"id_obat"`
 	JumlahTerpakai int     `json:"jumlah_terpakai"`
@@ -541,16 +546,21 @@ type TopSellingProduct struct {
 }
 
 type LowStockItem struct {
-	IDObat   string
-	NamaObat string
-	Stok     int
+	IDObat      string `json:"id_obat"`
+	Nama        string `json:"nama"`
+	IDDepo      string `json:"id_depo"`
+	StokBarang  int    `json:"stok_barang"`
+	StokMinimum int    `json:"stok_minimum"`
 }
 
 type NearExpiryItem struct {
-	IDObat     string
-	NamaObat   string
-	Kadaluarsa time.Time
-	Stok       int
+	IDObat       string    `json:"id_obat"`
+	IDNomorBatch string    `json:"id_nomor_batch"`
+	NoBatch      string    `json:"no_batch"`
+	Nama         string    `json:"nama"`
+	IDDepo       string    `json:"id_depo"`
+	Kadaluarsa   time.Time `json:"kadaluarsa"`
+	StokBarang   int       `json:"stok_barang"`
 }
 
 type ManagementDashboardResponse struct {
