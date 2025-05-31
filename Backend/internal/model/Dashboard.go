@@ -14,8 +14,8 @@ func GetTotalStokMovement(ctx context.Context, iddpeo string) (class.ManagementD
 
 	query := `SELECT
 
-		SUM(CASE WHEN created_at >= CURRENT_DATE THEN masuk ELSE 0 END) AS daily_in,
-		SUM(CASE WHEN created_at >= CURRENT_DATE THEN keluar ELSE 0 END) AS daily_out,
+		SUM(CASE WHEN DATE(created_at) = CURRENT_DATE THEN masuk ELSE 0 END) AS daily_in,
+		SUM(CASE WHEN DATE(created_at) = CURRENT_DATE THEN keluar ELSE 0 END) AS daily_out,
 
 		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY) THEN masuk ELSE 0 END) AS weekly_in,
 		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY) THEN keluar ELSE 0 END) AS weekly_out,
