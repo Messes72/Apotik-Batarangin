@@ -578,3 +578,9 @@ type ManagementDashboardResponse struct {
 	LowStockItems      []LowStockItem
 	NearExpiryItems    []NearExpiryItem
 }
+
+type Batch struct {
+	IdNomorBatch string `json:"id_nomor_batch"`
+	NoBatch      string `json:"no_batch"`
+	Kadaluarsa   string `json:"kadaluarsa"`
+}

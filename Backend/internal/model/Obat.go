@@ -747,3 +747,57 @@ func DeleteObatRacik(ctx context.Context, idobatracik, alasan string) (class.Res
 	}
 	return class.Response{Status: http.StatusOK, Message: "Success"}, nil
 }
+
+func GetAllBatch(ctx context.Context, page, pageSize int) (class.Response, error) {
+	if page <= 0 {
+		page = 1
+
+	}
+
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	offset := (page - 1) * pageSize
+	con := db.GetDBCon()
+	query := `SELECT id_nomor_batch, no_batch, kadaluarsa FROM nomor_batch  ORDER BY id DESC LIMIT ? OFFSET ?`
+	rows, err := con.QueryContext(ctx, query, pageSize, offset)
+	if err != nil {
+		log.Println("Error saat get all batch", err)
+		return class.Response{Status: http.StatusInternalServerError, Message: "Error saaat mengambil data batch"}, err
+	}
+
+	defer rows.Close()
+
+	var list []class.Batch
+
+	for rows.Next() {
+		var batch class.Batch
+		if err := rows.Scan(&batch.IdNomorBatch, &batch.NoBatch, &batch.Kadaluarsa); err != nil {
+			log.Println("Erropr saat scan data batch", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat mengambil data batch"}, err
+		}
+
+		list = append(list, batch)
+
+	}
+
+	var totalrecord int
+	countrecordquery := `SELECT COUNT(*) FROM nomor_batch `
+	err = con.QueryRow(countrecordquery).Scan(&totalrecord)
+
+	if err != nil {
+		log.Println("gagal menghitung jumlah entry table batch ")
+		return class.Response{Status: http.StatusInternalServerError, Message: "Metadata Error"}, nil
+	}
+
+	totalpage := (totalrecord + pageSize - 1) / pageSize //bisa juga pakai total/pagesize tp kan nanti perlu di bulatkan keatas pakai package math dimana dia perlu type floating point yg membuat performa hitung lebih lambat
+	metadata := class.Metadata{
+		CurrentPage:  page,
+		PageSize:     pageSize,
+		TotalPages:   totalpage,
+		TotalRecords: totalrecord,
+	}
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: list, Metadata: metadata}, nil
+
+}

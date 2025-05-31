@@ -17,18 +17,18 @@ func GetTotalStokMovement(ctx context.Context, iddpeo string) (class.ManagementD
 		SUM(CASE WHEN created_at >= CURRENT_DATE THEN masuk ELSE 0 END) AS daily_in,
 		SUM(CASE WHEN created_at >= CURRENT_DATE THEN keluar ELSE 0 END) AS daily_out,
 
-		SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL 7 DAYS THEN masuk ELSE 0 END) AS weekly_in,
-		SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL 7 DAYS THEN keluar ELSE 0 END) AS weekly_out,
+		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY) THEN masuk ELSE 0 END) AS weekly_in,
+		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY) THEN keluar ELSE 0 END) AS weekly_out,
 
-		SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL 30 DAYS THEN masuk ELSE 0 END) AS monthly_in,
-		SUM(CASE WHEN created_at >= CURRENT_DATE - INTERVAL 30 DAYS THEN keluar ELSE 0 END) AS monthly_out
+		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) THEN masuk ELSE 0 END) AS monthly_in,
+		SUM(CASE WHEN created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY) THEN keluar ELSE 0 END) AS monthly_out
 
 		FROM detail_kartustok
-		WHERE ($1 = '' OR id_depo = $1)
+		WHERE (? = '' OR id_depo = ?)
 
 	`
 	var data class.ManagementDashboardResponse
-	rows := con.QueryRowContext(ctx, query, iddpeo)
+	rows := con.QueryRowContext(ctx, query, iddpeo, iddpeo)
 	err := rows.Scan(&data.TotalStockMovement.DailyIn, &data.TotalStockMovement.DailyOut, &data.TotalStockMovement.WeeklyIn, &data.TotalStockMovement.WeeklyOut,
 		&data.TotalStockMovement.MonthlyIn, &data.TotalStockMovement.MonthlyOut)
 	if err != nil {
@@ -99,9 +99,9 @@ func GetLowStokObat(ctx context.Context, iddepo string) ([]class.LowStockItem, e
 	FROM obat_jadi oj 
 	JOIN kartu_stok ks ON oj.id_kartustok = ks.id_kartustok
 	WHERE ks.stok_barang < oj.stok_minimum
-	AND ($1= '' OR ks.id_depo = $1)`
+	AND (?= '' OR ks.id_depo = ?)`
 
-	rows, err := con.QueryContext(ctx, query, iddepo)
+	rows, err := con.QueryContext(ctx, query, iddepo, iddepo)
 	if err != nil {
 		log.Println("Error saat query stok low obat", err)
 		return nil, err
@@ -140,11 +140,11 @@ func GetNearExpiredObat(ctx context.Context, iddepo string) ([]class.NearExpiryI
 	JOIN obat_jadi o ON ks.id_obat = o.id_obat
 	WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY
 	AND dks.jumlah > 0
-	AND ($1 = '' OR ks.id_depo = $1)
+	AND (? = '' OR ks.id_depo = ?)
 	ORDER BY nb.kadaluarsa ASC
 `
 
-	rows, err := con.QueryContext(ctx, query, iddepo)
+	rows, err := con.QueryContext(ctx, query, iddepo, iddepo)
 	if err != nil {
 		log.Println("Error saat query stok near expired", err)
 		return nil, err

@@ -397,3 +397,29 @@ func DeleteObatRacik(c echo.Context) error {
 	return c.JSON(result.Status, result)
 
 }
+
+func GetAllBatch(c echo.Context) error {
+	pageparam := c.QueryParam("page")
+	pagesizeparam := c.QueryParam("page_size")
+
+	page := 1
+	pageSize := 10
+
+	if pageparam != "" {
+		if p, err := strconv.Atoi(pageparam); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if pagesizeparam != "" {
+		if ps, err := strconv.Atoi(pagesizeparam); err == nil && ps > 0 {
+			pageSize = ps
+		}
+	}
+	result, err := model.GetAllBatch(c.Request().Context(), page, pageSize)
+	if err != nil {
+		return c.JSON(result.Status, result)
+
+	}
+	return c.JSON(result.Status, result)
+
+}
