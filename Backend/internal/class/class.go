@@ -225,9 +225,23 @@ type AlokasiObatResult struct {
 	Listbatchteralokasikan []AlokasiBatch `json:"list_alokasi"`
 }
 type IngredientSale struct {
-	IDObat        string  `json:"id_obat"`        // obat_jadi ID
-	JumlahDecimal float64 `json:"jumlah_decimal"` // e.g. 3.5
-	Dosis         string  `json:"dosis"`          // e.g. "tablet"
+	IDObat        string  `json:"id_obat"`         // obat_jadi ID
+	JumlahDecimal float64 `json:"jumlah_decimal"`  // e.g. 3.5
+	Dosis         string  `json:"dosis,omitempty"` // e.g. "tablet"
+}
+type RequestCalculateHargaRacik struct {
+	Kuantitas   int              `json:"kuantitas"`
+	Ingredients []IngredientSale `json:"ingredients"`
+}
+type IngredientDetail struct {
+	IDObat         string  `json:"id_obat"`
+	JumlahTerpakai int     `json:"jumlah_terpakai"`
+	HargaSatuan    float64 `json:"harga_satuan"`
+	Subtotal       float64 `json:"subtotal"`
+}
+type HargaObatRacik struct {
+	TotalHarga StaffLogin         `json:"total_harga"`
+	Items      []IngredientDetail `json:"items"`
 }
 type PenjualanObat struct {
 	IDObat string `json:"id_obat"`
@@ -519,4 +533,38 @@ type LaporanMutasi struct {
 	Referensi      string    `json:"referensi"`
 	NomorBatch     *string   `json:"nomor_batch,omitempty"`
 	Kadaluarsa     *string   `json:"kadaluarsa,omitempty"`
+}
+
+type TopSellingProduct struct {
+	NamaObat string
+	Jumlah   int
+}
+
+type LowStockItem struct {
+	IDObat   string
+	NamaObat string
+	Stok     int
+}
+
+type NearExpiryItem struct {
+	IDObat     string
+	NamaObat   string
+	Kadaluarsa time.Time
+	Stok       int
+}
+
+type ManagementDashboardResponse struct {
+	TotalStockMovement struct {
+		DailyIn    int
+		DailyOut   int
+		WeeklyIn   int
+		WeeklyOut  int
+		MonthlyIn  int
+		MonthlyOut int
+	}
+
+	TotalSales         float64
+	TopSellingProducts []TopSellingProduct
+	LowStockItems      []LowStockItem
+	NearExpiryItems    []NearExpiryItem
 }

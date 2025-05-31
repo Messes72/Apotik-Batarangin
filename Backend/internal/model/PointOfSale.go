@@ -203,6 +203,34 @@ func moveOut(
 	return err
 }
 
+func CalculateObatRacik(ctx context.Context, req class.RequestCalculateHargaRacik) (class.Response, error) {
+	var total float64
+	var list []class.IngredientDetail
+
+	for _, ing := range req.Ingredients {
+		var item class.IngredientDetail
+		harga, err := GetHargaJual(ctx, ing.IDObat)
+		if err != nil {
+			log.Println("Error saat mengambil harga jual", err)
+			return class.Response{Status: http.StatusInternalServerError, Message: "Error saat menghitung harga racik"}, err
+		}
+
+		jumlahdipakai := int(math.Ceil(ing.JumlahDecimal * float64(req.Kuantitas)))
+		subtotal := float64(jumlahdipakai) * harga
+		total += subtotal
+
+		item.IDObat = ing.IDObat
+		item.HargaSatuan = harga
+		item.JumlahTerpakai = jumlahdipakai
+		item.Subtotal = subtotal
+
+		list = append(list, item)
+
+	}
+	return class.Response{Status: http.StatusOK, Message: "Suceess", Data: list}, nil
+
+}
+
 func TransaksiPenjualanObat(ctx context.Context, idkaryawan string, listobat []class.PenjualanObat, bayar class.MetodeBayar, idkustomer *string) (class.Response, error) {
 
 	con := db.GetDBCon()
@@ -543,8 +571,8 @@ func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, erro
 	  t.id_kustomer, ku.nama,
 	  t.total_harga, t.metode_pembayaran, st.nama_status, t.created_at
 	FROM transaksi t
-	JOIN karyawan k ON t.id_karyawan = k.id_karyawan
-	LEFT JOIN kustomer ku ON t.id_kustomer = ku.id_kustomer
+	JOIN Karyawan k ON t.id_karyawan = k.id_karyawan
+	LEFT JOIN Kustomer ku ON t.id_kustomer = ku.id_kustomer
 	JOIN status_transaksi st ON t.id_status = st.id_status
 	WHERE t.id_transaksi = ?
 	`

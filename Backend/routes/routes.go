@@ -141,6 +141,7 @@ func Init() *echo.Echo {
 	routelaporan := e.Group("/laporan")
 	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routelaporan.GET("", controller.Laporan)
+	routelaporan.GET("/dashboard", controller.Dashboard)
 	return e
 
 }

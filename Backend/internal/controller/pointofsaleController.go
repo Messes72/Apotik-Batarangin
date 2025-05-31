@@ -54,6 +54,27 @@ func CreateTransaksi(c echo.Context) error {
 	}
 	return c.JSON(result.Status, result)
 }
+func CalculateObatRacik(c echo.Context) error {
+
+	var requestBody class.RequestCalculateHargaRacik
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, class.Response{
+			Status:  http.StatusBadRequest,
+			Message: "Bad JSON",
+		})
+	}
+
+	if len(requestBody.Ingredients) <= 0 {
+		log.Println("user input tidak input list obat")
+		return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Wajib menyeritakan obat yang akan dibeli"})
+
+	}
+	result, err := model.CalculateObatRacik(c.Request().Context(), requestBody)
+	if err != nil {
+		return c.JSON(result.Status, result)
+	}
+	return c.JSON(result.Status, result)
+}
 
 func GetStokObat(c echo.Context) error {
 
