@@ -97,7 +97,7 @@ func GetLowStokObat(ctx context.Context, iddepo string) ([]class.LowStockItem, e
 
 	query := `SELECT oj.id_obat, oj.nama_obat, ks.id_depo, ks.stok_barang, oj.stok_minimum
 	FROM obat_jadi oj 
-	JOIN kartu_stok ks ON oj.id_kartustok = ks.id_kartustok
+	JOIN kartu_stok ks ON oj.id_obat = ks.id_kartustok
 	WHERE ks.stok_barang < oj.stok_minimum
 	AND (?= '' OR ks.id_depo = ?)`
 
@@ -132,14 +132,14 @@ func GetNearExpiredObat(ctx context.Context, iddepo string) ([]class.NearExpiryI
     nb.kadaluarsa,
     ks.id_obat,
     o.nama_obat,
-    dks.jumlah AS stok,
+    dks.sisa	,
     ks.id_depo
 	FROM detail_kartustok dks
 	JOIN nomor_batch nb ON dks.id_nomor_batch = nb.id_nomor_batch
 	JOIN kartu_stok ks ON dks.id_kartustok = ks.id_kartustok
 	JOIN obat_jadi o ON ks.id_obat = o.id_obat
 	WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY
-	AND dks.jumlah > 0
+	AND dks.sisa > 0
 	AND (? = '' OR ks.id_depo = ?)
 	ORDER BY nb.kadaluarsa ASC
 `
