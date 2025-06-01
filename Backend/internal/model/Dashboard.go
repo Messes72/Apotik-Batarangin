@@ -221,16 +221,23 @@ func GetNearExpiredObat(ctx context.Context, iddepo string) ([]class.NearExpiryI
     nb.kadaluarsa,
     ks.id_obat,
     o.nama_obat,
-    dks.sisa	,
+    dks.sisa,
     ks.id_depo
-	FROM detail_kartustok dks
-	JOIN nomor_batch nb ON dks.id_nomor_batch = nb.id_nomor_batch
-	JOIN kartu_stok ks ON dks.id_kartustok = ks.id_kartustok
-	JOIN obat_jadi o ON ks.id_obat = o.id_obat
-	WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY
-	AND dks.sisa > 0
-	AND (? = '' OR ks.id_depo = ?)
-	ORDER BY nb.kadaluarsa ASC
+FROM detail_kartustok dks
+JOIN (
+    SELECT id_nomor_batch, MAX(created_at) AS latest
+    FROM detail_kartustok
+    GROUP BY id_nomor_batch
+) latest_dks ON dks.id_nomor_batch = latest_dks.id_nomor_batch
+            AND dks.created_at = latest_dks.latest
+JOIN nomor_batch nb ON dks.id_nomor_batch = nb.id_nomor_batch
+JOIN kartu_stok ks ON dks.id_kartustok = ks.id_kartustok
+JOIN obat_jadi o ON ks.id_obat = o.id_obat
+WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY
+  AND dks.sisa > 0
+  AND (? = '' OR ks.id_depo = ?)
+ORDER BY nb.kadaluarsa ASC
+
 `
 
 	rows, err := con.QueryContext(ctx, query, iddepo, iddepo)
@@ -263,17 +270,19 @@ func DashboardManagement(ctx context.Context, iddepo string) (class.Response, er
 	}
 	res.TotalStockMovement = stokMovement.TotalStockMovement
 
-	totalPenjualan, err := GetTotalPenjualan(ctx)
-	if err != nil {
-		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data total penjualan"}, err
-	}
-	res.TotalSales = totalPenjualan
+	if iddepo == "20" {
+		totalPenjualan, err := GetTotalPenjualan(ctx)
+		if err != nil {
+			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data total penjualan"}, err
+		}
+		res.TotalSales = totalPenjualan
 
-	topSelling, err := GetTopSellingObat(ctx)
-	if err != nil {
-		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top selling"}, err
+		topSelling, err := GetTopSellingObat(ctx)
+		if err != nil {
+			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top selling"}, err
+		}
+		res.TopSellingProducts = topSelling
 	}
-	res.TopSellingProducts = topSelling
 
 	lowStok, err := GetLowStokObat(ctx, iddepo)
 	if err != nil {
@@ -293,3 +302,7 @@ func DashboardManagement(ctx context.Context, iddepo string) (class.Response, er
 		Data:    res,
 	}, nil
 }
+
+// func dashboardApotik(ctx context.Context, iddepo string) (class.Response, error) {
+
+// }
