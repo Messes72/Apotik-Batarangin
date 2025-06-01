@@ -597,3 +597,34 @@ type Batch struct {
 	NoBatch      string `json:"no_batch"`
 	Kadaluarsa   string `json:"kadaluarsa"`
 }
+
+type OpenRequestApotik struct {
+	IdDistribusi      string     `json:"id_distribusi"`
+	IdDepoTujuan      string     `json:"id_depo_tujuan"`
+	TanggalPermohonan time.Time  `json:"tanggal_permohonan"`
+	Keterangan        *string    `json:"keterangan,omitempty"`
+	CreatedAt         string     `json:"created_at"`
+	CreatedBy         string     `json:"created_by"`
+	UpdatedAt         *time.Time `json:"updated_at,omitempty"`
+}
+
+type TopRequestedObat struct {
+	NamaObat string
+	Jumlah   int
+}
+
+type GudangDashboardResponse struct {
+	TotalStockMovement struct {
+		DailyIn    int
+		DailyOut   int
+		WeeklyIn   int
+		WeeklyOut  int
+		MonthlyIn  int
+		MonthlyOut int
+	}
+	LowStockItems     []LowStockItem      `json:"low_stock_items"`
+	NearExpiryItems   []NearExpiryItem    `json:"near_expiry_items"`
+	TopRequestedObat  []TopRequestedObat  `json:"top_requested_obat"`
+	TopFulfilledObat  []TopRequestedObat  `json:"top_fulfilled_obat"`
+	OpenRequestApotik []OpenRequestApotik `json:"request_barang_open"`
+}

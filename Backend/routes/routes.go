@@ -144,6 +144,7 @@ func Init() *echo.Echo {
 	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
 	routelaporan.GET("", controller.Laporan)
 	routelaporan.GET("/dashboard-management", controller.DashboardManagement)
+	routelaporan.GET("/dashboard-gudang", controller.DashboardGudang)
 	return e
 
 }

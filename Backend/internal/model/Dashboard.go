@@ -223,24 +223,25 @@ func GetNearExpiredObat(ctx context.Context, iddepo string) ([]class.NearExpiryI
     o.nama_obat,
     dks.sisa,
     ks.id_depo
-FROM detail_kartustok dks
-JOIN (
-    SELECT id_nomor_batch, MAX(created_at) AS latest
-    FROM detail_kartustok
-    GROUP BY id_nomor_batch
-) latest_dks ON dks.id_nomor_batch = latest_dks.id_nomor_batch
-            AND dks.created_at = latest_dks.latest
-JOIN nomor_batch nb ON dks.id_nomor_batch = nb.id_nomor_batch
-JOIN kartu_stok ks ON dks.id_kartustok = ks.id_kartustok
-JOIN obat_jadi o ON ks.id_obat = o.id_obat
-WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY
-  AND dks.sisa > 0
-  AND (? = '' OR ks.id_depo = ?)
-ORDER BY nb.kadaluarsa ASC
+	FROM detail_kartustok dks
+	JOIN (
+		SELECT id_nomor_batch, MAX(created_at) AS latest
+		FROM detail_kartustok
+		GROUP BY id_nomor_batch
+	) latest_dks ON dks.id_nomor_batch = latest_dks.id_nomor_batch
+				AND dks.created_at = latest_dks.latest
+	JOIN nomor_batch nb ON dks.id_nomor_batch = nb.id_nomor_batch
+	JOIN kartu_stok ks ON dks.id_kartustok = ks.id_kartustok
+	JOIN obat_jadi o ON ks.id_obat = o.id_obat
+	WHERE nb.kadaluarsa <= CURRENT_DATE + INTERVAL 30 DAY AND (? = '' OR dks.id_depo = ?)
+	AND dks.sisa > 0 
+	AND (? = '' OR ks.id_depo = ?)
+	GROUP BY dks.id_nomor_batch
+	ORDER BY nb.kadaluarsa ASC
 
-`
+	`
 
-	rows, err := con.QueryContext(ctx, query, iddepo, iddepo)
+	rows, err := con.QueryContext(ctx, query, iddepo, iddepo, iddepo, iddepo)
 	if err != nil {
 		log.Println("Error saat query stok near expired", err)
 		return nil, err
@@ -303,6 +304,161 @@ func DashboardManagement(ctx context.Context, iddepo string) (class.Response, er
 	}, nil
 }
 
-// func dashboardApotik(ctx context.Context, iddepo string) (class.Response, error) {
+func GetOpenRequestObat(ctx context.Context) ([]class.OpenRequestApotik, error) {
 
-// }
+	con := db.GetDBCon()
+
+	query := `SELECT
+	id_distribusi , id_depo_tujuan, tanggal_permohonan, keterangan, created_at, updated_at, created_by
+	FROM distribusi WHERE tanggal_pengiriman IS NULL
+	`
+
+	rows, err := con.QueryContext(ctx, query)
+
+	if err != nil {
+		log.Println("Error saat query open request obat", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []class.OpenRequestApotik
+
+	for rows.Next() {
+
+		var data class.OpenRequestApotik
+
+		var keterangan sql.NullString
+		var updatedat sql.NullTime
+
+		if err := rows.Scan(&data.IdDistribusi, &data.IdDepoTujuan, &data.TanggalPermohonan, &keterangan,
+			&data.CreatedAt, &updatedat, &data.CreatedBy); err != nil {
+			log.Println("Error saat scan open requested obat", err)
+			return nil, err
+		}
+
+		if keterangan.Valid {
+			data.Keterangan = &keterangan.String
+		}
+		if updatedat.Valid {
+			data.UpdatedAt = &updatedat.Time
+		}
+
+		list = append(list, data)
+	}
+	return list, nil
+
+}
+
+func GetTopRequestedObat(ctx context.Context) ([]class.TopRequestedObat, error) {
+
+	con := db.GetDBCon()
+
+	query := `SELECT oj.nama_obat , SUM(dpo.jumlah_diminta) AS total
+	FROM detail_distribusi dpo 
+	JOIN obat_jadi oj ON dpo.id_kartustok = oj.id_obat 
+	GROUP BY oj.nama_obat
+	ORDER BY total DESC 
+	LIMIT 10
+	`
+
+	rows, err := con.QueryContext(ctx, query)
+
+	if err != nil {
+		log.Println("Error saat query top requested obat", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []class.TopRequestedObat
+	for rows.Next() {
+		var obj class.TopRequestedObat
+
+		if err := rows.Scan(&obj.NamaObat, &obj.Jumlah); err != nil {
+			log.Println("Error saat scan top requested obat", err)
+			return nil, err
+		}
+		list = append(list, obj)
+	}
+	return list, nil
+}
+func GetTopFulfilledObat(ctx context.Context) ([]class.TopRequestedObat, error) {
+
+	con := db.GetDBCon()
+
+	query := `SELECT oj.nama_obat , SUM(dpo.jumlah_dikirim) AS total
+	FROM detail_distribusi dpo 
+	JOIN obat_jadi oj ON dpo.id_kartustok = oj.id_obat 
+	ORDER BY total DESC 
+	LIMIT 10
+	`
+
+	rows, err := con.QueryContext(ctx, query)
+
+	if err != nil {
+		log.Println("Error saat query top requested obat", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []class.TopRequestedObat
+	for rows.Next() {
+		var obj class.TopRequestedObat
+
+		if err := rows.Scan(&obj.NamaObat, &obj.Jumlah); err != nil {
+			log.Println("Error saat scan top requested obat", err)
+			return nil, err
+		}
+		list = append(list, obj)
+	}
+	return list, nil
+}
+
+func DashboardGudang(ctx context.Context) (class.Response, error) {
+
+	var res class.GudangDashboardResponse
+
+	const iddepo = "10"
+	stokMovement, err := GetTotalStokMovement(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data stok movement"}, err
+	}
+	res.TotalStockMovement = stokMovement.TotalStockMovement
+
+	lowStok, err := GetLowStokObat(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data low stok"}, err
+	}
+	res.LowStockItems = lowStok
+
+	nearExp, err := GetNearExpiredObat(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data near expired"}, err
+	}
+	res.NearExpiryItems = nearExp
+
+	openreq, err := GetOpenRequestObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data open requested obat"}, err
+	}
+	res.OpenRequestApotik = openreq
+
+	topreq, err := GetTopRequestedObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top requested obat"}, err
+	}
+	res.TopRequestedObat = topreq
+
+	topful, err := GetTopFulfilledObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top fulfilled obat"}, err
+	}
+	res.TopFulfilledObat = topful
+
+	return class.Response{
+		Status:  http.StatusOK,
+		Message: "Berhasil mengambil data dashboard",
+		Data:    res,
+	}, nil
+
+	//ingat tanya perlu ga function untuk tampilkan semua stok barang dari tiap obat yang ada
+}
