@@ -544,6 +544,19 @@ type TopSellingProduct struct {
 	NamaObat string
 	Jumlah   int
 }
+type PeriodSales struct {
+	AllTime float64 `json:"all_time"`
+	Daily   float64 `json:"daily"`
+	Weekly  float64 `json:"weekly"`
+	Monthly float64 `json:"monthly"`
+}
+
+type PeriodTopSelling struct {
+	AllTime []TopSellingProduct `json:"all_time"`
+	Daily   []TopSellingProduct `json:"daily"`
+	Weekly  []TopSellingProduct `json:"weekly"`
+	Monthly []TopSellingProduct `json:"monthly"`
+}
 
 type LowStockItem struct {
 	IDObat      string `json:"id_obat"`
@@ -573,8 +586,8 @@ type ManagementDashboardResponse struct {
 		MonthlyOut int
 	}
 
-	TotalSales         float64
-	TopSellingProducts []TopSellingProduct
+	TotalSales         PeriodSales
+	TopSellingProducts PeriodTopSelling
 	LowStockItems      []LowStockItem
 	NearExpiryItems    []NearExpiryItem
 }

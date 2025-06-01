@@ -7,6 +7,7 @@ import (
 	"net/http"
 	class "proyekApotik/internal/class"
 	"proyekApotik/internal/db"
+	"time"
 )
 
 func GetTotalStokMovement(ctx context.Context, iddpeo string) (class.ManagementDashboardResponse, error) {
@@ -42,52 +43,140 @@ func GetTotalStokMovement(ctx context.Context, iddpeo string) (class.ManagementD
 	return data, nil
 }
 
-func GetTotalPenjualan(ctx context.Context) (float64, error) {
+func GetTotalPenjualan(ctx context.Context) (class.PeriodSales, error) {
 
 	con := db.GetDBCon()
+	var penj class.PeriodSales
 
-	var total float64
-	query := `SELECT COALESCE(SUM(total_harga),0) FROM transaksi `
-	err := con.QueryRowContext(ctx, query).Scan(&total)
+	queryall := `SELECT COALESCE(SUM(total_harga),0) FROM transaksi `
+	err := con.QueryRowContext(ctx, queryall).Scan(&penj.AllTime)
 	if err != nil {
 		log.Println("Error saat menghitung total penjualan", err)
-		return 0, err
+		return penj, err
 	}
-	return total, nil
+
+	endtime := time.Now()
+
+	starttime := time.Now().Truncate(24 * time.Hour)
+
+	queryharian := `SELECT COALESCE(SUM(total_harga),0) FROM transaksi WHERE created_at BETWEEN ? AND ?`
+
+	if err := con.QueryRowContext(ctx, queryharian, starttime, endtime).Scan(&penj.Daily); err != nil {
+		log.Println("Error saat mengambil total penjualan harian", err)
+		return penj, err
+	}
+
+	starttimeweekly := starttime.AddDate(0, 0, -6)
+	querymingguan := `SELECT COALESCE(SUM(total_harga),0) FROM transaksi WHERE created_at BETWEEN ? AND ?`
+
+	if err := con.QueryRowContext(ctx, querymingguan, starttimeweekly, endtime).Scan(&penj.Weekly); err != nil {
+		log.Println("Error saat mengambil total penjualan mingguan", err)
+		return penj, err
+	}
+
+	starttimemonthly := starttime.AddDate(0, -1, 0)
+	querybulanan := `SELECT COALESCE(SUM(total_harga),0) FROM transaksi WHERE created_at BETWEEN ? AND ?`
+
+	if err := con.QueryRowContext(ctx, querybulanan, starttimemonthly, endtime).Scan(&penj.Monthly); err != nil {
+		log.Println("Error saat mengambil total penjualan bulanan", err)
+		return penj, err
+	}
+
+	return penj, nil
 }
-
-func GetTopSellingObat(ctx context.Context) ([]class.TopSellingProduct, error) {
-
+func GetTopSellingObatHelper(ctx context.Context, start, end time.Time, filter bool) ([]class.TopSellingProduct, error) {
 	con := db.GetDBCon()
+	var (
+		query string
+		arg   []interface{}
+	)
+	if filter {
+		query = `
+		SELECT oj.nama_obat, SUM(COALESCE(dt.jumlah,0)) AS jumlah
+		FROM detail_transaksi_penjualan_obat dt
+		JOIN obat_jadi oj ON dt.id_kartustok = oj.id_obat
+		WHERE dt.created_at BETWEEN ? AND ?
+		GROUP BY oj.nama_obat
+		ORDER BY jumlah DESC 
+		LIMIT 10`
 
-	query := `SELECT oj.nama_obat, SUM(COALESCE(dt.jumlah,0)) AS jumlah
-	FROM detail_transaksi_penjualan_obat dt
-	JOIN obat_jadi oj ON dt.id_kartustok = oj.id_obat
-	GROUP BY oj.nama_obat
-	ORDER BY jumlah DESC 
-	LIMIT 10
-	`
+		arg = []interface{}{start, end}
+	} else {
+		query = `
+		SELECT oj.nama_obat, SUM(COALESCE(dt.jumlah,0)) AS jumlah
+		FROM detail_transaksi_penjualan_obat dt
+		JOIN obat_jadi oj ON dt.id_kartustok = oj.id_obat
+		GROUP BY oj.nama_obat
+		ORDER BY jumlah DESC 
+		LIMIT 10`
 
-	rows, err := con.QueryContext(ctx, query)
+		arg = nil
+	}
+
+	rows, err := con.QueryContext(ctx, query, arg...)
 	if err != nil {
-		log.Println("Error saat query top selling obat", err)
+		log.Println("Error saat query di helper get top selling obt", err)
 		return nil, err
 	}
+
 	defer rows.Close()
 
 	var list []class.TopSellingProduct
 
 	for rows.Next() {
 
-		var obat class.TopSellingProduct
+		var obj class.TopSellingProduct
 
-		if err := rows.Scan(&obat.NamaObat, &obat.Jumlah); err != nil {
-			log.Println("Error saat scan rows top selling obat", err)
+		if err := rows.Scan(&obj.NamaObat, &obj.Jumlah); err != nil {
+			log.Println("Error saat scan top selling obat helpoer", err)
 			return nil, err
 		}
-		list = append(list, obat)
+		list = append(list, obj)
 	}
 	return list, nil
+
+}
+func GetTopSellingObat(ctx context.Context) (class.PeriodTopSelling, error) {
+
+	var topselling class.PeriodTopSelling
+
+	endtime := time.Now()
+
+	starttime := time.Now().Truncate(24 * time.Hour)
+	starttimeweekly := starttime.AddDate(0, 0, -6)
+
+	starttimemonthly := starttime.AddDate(0, -1, 0)
+	log.Println("time :", starttime, endtime, starttimeweekly, starttimemonthly)
+
+	overall, err := GetTopSellingObatHelper(ctx, time.Time{}, time.Time{}, false)
+	if err != nil {
+		log.Println("Error fetching all-time top selling:", err)
+		return topselling, err
+	}
+	topselling.AllTime = overall
+
+	daily, err := GetTopSellingObatHelper(ctx, starttime, endtime, true)
+	if err != nil {
+		log.Println("Error fetching harian top selling:", err)
+		return topselling, err
+	}
+	topselling.Daily = daily
+
+	weekly, err := GetTopSellingObatHelper(ctx, starttimeweekly, endtime, true)
+	if err != nil {
+		log.Println("Error fetching weekly top selling:", err)
+		return topselling, err
+	}
+	topselling.Weekly = weekly
+
+	monthly, err := GetTopSellingObatHelper(ctx, starttimemonthly, endtime, true)
+	if err != nil {
+		log.Println("Error fetching monthly top selling:", err)
+		return topselling, err
+	}
+	topselling.Monthly = monthly
+
+	return topselling, nil
 
 }
 
