@@ -469,7 +469,7 @@ func GetOpenPembelianPenerimaan(ctx context.Context) ([]class.GetOpenPembelianPe
 	query := `SELECT pp.id_pembelian_penerimaan_obat ,su.nama, pp.total_harga, pp.keterangan, pp.tanggal_pemesanan,
 	pp.tanggal_pembayaran, kpem.nama, kpen.nama, pp.created_at 
 	FROM pembelian_penerimaan pp
-	JOIN Supplier su ON su.id_supplier = pp.id_supplier
+	JOIN supplier su ON su.id_supplier = pp.id_supplier
 	JOIN Karyawan kpem ON kpem.id_karyawan = pp.pemesan  
 	LEFT JOIN Karyawan kpen ON kpen.id_karyawan = pp.penerima
 	WHERE pp.tanggal_penerimaan IS NULL  
