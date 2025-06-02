@@ -271,7 +271,7 @@ func DashboardManagement(ctx context.Context, iddepo string) (class.Response, er
 	}
 	res.TotalStockMovement = stokMovement.TotalStockMovement
 
-	if iddepo == "20" {
+	if iddepo == "20" || iddepo == "" {
 		totalPenjualan, err := GetTotalPenjualan(ctx)
 		if err != nil {
 			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data total penjualan"}, err
