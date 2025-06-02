@@ -210,39 +210,29 @@ func Laporan(ctx context.Context, startdate, enddate time.Time, iddepo string, p
 
 	}
 
+	countQuery := `SELECT COUNT(*) 
+		FROM detail_kartustok dk
+		JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok AND dk.id_depo = ks.id_depo
+		JOIN obat_jadi oj ON ks.id_obat = oj.id_obat
+		LEFT JOIN nomor_batch nb ON dk.id_nomor_batch = nb.id_nomor_batch
+		%s`
+
+	countQueryDynamic := fmt.Sprintf(countQuery, where)
+
 	var totalrecord int
-	var (
-		countRecordQuery string
-		args             []interface{}
-	)
-
-	if nobatch != "" || len(jenislist) <= 0 {
-		countRecordQuery = `
-        SELECT COUNT(*)
-        FROM detail_kartustok dk
-        JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok
-        JOIN obat_jadi oj ON ks.id_obat = oj.id_obat
-        WHERE dk.id_depo = ? AND ks.id_depo = ? AND dk.created_at BETWEEN ? AND ?
-        AND dk.id_nomor_batch = ?
-    `
-		args = []interface{}{iddepo, iddepo, startdate, enddate, nobatch}
-	} else {
-		countRecordQuery = `
-        SELECT COUNT(*)
-        FROM detail_kartustok dk
-        JOIN kartu_stok ks ON dk.id_kartustok = ks.id_kartustok
-        JOIN obat_jadi oj ON ks.id_obat = oj.id_obat
-        WHERE dk.id_depo = ? AND dk.created_at BETWEEN ? AND ?
-    `
-		args = []interface{}{iddepo, startdate, enddate}
+	countArgs := make([]interface{}, len(argumn)-2)
+	copy(countArgs, argumn[:len(argumn)-2])
+	if len(countArgs) > 0 {
+		countArgs = append(countArgs[:1], countArgs[2:]...)
 	}
+	log.Println("query", where)
+	log.Println("data", argumn)
+	err = con.QueryRowContext(ctx, countQueryDynamic, countArgs...).Scan(&totalrecord)
 
-	err = con.QueryRowContext(ctx, countRecordQuery, args...).Scan(&totalrecord)
 	if err != nil {
 		log.Println("count record query error:", err)
 		return class.Response{Status: http.StatusInternalServerError, Message: "Error saat count total record"}, err
 	}
-
 	totalpage := (totalrecord + pageSize - 1) / pageSize
 
 	metadata := class.Metadata{
