@@ -462,3 +462,110 @@ func DashboardGudang(ctx context.Context) (class.Response, error) {
 
 	//ingat tanya perlu ga function untuk tampilkan semua stok barang dari tiap obat yang ada
 }
+
+func GetOpenPembelianPenerimaan(ctx context.Context) ([]class.GetOpenPembelianPenerimaan, error) {
+
+	con := db.GetDBCon()
+	query := `SELECT pp.id_pembelian_penerimaan_obat ,su.nama, pp.total_harga, pp.keterangan, pp.tanggal_pemesanan,
+	pp.tanggal_pembayaran, kpem.nama, kpen.nama, pp.created_at 
+	FROM pembelian_penerimaan pp
+	JOIN Supplier su ON su.id_supplier = pp.id_supplier
+	JOIN Karyawan kpem ON kpem.id_karyawan = pp.pemesan  
+	LEFT JOIN Karyawan kpen ON kpen.id_karyawan = pp.penerima
+	WHERE pp.tanggal_penerimaan IS NULL  
+	`
+
+	rows, err := con.QueryContext(ctx, query)
+	if err != nil {
+		log.Println("Error saat query open pembelian penerimaan", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []class.GetOpenPembelianPenerimaan
+
+	for rows.Next() {
+		var data class.GetOpenPembelianPenerimaan
+		var keterangan, namapenerima sql.NullString
+		var tglpembayaran sql.NullTime
+		err := rows.Scan(&data.IDPembelianPenerimaanObat, &data.NamaSupplier, &data.TotalHarga, &keterangan, &data.TanggalPembelianInput,
+			&tglpembayaran, &data.Pemesan, &namapenerima, &data.CreatedAt)
+		if err != nil {
+			log.Println("Error saat scan data", err)
+			return nil, err
+		}
+		if keterangan.Valid {
+			data.Keterangan = &keterangan.String
+		}
+		if namapenerima.Valid {
+			data.Penerima = &namapenerima.String
+		}
+		data.TanggalPembelian = data.TanggalPembelianInput.Format("2006-01-02")
+		data.TanggalPembayaran = tglpembayaran.Time.Format("2006-01-02")
+		list = append(list, data)
+
+	}
+
+	return list, nil
+}
+
+func DashboardApotik(ctx context.Context) (class.Response, error) {
+	var res class.ApotikDashboardResponse
+
+	const iddepo = "20"
+	stokMovement, err := GetTotalStokMovement(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data stok movement"}, err
+	}
+	res.TotalStockMovement = stokMovement.TotalStockMovement
+
+	lowStok, err := GetLowStokObat(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data low stok"}, err
+	}
+	res.LowStockItems = lowStok
+
+	nearExp, err := GetNearExpiredObat(ctx, iddepo)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data near expired"}, err
+	}
+	res.NearExpiryItems = nearExp
+
+	openreq, err := GetOpenRequestObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data open requested obat"}, err
+	}
+	res.OpenRequestApotik = openreq
+
+	topreq, err := GetTopRequestedObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top requested obat"}, err
+	}
+	res.TopRequestedObat = topreq
+
+	topful, err := GetTopFulfilledObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top fulfilled obat"}, err
+	}
+	res.TopFulfilledObat = topful
+
+	totalPenjualan, err := GetTotalPenjualan(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data total penjualan"}, err
+	}
+	res.TotalSales = totalPenjualan
+
+	topSelling, err := GetTopSellingObat(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data top selling"}, err
+	}
+	res.TopSellingProducts = topSelling
+
+	getopenpem, err := GetOpenPembelianPenerimaan(ctx)
+	if err != nil {
+		return class.Response{Status: http.StatusInternalServerError, Message: "Gagal mengambil data open pembelian penerimaan"}, err
+	}
+	res.OpenPembelianPenerimaan = getopenpem
+
+	return class.Response{Status: http.StatusOK, Message: "Success", Data: res}, nil
+}

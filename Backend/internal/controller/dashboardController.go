@@ -28,3 +28,13 @@ func DashboardGudang(c echo.Context) error {
 
 	return c.JSON(result.Status, result)
 }
+
+func DashboardApotik(c echo.Context) error {
+
+	result, err := model.DashboardApotik(c.Request().Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, map[string]string{"message": "Error saat memproses permintaan"})
+	}
+
+	return c.JSON(result.Status, result)
+}

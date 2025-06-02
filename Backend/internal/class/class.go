@@ -628,3 +628,36 @@ type GudangDashboardResponse struct {
 	TopFulfilledObat  []TopRequestedObat  `json:"top_fulfilled_obat"`
 	OpenRequestApotik []OpenRequestApotik `json:"request_barang_open"`
 }
+type ApotikDashboardResponse struct {
+	TotalStockMovement struct {
+		DailyIn    int
+		DailyOut   int
+		WeeklyIn   int
+		WeeklyOut  int
+		MonthlyIn  int
+		MonthlyOut int
+	}
+	LowStockItems           []LowStockItem               `json:"low_stock_items"`
+	NearExpiryItems         []NearExpiryItem             `json:"near_expiry_items"`
+	TopRequestedObat        []TopRequestedObat           `json:"top_requested_obat"`
+	TopFulfilledObat        []TopRequestedObat           `json:"top_fulfilled_obat"`
+	OpenRequestApotik       []OpenRequestApotik          `json:"request_barang_open"`
+	OpenPembelianPenerimaan []GetOpenPembelianPenerimaan `json:"pembelian_penerimaan_open"`
+	TotalSales              PeriodSales
+	TopSellingProducts      PeriodTopSelling
+}
+
+type GetOpenPembelianPenerimaan struct {
+	IDPembelianPenerimaanObat string     `json:"id_pembelian_penerimaan_obat"`
+	IDSupplier                string     `json:"id_supplier"`
+	NamaSupplier              string     `json:"nama_supplier,omitempty"`
+	TanggalPembelianInput     time.Time  `json:"-"`
+	TanggalPembayaranInput    *time.Time `json:"-"`
+	TanggalPembelian          string     `json:"tanggal_pembelian"`
+	TanggalPembayaran         string     `json:"tanggal_pembayaran,omitempty"`
+	Pemesan                   string     `json:"pemesan,omitempty"`
+	Penerima                  *string    `json:"penerima,omitempty"`
+	TotalHarga                float64    `json:"total_harga"`
+	Keterangan                *string    `json:"keterangan,omitempty"`
+	CreatedAt                 time.Time  `json:"created_at"`
+}
