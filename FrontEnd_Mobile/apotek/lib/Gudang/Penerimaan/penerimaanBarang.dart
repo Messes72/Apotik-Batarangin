@@ -122,6 +122,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
     detailBarangPembelian2 = await DetailPembelianBarang.getDataDetail(id);
   }
 
+bool loadingData = true;
+
   Future<void> getDataAllPembelian() async {
     try {
       listPembelianBarang = await PembelianBarangObat.getData();
@@ -134,8 +136,12 @@ class pagePenerimaan extends State<PenerimaanBarang>
       // print();
       setState(() {
         filterData = List.from(listPembelianBarang);
+        loadingData = false;
       });
     } catch (e) {
+      setState(() {
+        loadingData = false;
+      });
       print("Error: $e");
     }
   }
@@ -2551,7 +2557,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
                                                 ),
                                               )),
                                             ],
-                                            rows: paginatedData
+                                            rows: 
+                                            paginatedData
                                                 .asMap()
                                                 .entries
                                                 .map((entry) {

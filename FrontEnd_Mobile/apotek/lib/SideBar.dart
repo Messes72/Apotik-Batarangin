@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:apotek/Gudang/Pembelian/pembeliaanBarang.dart';
 import 'package:apotek/Gudang/Stock/detailStockOpname.dart';
-import 'package:apotek/Gudang/Stock/editStockOpname.dart';
 import 'package:apotek/Gudang/Stock/inputStockOpname.dart';
 import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
@@ -65,7 +64,6 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
           isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 4
       Detailstockopname(
           isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 5
-      Editstockopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 6
     ];
   }
 
@@ -154,7 +152,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
             child: Column(
               children: [
                 NavbarTop(
-                    title: pageIndex == 0 ? "PRODUK" : pageIndex == 1 ?"STOCK OPNAME": pageIndex == 2 ? "PENERIMAAN BARANG": pageIndex == 4 ?"PEMBELIAN BARANG" : pageIndex == 3 ? "INPUT STOCK OPNAME" : pageIndex ==5 ? "DETAIL STOCK OPNAME" : pageIndex == 6 ? "EDIT STOCK OPNAME" : "TIDAK ADA",
+                    title: pageIndex == 0 ? "PRODUK" : pageIndex == 1 ?"STOCK OPNAME": pageIndex == 2 ? "PENERIMAAN BARANG": pageIndex == 4 ?"PEMBELIAN BARANG" : pageIndex == 3 ? "INPUT STOCK OPNAME" : pageIndex ==5 ? "INFORMASI DATA STOCK OPNAME"  : "TIDAK ADA",
                     onMenuPressed: () {
                       setState(() {
                         if (isExpanded) {

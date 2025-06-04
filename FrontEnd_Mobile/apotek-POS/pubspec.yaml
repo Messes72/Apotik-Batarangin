@@ -44,6 +44,8 @@ dependencies:
   fl_chart: ^0.70.2
   shared_preferences: ^2.2.2
   google_fonts: ^6.2.1
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 
 dev_dependencies:
@@ -88,6 +90,7 @@ flutter:
      - images/print.png
      - images/gambarObat.png
      - images/dashboard.png
+     - images/drug.png
 
 
 

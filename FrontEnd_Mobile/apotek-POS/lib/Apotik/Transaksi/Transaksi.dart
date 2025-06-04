@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:apotek/Apotik/Obat%20Racik/obatRacik.dart';
 import 'package:apotek/Apotik/Transaksi/DataTransaksi.dart';
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
@@ -42,22 +44,49 @@ class _TransaksiPage extends State<TransaksiPage> {
   List<String> stockOptions = [">5", ">10", "<5", "<10"];
   String? selectedUnit;
 
+  List<Widget> inputFormObat = [];
+
+  List<TextEditingController> jumlahObatRacikan = [];
+  List<TextEditingController> dosisRacikan = [];
+
+  TextEditingController jumlahObatRacik = TextEditingController();
+  ObatRacikModel? isiIdObat; // obat yg dipilih
+  ObatRacikModel? isiIdObatEdit; // obat yg dipilih
+
+  Future<void> tambahInputForm(
+      void Function(void Function()) setDialogState2) async {
+    // Obat? isiNama;
+    TextEditingController hargaTotal = TextEditingController();
+    TextEditingController kemasan = TextEditingController();
+    TextEditingController jumlahObatRacik = TextEditingController();
+
+    setState(() {
+      // isi.add(isiNama);
+      // isi2.add(nomorBatch);
+      // isi3.add(jumlahBarang);
+      // isi4.add(namaObat);
+      // tanggal.add(tanggalInput);
+      // int index = isi.length - 1;
+      // inputBarang.add(
+      //   InputForm(
+      //     "Nama Obat",
+      //     "Nama Obat",
+      //     "Jumlah Barang yang Dipesan",
+      //     "Jumlah Barang yang Dipesan",
+      //     index,
+      //     index == 0 ? null : () => hapusInputForm(index, setDialogState2),
+      //   ),
+      // );
+    });
+  }
+
   List<Map<String, dynamic>> filteredItems = [];
   TextEditingController searchController = TextEditingController();
   bool isExpanded = false;
 
-  final List<String> rowKategori = ["Obat Panas", "Obat Batuk", "Obat Flu"];
-  final List<String> rowSatuan = ["Strip", "Botol", "Pcs"];
-
-  String? _selectedKategori;
-  String? _selectedSatuan;
   KategoriObat? _selectedKategoriEdit;
-  SatuanObat? _selectedSatuanEdit;
 
   KategoriObat? _pilihKategori;
-  SatuanObat? _pilihSatuan;
-
-  String? _selectedNama;
 
   String? selectedSatuan;
   final TextEditingController minHargaController = TextEditingController();
@@ -92,18 +121,78 @@ class _TransaksiPage extends State<TransaksiPage> {
     });
   }
 
-  List<Products> filterData = [];
+  List<ProdukSemua> filterData = [];
 
-  List<Products> listProduk = [];
+  List<ProdukSemua> listProduk = [];
+
+  List<ObatRacikModel> listObatRacik = [];
+
+  List<SatuanObat> listSatuan = [];
+
+  List<int> jumObatRacikTransaksi = [];
+  List<String> dosisTransaksi = [];
 
   bool _validasiTerisi = false;
 
+  ObatRacikModel? detailObatRacik;
+
+  Future<void> getDetailObatRacik(ObatRacikModel id) async {
+    try {
+      ObatRacikModel.getDetailObatRacik(id.idObatRacik).then((value) {
+        setState(() {
+          detailObatRacik = value;
+          for (var item in detailObatRacik!.bahan) {
+            komposisiList.add(KomposisiInput(
+                namaObat: item.namaObat.toString(),
+                idObat: item.idObat.toString(),
+                jumlahController: TextEditingController(),
+                dosisController: TextEditingController()));
+          }
+        });
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
   Future<void> getDataAPI() async {
     try {
-      listProduk = await Products.getData();
+      listProduk = await ProdukSemua.getData();
+      for (var item in listProduk) {
+        int detail = await ProdukSemua.getDataStok(item.idObat);
+        item.stokObatReal = detail;
+      }
       // print();
       setState(() {
         filterData = List.from(listProduk);
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  SatuanObat? isiSatuan;
+  SatuanObat? isiSatuanEdit;
+
+  var isiJumlah = TextEditingController();
+  Future<void> getDataAPIObatRacik() async {
+    try {
+      ObatRacikModel.getDataObatRacik().then((value) {
+        setState(() {
+          listObatRacik = value;
+        });
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  Future<void> getDataAPISatuan() async {
+    try {
+      SatuanObat.getDataSatuan().then((value) {
+        setState(() {
+          listSatuan = value;
+        });
       });
     } catch (e) {
       print("Error: $e");
@@ -137,7 +226,7 @@ class _TransaksiPage extends State<TransaksiPage> {
     // print(pickedImageByte.toString());
     response.files.add(imageInput);
     response.fields['nama_obat'] = namaObat_text.text;
-    response.fields['id_satuan'] = _pilihSatuan!.idSatuan;
+    // response.fields['id_satuan'] = _pilihSatuan!.idSatuan;
     response.fields['harga_jual'] = hargajual_text.text;
     response.fields['harga_beli'] = hargaBeli_Text.text;
     response.fields['stok_minimum'] = stokBarang_text.text;
@@ -168,7 +257,7 @@ class _TransaksiPage extends State<TransaksiPage> {
       response.files.add(imageInput);
     }
     response.fields['nama_obat'] = namaObatController.text;
-    response.fields['id_satuan'] = _selectedSatuanEdit!.idSatuan;
+    // response.fields['id_satuan'] = _selectedSatuanEdit!.idSatuan;
     response.fields['harga_jual'] = hargaJualController.text;
     response.fields['harga_beli'] = hargaBeliController.text;
     response.fields['stok_minimum'] = stockMinimumController.text;
@@ -250,7 +339,7 @@ class _TransaksiPage extends State<TransaksiPage> {
     return formatter.format(number);
   }
 
-  void _viewDetails(Products item) {
+  void _viewDetails(ProdukSemua item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -361,36 +450,52 @@ class _TransaksiPage extends State<TransaksiPage> {
     );
   }
 
-  Future<void> _editProduk(Products item) async {
-    String url = "http://leap.crossnet.co.id:2688/${item.linkGambarObat}";
-    var response = await http.get(Uri.parse(url), headers: {
-      'Authorization': '${global.token}',
-      'x-api-key': '${global.xApiKey}'
-    });
-    print(response.bodyBytes);
-    setState(() {
-      // _selectedKategoriEdit = getNamaKategori2(item.idKategori);
-      // _selectedSatuanEdit = getNamaSatuan2(item.idSatuan);
-      // namaObatController.text = item.namaObat.toString();
-      // hargaBeliController.text = item.hargaBeli.toString();
-      // hargaJualController.text = item.hargaJual.toString();
-      // stockMinimumController.text = item.stokMinimum.toString();
-      // keteranganController.text = item.keterangan.toString();
-      // idObatPut = item.idObat;
-      // pickedImageByte2 = response.bodyBytes;
-      // print(_selectedKategoriEdit!.idKategori);
-    });
+  ObatRacikModel? getNamaObatRacik(String idKategori) {
+    try {
+      return listObatRacik.firstWhere(
+        (item) => item.idObatRacik == idKategori,
+      );
+    } catch (e) {
+      return null; // jika tidak ditemukan
+    }
+  }
 
-    // TextEditingController namaObatController =
-    //     TextEditingController(text: item.namaObat);
-    // TextEditingController hargaBeliController =
-    //     TextEditingController(text: item.hargaBeli.toString());
-    // TextEditingController hargaJualController =
-    //     TextEditingController(text: item.hargaJual.toString());
-    // TextEditingController keteraanganController =
-    //     TextEditingController(text: item.keterangan);
-    // TextEditingController stockMinimumController =
-    //     TextEditingController(text: item.stokMinimum.toString());
+  SatuanObat? getNamaSatuan2(String idSatuan) {
+    try {
+      return listSatuan.firstWhere(
+        (item) => item.idSatuan == idSatuan,
+      );
+    } catch (e) {
+      return null; // jika tidak ditemukan
+    }
+  }
+
+  int? indexEdit; // untuk menyimpan index item yang sedang diedit
+
+  TextEditingController jumlahObatRacikEdit = TextEditingController();
+  Future<void> _editObatRacik(ObatRacik item, int index) async {
+    indexEdit = index; // Simpan index data yang sedang diedit
+
+    List<KomposisiInput> komposisiEdit = [];
+
+    setState(() {
+      isiIdObatEdit = getNamaObatRacik(item.idnamaRacik);
+      isiSatuanEdit = getNamaSatuan2(item.idsatuan);
+      jumlahObatRacikEdit.text = item.jumlah.toString();
+      for (var i = 0; i < item.komposisi.length; i++) {
+        komposisiEdit.add(KomposisiInput(
+            namaObat: item.komposisi[i].namaObat,
+            idObat: item.komposisi[i].idObat,
+            jumlahController: TextEditingController(),
+            dosisController: TextEditingController()));
+
+        komposisiEdit[i].jumlahController.text =
+            item.komposisi[i].jumlah.toString();
+
+        komposisiEdit[i].dosisController.text =
+            item.komposisi[i].dosis.toString();
+      }
+    });
 
     showDialog(
       context: context,
@@ -432,7 +537,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Edit Data Obat",
+                              "Edit Data Obat Racik",
                               style: GoogleFonts.montserrat(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -463,234 +568,816 @@ class _TransaksiPage extends State<TransaksiPage> {
                                 key: _formKey,
                                 child: Column(
                                   children: [
-                                    // idKategori = item.idKategori,
-                                    editFeld("Nama Obat", item.namaObat,
-                                        namaObatController),
-                                    // dropdownKategoriEdit(
-                                    //     getNamaKategori(item.idKategori) ??
-                                    //         "Tidak ada"),
-                                    editFeld(
-                                        "Harga Beli",
-                                        item.hargaBeli.toString(),
-                                        hargaBeliController),
-                                    editFeld(
-                                        "Harga Jual",
-                                        item.hargaJual.toString(),
-                                        hargaJualController),
-                                    // dropdownSatuanEdit(item.namaSatuan),
-                                    editFeld(
-                                        "Stock Minimum",
-                                        item.stokMinimum.toString(),
-                                        stockMinimumController),
                                     Padding(
                                       padding: const EdgeInsets.only(
-                                          left: 16, right: 16, top: 10.27),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                                          right: 16.0, top: 16),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: ColorStyle.warna_form,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: ColorStyle.shadow
+                                                  .withOpacity(0.25),
+                                              spreadRadius: 0,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 1), // x dan y
+                                            ),
+                                          ],
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                "Upload Gambar Kategori Obat",
-                                                style: GoogleFonts.inter(
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 14),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          "Nama Obat Racik",
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                        ),
+                                                        SizedBox(height: 6),
+                                                        SizedBox(
+                                                          // width:
+                                                          //     80, // Sesuaikan lebar
+                                                          // height:
+                                                          //     40, // Untuk jaga tinggi agar konsisten
+                                                          child: TextFormField(
+                                                            // controller:
+                                                            //     jumlahObatRacikEdit,
+                                                            // keyboardType:
+                                                            //     TextInputType
+                                                            //         .number,
+                                                            style: TextStyle(
+                                                                fontSize:
+                                                                    14), // Font kecil
+                                                            decoration:
+                                                                InputDecoration(
+                                                              isDense:
+                                                                  true, // Mengurangi tinggi padding
+                                                              contentPadding:
+                                                                  EdgeInsets.only(
+                                                                      bottom:
+                                                                          8), // Padding minimal
+                                                              hintText:
+                                                                  isiIdObatEdit!
+                                                                      .namaRacik
+                                                                      .toString(),
+                                                              hintStyle: TextStyle(
+                                                                  fontSize: 13,
+                                                                  color: Colors
+                                                                      .grey),
+                                                              border:
+                                                                  UnderlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                              enabledBorder:
+                                                                  UnderlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                              focusedBorder:
+                                                                  UnderlineInputBorder(
+                                                                borderSide: BorderSide(
+                                                                    color: Colors
+                                                                        .black,
+                                                                    width: 1.5),
+                                                              ),
+                                                            ),
+                                                            validator: (value) {
+                                                              if (value ==
+                                                                      null ||
+                                                                  value
+                                                                      .isEmpty) {
+                                                                return 'Wajib isi';
+                                                              }
+                                                              return null;
+                                                            },
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: 32,
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Satuan",
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      LayoutBuilder(
+                                                        builder: (context,
+                                                            constraints) {
+                                                          return Container(
+                                                            width: 100,
+                                                            child:
+                                                                DropdownButtonFormField2<
+                                                                    SatuanObat>(
+                                                              isExpanded: true,
+                                                              value:
+                                                                  isiSatuanEdit,
+                                                              validator:
+                                                                  (value) {
+                                                                if (value ==
+                                                                    null) {
+                                                                  return "Silahkan Pilih Satuan";
+                                                                }
+                                                                return null;
+                                                              },
+                                                              hint: Text(
+                                                                "Pilih Satuan",
+                                                                style:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  fontSize: 13,
+                                                                  color: ColorStyle
+                                                                      .text_hint,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
+                                                                ),
+                                                              ),
+                                                              items: listSatuan!
+                                                                  .map((e) =>
+                                                                      DropdownMenuItem(
+                                                                        value:
+                                                                            e,
+                                                                        child:
+                                                                            Text(
+                                                                          "${e.namaSatuan}",
+                                                                          style:
+                                                                              GoogleFonts.inter(
+                                                                            fontSize:
+                                                                                13,
+                                                                            color:
+                                                                                ColorStyle.text_hint,
+                                                                            fontWeight:
+                                                                                FontWeight.w400,
+                                                                          ),
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ))
+                                                                  .toList(),
+                                                              onChanged:
+                                                                  (value) {
+                                                                _formKey
+                                                                    .currentState
+                                                                    ?.validate();
+                                                                setState(() {
+                                                                  isiSatuan =
+                                                                      value!;
+                                                                });
+                                                              },
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                isDense: true,
+                                                                contentPadding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        bottom:
+                                                                            4), // tipis
+                                                                hintStyle:
+                                                                    GoogleFonts.inter(
+                                                                        fontSize:
+                                                                            13),
+                                                                filled: false,
+                                                                border:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.black),
+                                                                ),
+                                                                enabledBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.black),
+                                                                ),
+                                                                focusedBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide: BorderSide(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      width:
+                                                                          1.5),
+                                                                ),
+                                                                errorBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide: BorderSide(
+                                                                      color: ColorStyle
+                                                                          .button_red,
+                                                                      width: 1),
+                                                                ),
+                                                              ),
+                                                              dropdownStyleData:
+                                                                  DropdownStyleData(
+                                                                width: 100,
+                                                                maxHeight: 200,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: ColorStyle
+                                                                          .button_grey),
+                                                                  color: ColorStyle
+                                                                      .fill_form,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              4),
+                                                                ),
+                                                              ),
+                                                              menuItemStyleData:
+                                                                  const MenuItemStyleData(
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            4),
+                                                              ),
+                                                              iconStyleData:
+                                                                  const IconStyleData(
+                                                                icon: Icon(
+                                                                    Icons
+                                                                        .arrow_drop_down,
+                                                                    size: 16,
+                                                                    color: Colors
+                                                                        .black),
+                                                                openMenuIcon: Icon(
+                                                                    Icons
+                                                                        .arrow_drop_up,
+                                                                    size: 16,
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    width: 32,
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Jumlah",
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      SizedBox(
+                                                        width:
+                                                            80, // Sesuaikan lebar
+                                                        // height:
+                                                        //     40, // Untuk jaga tinggi agar konsisten
+                                                        child: TextFormField(
+                                                          controller:
+                                                              jumlahObatRacikEdit,
+                                                          keyboardType:
+                                                              TextInputType
+                                                                  .number,
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                                  14), // Font kecil
+                                                          decoration:
+                                                              InputDecoration(
+                                                            isDense:
+                                                                true, // Mengurangi tinggi padding
+                                                            contentPadding:
+                                                                EdgeInsets.only(
+                                                                    bottom:
+                                                                        8), // Padding minimal
+                                                            hintText: '0',
+                                                            hintStyle: TextStyle(
+                                                                fontSize: 13,
+                                                                color: Colors
+                                                                    .grey),
+                                                            border:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black),
+                                                            ),
+                                                            enabledBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black),
+                                                            ),
+                                                            focusedBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  width: 1.5),
+                                                            ),
+                                                          ),
+                                                          validator: (value) {
+                                                            if (value == null ||
+                                                                value.isEmpty) {
+                                                              return 'Wajib isi';
+                                                            }
+                                                            return null;
+                                                          },
+                                                        ),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                height: 20,
                                               ),
                                               Text(
-                                                " *",
+                                                "KOMPOSISI",
                                                 style: GoogleFonts.inter(
                                                     fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        ColorStyle.button_red),
+                                                    fontWeight: FontWeight.bold,
+                                                    decoration: TextDecoration
+                                                        .underline),
+                                              ),
+                                              SizedBox(
+                                                height: 15.5,
+                                              ),
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount:
+                                                    komposisiEdit!.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  return Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            bottom: 20),
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                "Nama Obat",
+                                                                style: GoogleFonts.inter(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                              SizedBox(
+                                                                  height: 6),
+                                                              SizedBox(
+                                                                // width: 100, // Sesuaikan lebar
+                                                                // height:
+                                                                //     40, // Untuk jaga tinggi agar konsisten
+                                                                child:
+                                                                    TextFormField(
+                                                                  // onChanged: (value) =>
+                                                                  //     komposisiList[index].namaObat = namaObat,
+                                                                  readOnly:
+                                                                      true,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          14), // Font kecil
+                                                                  decoration:
+                                                                      InputDecoration(
+                                                                    isDense:
+                                                                        true, // Mengurangi tinggi padding
+                                                                    contentPadding:
+                                                                        EdgeInsets.only(
+                                                                            bottom:
+                                                                                8), // Padding minimal
+                                                                    hintText: komposisiEdit[
+                                                                            index]
+                                                                        .namaObat,
+                                                                    hintStyle: TextStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .grey),
+                                                                    border:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    enabledBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    focusedBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide: BorderSide(
+                                                                          color: Colors
+                                                                              .black,
+                                                                          width:
+                                                                              1.5),
+                                                                    ),
+                                                                  ),
+                                                                  validator:
+                                                                      (value) {
+                                                                    if (value ==
+                                                                            null ||
+                                                                        value
+                                                                            .isEmpty) {
+                                                                      return 'Wajib isi';
+                                                                    }
+                                                                    return null;
+                                                                  },
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                          width: 32,
+                                                        ),
+                                                        Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              "Jumlah",
+                                                              style: GoogleFonts.inter(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                            ),
+                                                            SizedBox(height: 6),
+                                                            SizedBox(
+                                                              width:
+                                                                  100, // Sesuaikan lebar
+                                                              // height:
+                                                              //     40, // Untuk jaga tinggi agar konsisten
+                                                              child:
+                                                                  TextFormField(
+                                                                controller:
+                                                                    komposisiEdit[
+                                                                            index]
+                                                                        .jumlahController,
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .number,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14), // Font kecil
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  isDense:
+                                                                      true, // Mengurangi tinggi padding
+                                                                  contentPadding:
+                                                                      EdgeInsets.only(
+                                                                          bottom:
+                                                                              8), // Padding minimal
+                                                                  hintText: '0',
+                                                                  hintStyle: TextStyle(
+                                                                      fontSize:
+                                                                          13,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                  border:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.black),
+                                                                  ),
+                                                                  enabledBorder:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.black),
+                                                                  ),
+                                                                  focusedBorder:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5),
+                                                                  ),
+                                                                ),
+                                                                validator:
+                                                                    (value) {
+                                                                  if (value ==
+                                                                          null ||
+                                                                      value
+                                                                          .isEmpty) {
+                                                                    return 'Wajib isi';
+                                                                  }
+                                                                  return null;
+                                                                },
+                                                              ),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        SizedBox(
+                                                          width: 32,
+                                                        ),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                "Dosis",
+                                                                style: GoogleFonts.inter(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                              SizedBox(
+                                                                  height: 6),
+                                                              SizedBox(
+                                                                // width: 100, // Sesuaikan lebar
+                                                                // height:
+                                                                //     40, // Untuk jaga tinggi agar konsisten
+                                                                child:
+                                                                    TextFormField(
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  controller: komposisiEdit[
+                                                                          index]
+                                                                      .dosisController,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          14), // Font kecil
+                                                                  decoration:
+                                                                      InputDecoration(
+                                                                    isDense:
+                                                                        true, // Mengurangi tinggi padding
+                                                                    contentPadding:
+                                                                        EdgeInsets.only(
+                                                                            bottom:
+                                                                                8), // Padding minimal
+                                                                    hintText:
+                                                                        'Dosis',
+                                                                    hintStyle: TextStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .grey),
+                                                                    border:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    enabledBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    focusedBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide: BorderSide(
+                                                                          color: Colors
+                                                                              .black,
+                                                                          width:
+                                                                              1.5),
+                                                                    ),
+                                                                  ),
+                                                                  validator:
+                                                                      (value) {
+                                                                    if (value ==
+                                                                            null ||
+                                                                        value
+                                                                            .isEmpty) {
+                                                                      return 'Wajib isi';
+                                                                    }
+                                                                    return null;
+                                                                  },
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             ],
                                           ),
-                                          SizedBox(height: 8),
-                                          InkWell(
-                                            onTap: () async {
-                                              final im.XFile? photos =
-                                                  await picker2.pickImage(
-                                                      source: im
-                                                          .ImageSource.gallery);
-                                              if (photos != null) {
-                                                print(
-                                                    "Berhasil pick photo edit");
-                                                setState2(() {
-                                                  pickedImage2 =
-                                                      File(photos.path);
-                                                  uploadFile2 = true;
-                                                });
-                                                pickedImageByte2 = await photos
-                                                    .readAsBytes()
-                                                    .whenComplete(() {
-                                                  setState2(() {
-                                                    uploadFile2 = true;
-                                                  });
-                                                });
-                                              }
-                                            },
-                                            child: Container(
-                                                width: double.infinity,
-                                                height: 150,
-                                                decoration: BoxDecoration(
-                                                  color: ColorStyle.fill_form,
-                                                ),
-                                                child: DottedBorder(
-                                                    color: Colors.black,
-                                                    strokeWidth: 1,
-                                                    dashPattern: [14, 8],
-                                                    borderType:
-                                                        BorderType.RRect,
-                                                    // radius: Radius.circular(10),
-                                                    child: Center(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(16.0),
-                                                        child: uploadFile2 ==
-                                                                true
-                                                            ? Image.file(
-                                                                pickedImage2!,
-                                                                height:
-                                                                    90, // Atur ukuran sesuai kebutuhan
-                                                                width: 90,
-                                                                fit: BoxFit
-                                                                    .cover,
-                                                              )
-                                                            : Column(
-                                                                children: [
-                                                                  Image.memory(
-                                                                    response
-                                                                        .bodyBytes,
-                                                                    height:
-                                                                        80, // Atur ukuran sesuai kebutuhan
-                                                                    width: 80,
-                                                                    fit: BoxFit
-                                                                        .cover,
-                                                                  ),
-                                                                  Padding(
-                                                                      padding: EdgeInsets.only(
-                                                                          bottom:
-                                                                              8)),
-                                                                  Text(
-                                                                    "Click to Upload",
-                                                                    style: GoogleFonts.inter(
-                                                                        color: ColorStyle
-                                                                            .alert_ungu,
-                                                                        fontSize:
-                                                                            16,
-                                                                        fontWeight:
-                                                                            FontWeight.w600),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                      ),
-                                                    ))),
-                                          ),
-                                          Text(
-                                            "Note:Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB",
-                                            style: GoogleFonts.inter(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w400),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                    editFeldNonMandatory("Keterangan",
-                                        item.keterangan, keteranganController),
-                                    // tanggalEdit(
-                                    //     "Kadaluarsa",
-                                    //     DateFormat('dd/MM/yyyy')
-                                    //         .format(item.kadaluarsa),
-                                    //     kadaluarsaController),
-                                    // dropdownSatuanEdit(item.satuan),
-                                    // editFeld("Harga Beli", value, edit)
-                                    // editFeld("Jumlah Barang",
-                                    //     item.jumlah.toString(), jumlahController),
-                                    // inputImage(),
-                                    // buildFormCaraPemakaian2(
-                                    //     "Cara Pemakaian",
-                                    //     item.caraPemakaian,
-                                    //     caraPemakaianController),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 16, right: 16),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
                                     SizedBox(
-                                      width: 120,
-                                      height: 30,
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          _validasiTerisi = true;
-                                          if (_formKey.currentState!
-                                              .validate()) {
-                                            Navigator.pop(context);
-                                            _alertInput(
-                                                "put", "mengedit", "edit");
-                                          }
-                                          // Navigator.pop(context);
-                                          // _alertDone(item, "diedit");
-                                          // setState(() {
-                                          //   _alertInput("put", "diedit", item.idObat);
-                                          //   print(item.idObat);
-                                          // 🔹 Ini yang memastikan UI diperbarui
-                                          // item.nomorKartu =
-                                          //     nomorKartuController.text;
-                                          // item.nomorBatch =
-                                          //     nomorBatchController.text;
-                                          // item.kode = kodeController.text;
-                                          // item.kategori =
-                                          //     _selectedKategoriEdit ??
-                                          //         item.kategori;
-                                          // item.namaObat =
-                                          //     namaObatController.text;
-                                          // item.kadaluarsa =
-                                          //     DateFormat('dd/MM/yyyy').parse(
-                                          //         kadaluarsaController.text);
-                                          // item.satuan = _selectedSatuanEdit ??
-                                          //     item.satuan;
-                                          // item.jumlah =
-                                          //     int.parse(jumlahController.text);
-                                          // item.caraPemakaian =
-                                          //     caraPemakaianController.text;
-                                          // }
-                                          // );
-                                          // _updateProduk(
-                                          //     item,
-                                          //     nomorKartuController,
-                                          //     nomorBatchController,
-                                          //     kodeController,
-                                          //     kategoriController,
-                                          //     namaObatController,
-                                          //     kadaluarsaController,
-                                          //     satuanController,
-                                          //     jumlahController,
-                                          //     caraPemakaianController);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 6),
-                                          backgroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            side: const BorderSide(
-                                                color: ColorStyle.button_green,
-                                                width: 1),
+                                      height: 15,
+                                    ),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 16.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          SizedBox(
+                                            width: 100,
+                                            height: 35,
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                // Validasi
+                                                if (komposisiEdit.isEmpty ||
+                                                    isiIdObatEdit == null ||
+                                                    isiSatuanEdit == null ||
+                                                    jumlahObatRacikEdit
+                                                        .text.isEmpty) {
+                                                  // Tampilkan notifikasi / alert
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            'Harap lengkapi semua data racikan')),
+                                                  );
+                                                  return;
+                                                }
+                                                // Buat ObatRacik baru
+                                                ObatRacik racikBaru = ObatRacik(
+                                                  namaRacik:
+                                                      isiIdObatEdit!.namaRacik,
+                                                  satuan:
+                                                      isiSatuanEdit!.namaSatuan,
+                                                  idnamaRacik: isiIdObatEdit!
+                                                      .idObatRacik,
+                                                  idsatuan:
+                                                      isiSatuanEdit!.idSatuan,
+                                                  jumlah:
+                                                      jumlahObatRacikEdit.text,
+                                                  totalHarga: 0,
+                                                  aturanPakai: "",
+                                                  caraPakai: "",
+                                                  keteranganPakai: "",
+                                                  komposisi: [],
+                                                );
+
+// Tambahkan komposisi
+                                                for (var i = 0;
+                                                    i < komposisiEdit.length;
+                                                    i++) {
+                                                  racikBaru.komposisi
+                                                      .add(KomposisiObat(
+                                                    idObat:
+                                                        komposisiEdit[i].idObat,
+                                                    namaObat: komposisiEdit[i]
+                                                        .namaObat,
+                                                    jumlah: num.parse(
+                                                        komposisiEdit[i]
+                                                            .jumlahController
+                                                            .text),
+                                                    dosis: komposisiEdit[i]
+                                                        .dosisController
+                                                        .text,
+                                                  ));
+                                                }
+                                                String temp =
+                                                    '''{"kuantitas": ${item.jumlah},
+"ingredients": [''';
+                                                for (var i = 0;
+                                                    i <
+                                                        racikBaru
+                                                            .komposisi.length;
+                                                    i++) {
+                                                  setState(() {
+                                                    if (i ==
+                                                        racikBaru.komposisi
+                                                                .length -
+                                                            1) {
+                                                      temp = temp +
+                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}}';
+                                                    } else
+                                                      temp = temp +
+                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}},';
+                                                  });
+                                                }
+                                                setState(() {
+                                                  temp = temp + ']}';
+                                                });
+                                                print("TEST TEMP");
+                                                print(temp);
+                                                String url =
+                                                    "http://leap.crossnet.co.id:2688/PoS/calculateharga";
+                                                var response = await http.post(
+                                                    Uri.parse(url),
+                                                    headers: {
+                                                      'Authorization':
+                                                          '${global.token}',
+                                                      'x-api-key':
+                                                          '${global.xApiKey}',
+                                                      "Content-Type":
+                                                          "application/json" // Tambahkan ini juga!
+                                                    },
+                                                    body: temp);
+                                                print(response.statusCode);
+                                                print(response.body);
+                                                if (response.statusCode ==
+                                                    200) {
+                                                  var jsonObject =
+                                                      jsonDecode(response.body);
+                                                  print(jsonObject);
+                                                  // print('data: $data');
+                                                  setState(() {
+                                                    racikBaru.totalHarga =
+                                                        jsonObject["data"]
+                                                            ["total_harga"];
+                                                  });
+                                                } else {
+                                                  throw Exception(
+                                                      "Gagal Load Data Detail Obat Racik");
+                                                }
+
+                                                setState(() {
+                                                  if (indexEdit != null) {
+                                                    // Mode edit
+                                                    daftarObatRacik[
+                                                        indexEdit!] = racikBaru;
+                                                    indexEdit = null;
+                                                  } else {
+                                                    // Mode tambah baru
+                                                    daftarObatRacik
+                                                        .add(racikBaru);
+                                                  }
+
+                                                  // // Reset form
+                                                  // komposisiEdit.clear();
+                                                  // isiIdObatEdit = null;
+                                                  // isiSatuanEdit = null;
+                                                  // jumlahObatRacikEdit.clear();
+                                                });
+
+                                                // Simpan ke daftar racikan
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 5),
+                                                backgroundColor:
+                                                    ColorStyle.primary,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                "SIMPAN",
+                                                style: GoogleFonts.inter(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        child: Text("SIMPAN",
-                                            style: GoogleFonts.inter(
-                                                color: ColorStyle.button_green,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600)),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -713,284 +1400,7 @@ class _TransaksiPage extends State<TransaksiPage> {
     );
   }
 
-  void _inputProdukBaru() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState2) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return Dialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Container(
-                    width: constraints.maxWidth *
-                        0.6, // Sesuaikan dengan ukuran layar
-                    height: constraints.maxHeight *
-                        0.9, // Batasi tinggi agar tidak terlalu besar
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Container(
-                          decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                topRight: Radius.circular(10),
-                              ),
-                              border: Border(
-                                  bottom: BorderSide(
-                                      color: ColorStyle.button_grey,
-                                      width: 1))),
-                          padding: const EdgeInsets.only(
-                              top: 8, left: 23, bottom: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Input Data Obat",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: ColorStyle.text_dalam_kolom,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 23),
-                                child: IconButton(
-                                  icon: Icon(Icons.close,
-                                      color: ColorStyle.text_dalam_kolom),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // SizedBox(height: 12),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Wrap(
-                              spacing: 16,
-                              runSpacing: 16,
-                              children: [
-                                Form(
-                                  key: _formKey,
-                                  child: Column(
-                                    children: [
-                                      inputField("Nama Obat", "Nama Obat",
-                                          namaObat_text),
-                                      // dropdownKategori(),
-                                      inputField("Harga Beli", "Harga Beli",
-                                          hargaBeli_Text),
-                                      inputField("Harga Jual", "Harga Jual",
-                                          hargajual_text),
-                                      // dropdownSatuan(),
-                                      inputField("Stock Minimum",
-                                          "Stock Minimum", stokBarang_text),
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            left: 16, right: 16, top: 10.27),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  "Upload Gambar Kategori Obat",
-                                                  style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 14),
-                                                ),
-                                                Text(
-                                                  " *",
-                                                  style: GoogleFonts.inter(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      color: ColorStyle
-                                                          .button_red),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 8),
-                                            InkWell(
-                                              onTap: () async {
-                                                final im.XFile? photo =
-                                                    await picker.pickImage(
-                                                        source: im.ImageSource
-                                                            .gallery);
-                                                if (photo != null) {
-                                                  print("Berhasil pick photo");
-                                                  setState2(() {
-                                                    pickedImage =
-                                                        File(photo.path);
-                                                    uploadFile = true;
-                                                  });
-                                                  pickedImageByte = await photo
-                                                      .readAsBytes()
-                                                      .whenComplete(() {
-                                                    setState2(() {
-                                                      uploadFile = true;
-                                                    });
-                                                  });
-                                                }
-                                              },
-                                              child: Container(
-                                                  width: double.infinity,
-                                                  height: 120,
-                                                  decoration: BoxDecoration(
-                                                    color: ColorStyle.fill_form,
-                                                  ),
-                                                  child: DottedBorder(
-                                                      color: Colors.black,
-                                                      strokeWidth: 1,
-                                                      dashPattern: [14, 8],
-                                                      borderType:
-                                                          BorderType.RRect,
-                                                      // radius: Radius.circular(10),
-                                                      child: Center(
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(16.0),
-                                                          child: uploadFile ==
-                                                                  true
-                                                              ? Image.file(
-                                                                  pickedImage!,
-                                                                  height:
-                                                                      80, // Atur ukuran sesuai kebutuhan
-                                                                  width: 80,
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                )
-                                                              : Column(
-                                                                  children: [
-                                                                    Image.asset(
-                                                                      "images/upload_pict.png",
-                                                                      height:
-                                                                          50,
-                                                                      width: 50,
-                                                                    ),
-                                                                    Padding(
-                                                                        padding:
-                                                                            EdgeInsets.only(bottom: 8)),
-                                                                    Text(
-                                                                      "Click to Upload",
-                                                                      style: GoogleFonts.inter(
-                                                                          color: ColorStyle
-                                                                              .alert_ungu,
-                                                                          fontSize:
-                                                                              16,
-                                                                          fontWeight:
-                                                                              FontWeight.w600),
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                        ),
-                                                      ))),
-                                            ),
-                                            Text(
-                                              "Note:Gambar hanya bisa jpg, jpeg, png dan maksimal 2MB",
-                                              style: GoogleFonts.inter(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      inputFieldNonMandatory("Keterangan",
-                                          "Keterangan", keterangan_text),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 16, right: 16),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      SizedBox(
-                                        width: 120,
-                                        height: 30,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            _validasiTerisi = true;
-                                            if (_formKey.currentState!
-                                                .validate()) {
-                                              Navigator.pop(context);
-                                              _alertInput(
-                                                  "post", "diinput", "input");
-                                            }
-                                            // Navigator.pop(context);
-                                            // _alertDone(item, "diedit");
-                                            // _alertInput();
-                                            // _alertDone("diinput");
-                                            // _updateProduk(
-                                            //     item,
-                                            //     nomorKartuController,
-                                            //     nomorBatchController,
-                                            //     kodeController,
-                                            //     kategoriController,
-                                            //     namaObatController,
-                                            //     kadaluarsaController,
-                                            //     satuanController,
-                                            //     jumlahController,
-                                            //     caraPemakaianController);
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 6),
-                                            backgroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              side: const BorderSide(
-                                                  color:
-                                                      ColorStyle.button_green,
-                                                  width: 1),
-                                            ),
-                                          ),
-                                          child: Text("KONFIRMASI",
-                                              style: GoogleFonts.inter(
-                                                  color:
-                                                      ColorStyle.button_green,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _alertDelete(Products item) {
+  void _alertDelete(ProdukSemua item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -1104,130 +1514,6 @@ class _TransaksiPage extends State<TransaksiPage> {
     );
   }
 
-  void _alertInput(String condition, String isi, String isi2) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FractionallySizedBox(
-                widthFactor: 0.5, // 50% dari lebar layar
-                heightFactor: 0.55, // 50% dari tinggi layar
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // Tidak bisa di-scroll
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        "images/input.png",
-                        width: constraints.maxWidth *
-                            0.08, // Ukuran gambar responsif
-                        height: constraints.maxWidth * 0.08,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Apakah Anda yakin akan \n ${isi} data ini?",
-                        style: GoogleFonts.montserrat(
-                          fontWeight: FontWeight.w600,
-                          fontSize: constraints.maxWidth *
-                              0.02, // Ukuran teks responsif
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 23),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: constraints.maxWidth *
-                                  0.15, // Ukuran button responsif
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.fill_stroke,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: Text(
-                                  "Tidak",
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: constraints.maxWidth * 0.15,
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  try {
-                                    if (condition == "post") {
-                                      await postData();
-                                      Navigator.pop(context);
-                                      _alertDone("diinput");
-                                    } else if (condition == "put") {
-                                      await putData(idObatPut);
-                                      Navigator.pop(context);
-                                      _alertDone("diedit");
-                                    }
-                                  } catch (e) {
-                                    print("Error saat simpan: $e");
-                                    // tampilkan dialog error juga kalau perlu
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                        color: ColorStyle.button_yellow,
-                                        width: 1),
-                                  ),
-                                ),
-                                child: Text(
-                                  "Iya, ${isi2}",
-                                  style: GoogleFonts.inter(
-                                    color: ColorStyle.button_yellow,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   void _alertDone(String isi) {
     showDialog(
       context: context,
@@ -1303,6 +1589,14 @@ class _TransaksiPage extends State<TransaksiPage> {
     // TODO: implement initState
     super.initState();
     getDataAPI();
+    getDataAPIObatRacik();
+    getDataAPISatuan();
+
+    // if (isiIdObat!.idObatRacik != null) {
+    //   setState(() {
+    //     getDetailObatRacik();
+    //   });
+    // }
 
     filterData = List.from(listProduk);
   }
@@ -1329,34 +1623,17 @@ class _TransaksiPage extends State<TransaksiPage> {
   int _rowsPerPage = 10; // Default jumlah baris per halaman
   int _currentPage = 0; // Halaman saat ini
 
-  List<Map<String, dynamic>> items = [
-    {"nama": "Paracetamol", "harga": 3500, "jumlah": 0},
-    {"nama": "Allopurinol", "harga": 4000, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-    {"nama": "Ibuprofen", "harga": 5500, "jumlah": 0},
-  ];
-
-  num hitungTotal() {
-    return items.fold(0, (sum, item) => sum + item["harga"] * item["jumlah"]);
-  }
-
   void tambahJumlah(int index) {
     final oldItem = keranjang[index];
     final newItem = Item(
-      idObat: oldItem.idObat,
-      kuantitas: oldItem.kuantitas + 1,
-      namaObat: oldItem.namaObat,
-      aturanPakai: oldItem.aturanPakai,
-      caraPakai: oldItem.caraPakai,
-      hargaObat: oldItem.hargaObat,
-      keteranganPakai: oldItem.keteranganPakai,
-    );
+        idObat: oldItem.idObat,
+        kuantitas: oldItem.kuantitas + 1,
+        namaObat: oldItem.namaObat,
+        aturanPakai: oldItem.aturanPakai,
+        caraPakai: oldItem.caraPakai,
+        hargaObat: oldItem.hargaObat,
+        keteranganPakai: oldItem.keteranganPakai,
+        jumlahObatReal: oldItem.jumlahObatReal);
 
     setState(() {
       keranjang[index] = newItem;
@@ -1368,14 +1645,14 @@ class _TransaksiPage extends State<TransaksiPage> {
 
     if (oldItem.kuantitas > 1) {
       final newItem = Item(
-        idObat: oldItem.idObat,
-        kuantitas: oldItem.kuantitas - 1,
-        aturanPakai: oldItem.aturanPakai,
-        caraPakai: oldItem.caraPakai,
-        hargaObat: oldItem.hargaObat,
-        namaObat: oldItem.namaObat,
-        keteranganPakai: oldItem.keteranganPakai,
-      );
+          idObat: oldItem.idObat,
+          kuantitas: oldItem.kuantitas - 1,
+          aturanPakai: oldItem.aturanPakai,
+          caraPakai: oldItem.caraPakai,
+          hargaObat: oldItem.hargaObat,
+          namaObat: oldItem.namaObat,
+          keteranganPakai: oldItem.keteranganPakai,
+          jumlahObatReal: oldItem.jumlahObatReal);
 
       setState(() {
         keranjang[index] = newItem;
@@ -1388,9 +1665,36 @@ class _TransaksiPage extends State<TransaksiPage> {
     }
   }
 
-  double hitungTotalHarga(List<Item> keranjang) {
+  // ISI LISTAN
+  // List<ObatRacik> daftarObatRacik = [];
+  List<KomposisiInput> komposisiList = [];
+  void tambahKomposisi(String namaObat, String idObat) {
+    setState(() {
+      komposisiList.add(KomposisiInput(
+          namaObat: namaObat,
+          idObat: idObat,
+          jumlahController: TextEditingController(),
+          dosisController: TextEditingController()));
+    });
+  }
+
+  double hitungTotalHarga(
+    List<Item> keranjang,
+  ) {
     return keranjang.fold(
         0, (total, item) => total + item.hargaObat * item.kuantitas);
+  }
+
+//  double hitungTotalHarga2(List<ObatRacik> obatRacik, ) {
+//     return obatRacik.fold(
+//         0, (total, item) => item.totalHarga.toDouble());
+//   }
+  double hitungTotalHarga2(List<ObatRacik> obatRacik) {
+    double total = 0.0;
+    for (var item in obatRacik) {
+      total += item.totalHarga.toDouble();
+    }
+    return total;
   }
 
   bool pilihButton = true;
@@ -1401,7 +1705,7 @@ class _TransaksiPage extends State<TransaksiPage> {
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex =
         (startIndex + _rowsPerPage).clamp(0, filterData.length); // Batas aman
-    List<Products> paginatedData = filterData.sublist(startIndex, endIndex);
+    List<ProdukSemua> paginatedData = filterData.sublist(startIndex, endIndex);
     return Scaffold(
       // appBar: NavbarTop(
       //     title: "PRODUK",
@@ -1602,63 +1906,68 @@ class _TransaksiPage extends State<TransaksiPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(
-                              width: 100,
-                              // width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    pilihButton = true;
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  backgroundColor: pilihButton
-                                      ? ColorStyle.primary
-                                      : ColorStyle.putih_background,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 100,
+                                  // width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        pilihButton = true;
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      backgroundColor: pilihButton
+                                          ? ColorStyle.primary
+                                          : ColorStyle.putih_background,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text("Obat",
+                                        style: GoogleFonts.montserrat(
+                                            color: pilihButton
+                                                ? Colors.white
+                                                : Colors.black,
+                                            fontWeight: FontWeight.w600)),
                                   ),
                                 ),
-                                child: Text("Obat",
-                                    style: GoogleFonts.montserrat(
-                                        color: pilihButton
-                                            ? Colors.white
-                                            : Colors.black,
-                                        fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            SizedBox(
-                              width: 100,
-                              // width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    pilihButton = false;
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  backgroundColor: !pilihButton
-                                      ? ColorStyle.primary
-                                      : ColorStyle.putih_background,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                SizedBox(
+                                  width: 100,
+                                  // width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        pilihButton = false;
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      backgroundColor: !pilihButton
+                                          ? ColorStyle.primary
+                                          : ColorStyle.putih_background,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text("Racikan",
+                                        style: GoogleFonts.montserrat(
+                                            color: !pilihButton
+                                                ? Colors.white
+                                                : Colors.black,
+                                            fontWeight: FontWeight.w600)),
                                   ),
                                 ),
-                                child: Text("Racikan",
-                                    style: GoogleFonts.montserrat(
-                                        color: !pilihButton
-                                            ? Colors.white
-                                            : Colors.black,
-                                        fontWeight: FontWeight.w600)),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -1667,13 +1976,13 @@ class _TransaksiPage extends State<TransaksiPage> {
                             ? Column(
                                 children: [
                                   SizedBox(
-                                    height: 400,
+                                    height: MediaQuery.of(context).size.height *
+                                        0.6,
                                     child: GridView.builder(
                                       padding: EdgeInsets.all(8),
                                       gridDelegate:
                                           SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 2,
-
                                         mainAxisExtent:
                                             150, // ubah tinggi kotak
                                         childAspectRatio: 2.7,
@@ -1768,7 +2077,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                             ),
                                                           ),
                                                           if (produk
-                                                                  .stokMinimum <=
+                                                                  .stokObatReal! <=
                                                               10)
                                                             Container(
                                                               width: 61,
@@ -1779,7 +2088,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                               decoration:
                                                                   BoxDecoration(
                                                                 color: produk
-                                                                            .stokMinimum ==
+                                                                            .stokObatReal ==
                                                                         0
                                                                     ? ColorStyle
                                                                         .button_red
@@ -1796,7 +2105,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                                 border:
                                                                     Border.all(
                                                                   color: produk
-                                                                              .stokMinimum ==
+                                                                              .stokObatReal ==
                                                                           0
                                                                       ? ColorStyle
                                                                           .button_red
@@ -1806,7 +2115,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                                 ),
                                                               ),
                                                               child: Text(
-                                                                produk.stokMinimum ==
+                                                                produk.stokObatReal ==
                                                                         0
                                                                     ? "HABIS"
                                                                     : "SISA",
@@ -1845,7 +2154,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                           SizedBox(
                                                             width: 100,
                                                             child: Text(
-                                                              "Stock: ${produk.stokMinimum} ${produk.namaSatuan}",
+                                                              "Stock: ${produk.stokObatReal} ${produk.namaSatuan}",
                                                               overflow:
                                                                   TextOverflow
                                                                       .visible,
@@ -1898,60 +2207,68 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                       SizedBox(
                                                         height: 8,
                                                       ),
-                                                      SizedBox(
-                                                        width: 100,
-                                                        child: ElevatedButton(
-                                                          onPressed: () {
-                                                            final selected =
-                                                                Item(
+                                                      produk.stokObatReal! > 0
+                                                          ? SizedBox(
+                                                              width: 100,
+                                                              height: 35,
+                                                              child:
+                                                                  ElevatedButton(
+                                                                onPressed: () {
+                                                                  final selected =
+                                                                      Item(
                                                                     idObat: produk
                                                                         .idObat,
                                                                     kuantitas:
-                                                                        1, // atau nilai default, bisa diganti pakai input
+                                                                        1,
                                                                     aturanPakai:
-                                                                        "", // contoh
+                                                                        "",
                                                                     caraPakai:
-                                                                        "", // contoh
+                                                                        "",
                                                                     keteranganPakai:
                                                                         "",
                                                                     namaObat: produk
                                                                         .namaObat,
                                                                     hargaObat:
                                                                         produk
-                                                                            .hargaJual // contoh
-                                                                    );
-                                                            setState(() {
-                                                              keranjang.add(
-                                                                  selected);
-                                                            });
-                                                          },
-                                                          style: ElevatedButton
-                                                              .styleFrom(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        12),
-                                                            backgroundColor:
-                                                                ColorStyle
-                                                                    .primary,
-                                                            shape:
-                                                                RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          4),
-                                                            ),
-                                                          ),
-                                                          child: Text("Tambah",
-                                                              style: GoogleFonts.inter(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600)),
-                                                        ),
-                                                      ),
+                                                                            .hargaJual,
+                                                                    jumlahObatReal:
+                                                                        produk.stokObatReal ??
+                                                                            0,
+                                                                  );
+                                                                  setState(() {
+                                                                    keranjang.add(
+                                                                        selected);
+                                                                  });
+                                                                },
+                                                                style: ElevatedButton
+                                                                    .styleFrom(
+                                                                  padding: const EdgeInsets
+                                                                      .symmetric(
+                                                                      vertical:
+                                                                          5),
+                                                                  backgroundColor:
+                                                                      ColorStyle
+                                                                          .primary,
+                                                                  shape:
+                                                                      RoundedRectangleBorder(
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(4),
+                                                                  ),
+                                                                ),
+                                                                child: Text(
+                                                                  "Tambah",
+                                                                  style: GoogleFonts.inter(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600),
+                                                                ),
+                                                              ),
+                                                            )
+                                                          : SizedBox
+                                                              .shrink(), // <- Tidak tampil sama sekali jika stok 0
                                                     ],
                                                   ),
                                                 ),
@@ -2110,8 +2427,646 @@ class _TransaksiPage extends State<TransaksiPage> {
                                 ],
                               )
                             : SizedBox(
-                                height: 400,
-                                child: Text("OBATTTT RACIK"),
+                                // ISIAN OBAT RACIK
+                                height:
+                                    MediaQuery.of(context).size.height * 0.65,
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 16.0),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: ColorStyle.warna_form,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: ColorStyle.shadow
+                                                  .withOpacity(0.25),
+                                              spreadRadius: 0,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 1), // x dan y
+                                            ),
+                                          ],
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          "Nama Racik",
+                                                          style:
+                                                              GoogleFonts.inter(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                        ),
+                                                        SizedBox(height: 6),
+                                                        LayoutBuilder(
+                                                          builder: (context,
+                                                              constraints) {
+                                                            return Container(
+                                                              // width: 300,
+                                                              child: DropdownButtonFormField2<
+                                                                  ObatRacikModel>(
+                                                                isExpanded:
+                                                                    true,
+                                                                value:
+                                                                    isiIdObat,
+                                                                validator:
+                                                                    (value) {
+                                                                  if (value ==
+                                                                      null) {
+                                                                    return "Silahkan Pilih Nama Racik";
+                                                                  }
+                                                                  return null;
+                                                                },
+                                                                hint: Text(
+                                                                  "Pilih Nama Racik",
+                                                                  style:
+                                                                      GoogleFonts
+                                                                          .inter(
+                                                                    fontSize:
+                                                                        13,
+                                                                    color: ColorStyle
+                                                                        .text_hint,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w400,
+                                                                  ),
+                                                                ),
+                                                                items:
+                                                                    listObatRacik!
+                                                                        .map((e) =>
+                                                                            DropdownMenuItem(
+                                                                              value: e,
+                                                                              child: Text(
+                                                                                "${e.namaRacik}",
+                                                                                style: GoogleFonts.inter(
+                                                                                  fontSize: 13,
+                                                                                  color: ColorStyle.text_hint,
+                                                                                  fontWeight: FontWeight.w400,
+                                                                                ),
+                                                                                overflow: TextOverflow.ellipsis,
+                                                                              ),
+                                                                            ))
+                                                                        .toList(),
+                                                                onChanged:
+                                                                    (value) {
+                                                                  _formKey
+                                                                      .currentState
+                                                                      ?.validate();
+                                                                  setState(() {
+                                                                    isiIdObat =
+                                                                        value!;
+                                                                    getDetailObatRacik(
+                                                                        value);
+                                                                  });
+                                                                },
+                                                                decoration:
+                                                                    InputDecoration(
+                                                                  isDense: true,
+                                                                  contentPadding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          bottom:
+                                                                              4), // tipis
+                                                                  hintStyle:
+                                                                      GoogleFonts.inter(
+                                                                          fontSize:
+                                                                              13),
+                                                                  filled: false,
+                                                                  border:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.black),
+                                                                  ),
+                                                                  enabledBorder:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide:
+                                                                        BorderSide(
+                                                                            color:
+                                                                                Colors.black),
+                                                                  ),
+                                                                  focusedBorder:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: Colors
+                                                                            .black,
+                                                                        width:
+                                                                            1.5),
+                                                                  ),
+                                                                  errorBorder:
+                                                                      UnderlineInputBorder(
+                                                                    borderSide: BorderSide(
+                                                                        color: ColorStyle
+                                                                            .button_red,
+                                                                        width:
+                                                                            1),
+                                                                  ),
+                                                                ),
+                                                                dropdownStyleData:
+                                                                    DropdownStyleData(
+                                                                  // width: 300,
+                                                                  maxHeight:
+                                                                      200,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    border: Border.all(
+                                                                        color: ColorStyle
+                                                                            .button_grey),
+                                                                    color: ColorStyle
+                                                                        .fill_form,
+                                                                    borderRadius:
+                                                                        BorderRadius
+                                                                            .circular(4),
+                                                                  ),
+                                                                ),
+                                                                menuItemStyleData:
+                                                                    const MenuItemStyleData(
+                                                                  padding: EdgeInsets
+                                                                      .symmetric(
+                                                                          horizontal:
+                                                                              8,
+                                                                          vertical:
+                                                                              4),
+                                                                ),
+                                                                iconStyleData:
+                                                                    const IconStyleData(
+                                                                  icon: Icon(
+                                                                      Icons
+                                                                          .arrow_drop_down,
+                                                                      size: 16,
+                                                                      color: Colors
+                                                                          .black),
+                                                                  openMenuIcon: Icon(
+                                                                      Icons
+                                                                          .arrow_drop_up,
+                                                                      size: 16,
+                                                                      color: Colors
+                                                                          .black),
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    width: 32,
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Satuan",
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      LayoutBuilder(
+                                                        builder: (context,
+                                                            constraints) {
+                                                          return Container(
+                                                            width: 100,
+                                                            child:
+                                                                DropdownButtonFormField2<
+                                                                    SatuanObat>(
+                                                              isExpanded: true,
+                                                              value: isiSatuan,
+                                                              validator:
+                                                                  (value) {
+                                                                if (value ==
+                                                                    null) {
+                                                                  return "Silahkan Pilih Satuan";
+                                                                }
+                                                                return null;
+                                                              },
+                                                              hint: Text(
+                                                                "Pilih Satuan",
+                                                                style:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  fontSize: 13,
+                                                                  color: ColorStyle
+                                                                      .text_hint,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
+                                                                ),
+                                                              ),
+                                                              items: listSatuan!
+                                                                  .map((e) =>
+                                                                      DropdownMenuItem(
+                                                                        value:
+                                                                            e,
+                                                                        child:
+                                                                            Text(
+                                                                          "${e.namaSatuan}",
+                                                                          style:
+                                                                              GoogleFonts.inter(
+                                                                            fontSize:
+                                                                                13,
+                                                                            color:
+                                                                                ColorStyle.text_hint,
+                                                                            fontWeight:
+                                                                                FontWeight.w400,
+                                                                          ),
+                                                                          overflow:
+                                                                              TextOverflow.ellipsis,
+                                                                        ),
+                                                                      ))
+                                                                  .toList(),
+                                                              onChanged:
+                                                                  (value) {
+                                                                _formKey
+                                                                    .currentState
+                                                                    ?.validate();
+                                                                setState(() {
+                                                                  isiSatuan =
+                                                                      value!;
+                                                                });
+                                                              },
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                isDense: true,
+                                                                contentPadding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        bottom:
+                                                                            4), // tipis
+                                                                hintStyle:
+                                                                    GoogleFonts.inter(
+                                                                        fontSize:
+                                                                            13),
+                                                                filled: false,
+                                                                border:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.black),
+                                                                ),
+                                                                enabledBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.black),
+                                                                ),
+                                                                focusedBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide: BorderSide(
+                                                                      color: Colors
+                                                                          .black,
+                                                                      width:
+                                                                          1.5),
+                                                                ),
+                                                                errorBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide: BorderSide(
+                                                                      color: ColorStyle
+                                                                          .button_red,
+                                                                      width: 1),
+                                                                ),
+                                                              ),
+                                                              dropdownStyleData:
+                                                                  DropdownStyleData(
+                                                                width: 100,
+                                                                maxHeight: 200,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  border: Border.all(
+                                                                      color: ColorStyle
+                                                                          .button_grey),
+                                                                  color: ColorStyle
+                                                                      .fill_form,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              4),
+                                                                ),
+                                                              ),
+                                                              menuItemStyleData:
+                                                                  const MenuItemStyleData(
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            4),
+                                                              ),
+                                                              iconStyleData:
+                                                                  const IconStyleData(
+                                                                icon: Icon(
+                                                                    Icons
+                                                                        .arrow_drop_down,
+                                                                    size: 16,
+                                                                    color: Colors
+                                                                        .black),
+                                                                openMenuIcon: Icon(
+                                                                    Icons
+                                                                        .arrow_drop_up,
+                                                                    size: 16,
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    width: 32,
+                                                  ),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        "Jumlah",
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600),
+                                                      ),
+                                                      SizedBox(height: 6),
+                                                      SizedBox(
+                                                        width:
+                                                            80, // Sesuaikan lebar
+                                                        // height:
+                                                        //     40, // Untuk jaga tinggi agar konsisten
+                                                        child: TextFormField(
+                                                          controller: isiJumlah,
+                                                          keyboardType:
+                                                              TextInputType
+                                                                  .number,
+                                                          style: TextStyle(
+                                                              fontSize:
+                                                                  14), // Font kecil
+                                                          decoration:
+                                                              InputDecoration(
+                                                            isDense:
+                                                                true, // Mengurangi tinggi padding
+                                                            contentPadding:
+                                                                EdgeInsets.only(
+                                                                    bottom:
+                                                                        8), // Padding minimal
+                                                            hintText: '0',
+                                                            hintStyle: TextStyle(
+                                                                fontSize: 13,
+                                                                color: Colors
+                                                                    .grey),
+                                                            border:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black),
+                                                            ),
+                                                            enabledBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black),
+                                                            ),
+                                                            focusedBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  width: 1.5),
+                                                            ),
+                                                          ),
+                                                          validator: (value) {
+                                                            if (value == null ||
+                                                                value.isEmpty) {
+                                                              return 'Wajib isi';
+                                                            }
+                                                            return null;
+                                                          },
+                                                        ),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                height: 20,
+                                              ),
+                                              Text(
+                                                "KOMPOSISI",
+                                                style: GoogleFonts.inter(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                    decoration: TextDecoration
+                                                        .underline),
+                                              ),
+                                              SizedBox(
+                                                height: 15.5,
+                                              ),
+                                              ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: detailObatRacik
+                                                        ?.bahan!.length ??
+                                                    0,
+                                                itemBuilder: (context, index) {
+                                                  final item = detailObatRacik!
+                                                      .bahan[index];
+                                                  return listInputDataObatRacik(
+                                                      index, item.namaObat);
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 15,
+                                    ),
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(right: 16.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          SizedBox(
+                                            width: 100,
+                                            height: 35,
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                // Validasi
+                                                if (komposisiList.isEmpty ||
+                                                    isiIdObat == null ||
+                                                    isiSatuan == null ||
+                                                    isiJumlah.text.isEmpty) {
+                                                  // Tampilkan notifikasi / alert
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            'Harap lengkapi semua data racikan')),
+                                                  );
+                                                  return;
+                                                }
+                                                ObatRacik racikBaru = ObatRacik(
+                                                    namaRacik:
+                                                        isiIdObat!.namaRacik,
+                                                    satuan:
+                                                        isiSatuan!.namaSatuan,
+                                                    idnamaRacik:
+                                                        isiIdObat!.idObatRacik,
+                                                    idsatuan:
+                                                        isiSatuan!.idSatuan,
+                                                    jumlah: isiJumlah.text,
+                                                    totalHarga: 0,
+                                                    aturanPakai: "",
+                                                    caraPakai: "",
+                                                    keteranganPakai: "",
+                                                    komposisi: []); // copy list
+                                                for (var i = 0;
+                                                    i < komposisiList.length;
+                                                    i++) {
+                                                  setState(() {
+                                                    racikBaru.komposisi.add(
+                                                        KomposisiObat(
+                                                            idObat:
+                                                                komposisiList[i]
+                                                                    .idObat,
+                                                            namaObat:
+                                                                komposisiList[i]
+                                                                    .namaObat,
+                                                            jumlah: num.parse(
+                                                                komposisiList[i]
+                                                                    .jumlahController
+                                                                    .text),
+                                                            dosis: komposisiList[
+                                                                    i]
+                                                                .dosisController
+                                                                .text));
+                                                  });
+                                                }
+                                                setState(() {
+                                                  daftarObatRacik
+                                                      .add(racikBaru);
+                                                  komposisiList
+                                                      .clear(); // reset komposisi
+                                                  detailObatRacik!.bahan
+                                                      .clear();
+                                                  isiIdObat = null;
+                                                  isiSatuan = null;
+                                                  isiJumlah.clear();
+                                                });
+
+                                                String temp =
+                                                    '''{"kuantitas": ${racikBaru.jumlah},
+"ingredients": [''';
+                                                for (var i = 0;
+                                                    i <
+                                                        racikBaru
+                                                            .komposisi.length;
+                                                    i++) {
+                                                  setState(() {
+                                                    if (i ==
+                                                        racikBaru.komposisi
+                                                                .length -
+                                                            1) {
+                                                      temp = temp +
+                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}}';
+                                                    } else
+                                                      temp = temp +
+                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}},';
+                                                  });
+                                                }
+                                                setState(() {
+                                                  temp = temp + ']}';
+                                                });
+                                                print("TEST TEMP");
+                                                print(temp);
+                                                String url =
+                                                    "http://leap.crossnet.co.id:2688/PoS/calculateharga";
+                                                var response = await http.post(
+                                                    Uri.parse(url),
+                                                    headers: {
+                                                      'Authorization':
+                                                          '${global.token}',
+                                                      'x-api-key':
+                                                          '${global.xApiKey}',
+                                                      "Content-Type":
+                                                          "application/json" // Tambahkan ini juga!
+                                                    },
+                                                    body: temp);
+                                                print(response.statusCode);
+                                                print(response.body);
+                                                if (response.statusCode ==
+                                                    200) {
+                                                  var jsonObject =
+                                                      jsonDecode(response.body);
+                                                  print(jsonObject);
+                                                  // print('data: $data');
+                                                  setState(() {
+                                                    racikBaru.totalHarga =
+                                                        jsonObject["data"]
+                                                            ["total_harga"];
+                                                  });
+                                                } else {
+                                                  throw Exception(
+                                                      "Gagal Load Data Detail Obat Racik");
+                                                }
+
+                                                // Simpan ke daftar racikan
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 5),
+                                                backgroundColor:
+                                                    ColorStyle.primary,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                "Tambah",
+                                                style: GoogleFonts.inter(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               )
                       ],
                     ),
@@ -2155,70 +3110,279 @@ class _TransaksiPage extends State<TransaksiPage> {
                                 borderRadius: BorderRadius.circular(0),
                               ),
                               child: SizedBox(
-                                // batas maksimal tinggi container
                                 height:
-                                    280, // misal 300 pixel, bisa kamu sesuaikan
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis
-                                      .vertical, // scroll vertikal untuk data table
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis
-                                        .horizontal, // scroll horizontal untuk kolom
-                                    child: DataTable(
-                                      columns: [
-                                        DataColumn(
-                                            label: Text(
-                                          "Nama Obat",
-                                          style: GoogleFonts.inter(
-                                              fontWeight: FontWeight.w600),
-                                        )),
-                                        DataColumn(
-                                            label: Text(
-                                          "Jumlah",
-                                          style: GoogleFonts.inter(
-                                              fontWeight: FontWeight.w600),
-                                        )),
-                                        DataColumn(
-                                            label: Text(
-                                          "Harga",
-                                          style: GoogleFonts.inter(
-                                              fontWeight: FontWeight.w600),
-                                        )),
-                                      ],
-                                      rows: keranjang
-                                          .asMap()
-                                          .entries
-                                          .map((entry) {
-                                        int index = entry.key;
-                                        final item = entry.value;
-                                        return DataRow(
-                                          cells: [
-                                            DataCell(Text(item.namaObat)),
-                                            DataCell(Row(
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(Icons
-                                                      .remove_circle_outline),
-                                                  onPressed: () =>
-                                                      kurangJumlah(index),
+                                    MediaQuery.of(context).size.height * 0.25,
+                                width: MediaQuery.of(context).size.width *
+                                    0.47, // Lebih lebar
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minWidth: constraints.maxWidth,
+                                          ),
+                                          child: DataTable(
+                                            columnSpacing: 24,
+                                            columns: [
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Nama Obat",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
                                                 ),
-                                                Text(item.kuantitas.toString()),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                      Icons.add_circle_outline),
-                                                  onPressed: () =>
-                                                      tambahJumlah(index),
+                                              )),
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Jumlah",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
                                                 ),
-                                              ],
-                                            )),
-                                            DataCell(Text(
-                                                "${formatRupiah(hitungHargaperObat(item.kuantitas, item.hargaObat))},00")),
-                                            // "Rp ${hitungHargaperObat(item.kuantitas, item.hargaObat).toStringAsFixed(0).replaceAll('.', ',')},00")),
-                                          ],
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ),
+                                              )),
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Harga",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                ),
+                                              )),
+                                            ],
+                                            rows: keranjang
+                                                .asMap()
+                                                .entries
+                                                .map((entry) {
+                                              int index = entry.key;
+                                              final item = entry.value;
+                                              return DataRow(
+                                                cells: [
+                                                  DataCell(Expanded(
+                                                      child: Center(
+                                                          child: Text(
+                                                    item.namaObat,
+                                                    textAlign: TextAlign.center,
+                                                  )))),
+                                                  DataCell(Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      IconButton(
+                                                        icon: const Icon(Icons
+                                                            .remove_circle_outline),
+                                                        onPressed: () =>
+                                                            kurangJumlah(index),
+                                                      ),
+                                                      Text(item.kuantitas
+                                                          .toString()),
+                                                      IconButton(
+                                                        icon: const Icon(Icons
+                                                            .add_circle_outline),
+                                                        onPressed: item
+                                                                    .kuantitas <
+                                                                item
+                                                                    .jumlahObatReal
+                                                            ? () =>
+                                                                tambahJumlah(
+                                                                    index)
+                                                            : null,
+                                                      ),
+                                                    ],
+                                                  )),
+                                                  DataCell(Expanded(
+                                                    child: Center(
+                                                      child: Text(
+                                                        "${formatRupiah(hitungHargaperObat(item.kuantitas, item.hargaObat))},00",
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  )),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                boxShadow: [
+                                  BoxShadow(
+                                      color:
+                                          ColorStyle.shadow.withOpacity(0.25),
+                                      spreadRadius: 0,
+                                      blurRadius: 4,
+                                      offset: Offset(0, 1))
+                                ],
+                                borderRadius: BorderRadius.circular(0),
+                              ),
+                              child: SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.20,
+                                width: MediaQuery.of(context).size.width *
+                                    0.47, // Lebih lebar
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            minWidth: constraints.maxWidth,
+                                          ),
+                                          child: DataTable(
+                                            columnSpacing: 24,
+                                            columns: [
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Nama Obat Racik",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                ),
+                                              )),
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Jumlah",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                ),
+                                              )),
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Harga",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                ),
+                                              )),
+                                              DataColumn(
+                                                  label: Expanded(
+                                                child: Center(
+                                                  child: Text("Action",
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts.inter(
+                                                          fontWeight:
+                                                              FontWeight.w600)),
+                                                ),
+                                              )),
+                                            ],
+                                            rows: daftarObatRacik
+                                                .asMap()
+                                                .entries
+                                                .map((entry) {
+                                              int index = entry.key;
+                                              final item = entry.value;
+                                              return DataRow(
+                                                cells: [
+                                                  DataCell(Expanded(
+                                                      child: Center(
+                                                          child: InkWell(
+                                                    onTap: () {
+                                                      _editObatRacik(
+                                                          item, index);
+                                                    },
+                                                    child: Text(
+                                                      item.namaRacik,
+                                                      style: GoogleFonts.inder(
+                                                        color: Colors
+                                                            .blue, // Sesuaikan dengan ColorStyle.text_secondary jika perlu
+                                                        // fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        decoration:
+                                                            TextDecoration
+                                                                .underline,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  )))),
+                                                  DataCell(Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      // IconButton(
+                                                      //   icon: const Icon(Icons
+                                                      //       .remove_circle_outline),
+                                                      //   onPressed: () =>
+                                                      //       kurangJumlah(index),
+                                                      // ),
+                                                      Text(item.jumlah
+                                                          .toString()),
+                                                      // IconButton(
+                                                      //   icon: const Icon(Icons
+                                                      //       .add_circle_outline),
+                                                      //   onPressed: item
+                                                      //               .kuantitas <
+                                                      //           item
+                                                      //               .jumlahObatReal
+                                                      //       ? () =>
+                                                      //           tambahJumlah(
+                                                      //               index)
+                                                      //       : null,
+                                                      // ),
+                                                    ],
+                                                  )),
+                                                  DataCell(Expanded(
+                                                    child: Center(
+                                                      child: Text(
+                                                        "${formatRupiah(item.totalHarga)},00",
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  )),
+                                                  DataCell(Center(
+                                                      child: InkWell(
+                                                    child: Icon(Icons.delete),
+                                                    onTap: () {
+                                                      setState(() {
+                                                        daftarObatRacik
+                                                            .removeAt(index);
+                                                      });
+                                                    },
+                                                  ))),
+                                                ],
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ),
@@ -2234,7 +3398,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                     Text("Total Harga",
                                         style: GoogleFonts.inter(fontSize: 18)),
                                     Text(
-                                      "${formatRupiah(hitungTotalHarga(keranjang))},00",
+                                      "${formatRupiah(hitungTotalHarga(keranjang) + hitungTotalHarga2(daftarObatRacik))},00",
                                       style: GoogleFonts.inter(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w600,
@@ -2301,6 +3465,158 @@ class _TransaksiPage extends State<TransaksiPage> {
     );
   }
 
+  Widget listInputDataObatRacik(int index, String namaObat) {
+    final item = komposisiList[index];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Nama Obat",
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 6),
+                SizedBox(
+                  // width: 100, // Sesuaikan lebar
+                  // height:
+                  //     40, // Untuk jaga tinggi agar konsisten
+                  child: TextFormField(
+                    // onChanged: (value) =>
+                    //     komposisiList[index].namaObat = namaObat,
+                    readOnly: true,
+                    style: TextStyle(fontSize: 14), // Font kecil
+                    decoration: InputDecoration(
+                      isDense: true, // Mengurangi tinggi padding
+                      contentPadding:
+                          EdgeInsets.only(bottom: 8), // Padding minimal
+                      hintText: namaObat,
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Wajib isi';
+                      }
+                      return null;
+                    },
+                  ),
+                )
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 32,
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Jumlah",
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 6),
+              SizedBox(
+                width: 100, // Sesuaikan lebar
+                // height:
+                //     40, // Untuk jaga tinggi agar konsisten
+                child: TextFormField(
+                  controller: item.jumlahController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontSize: 14), // Font kecil
+                  decoration: InputDecoration(
+                    isDense: true, // Mengurangi tinggi padding
+                    contentPadding:
+                        EdgeInsets.only(bottom: 8), // Padding minimal
+                    hintText: '0',
+                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                    border: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1.5),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Wajib isi';
+                    }
+                    return null;
+                  },
+                ),
+              )
+            ],
+          ),
+          SizedBox(
+            width: 32,
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Dosis",
+                  style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 6),
+                SizedBox(
+                  // width: 100, // Sesuaikan lebar
+                  // height:
+                  //     40, // Untuk jaga tinggi agar konsisten
+                  child: TextFormField(
+                    keyboardType: TextInputType.text,
+                    controller: item.dosisController,
+                    style: TextStyle(fontSize: 14), // Font kecil
+                    decoration: InputDecoration(
+                      isDense: true, // Mengurangi tinggi padding
+                      contentPadding:
+                          EdgeInsets.only(bottom: 8), // Padding minimal
+                      hintText: 'Dosis',
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Wajib isi';
+                      }
+                      return null;
+                    },
+                  ),
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
   Widget detailField(String title, String value) {
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
@@ -2329,88 +3645,6 @@ class _TransaksiPage extends State<TransaksiPage> {
               ),
             ),
           )
-        ],
-      ),
-    );
-  }
-
-  Widget inputField(String title, String isi, TextEditingController edit) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                    fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              Text(
-                " *",
-                style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: ColorStyle.button_red),
-              ),
-            ],
-          ),
-          SizedBox(height: 4),
-          TextFormField(
-            controller: edit,
-            onChanged: (value) {
-              if (_validasiTerisi == true) {
-                _formKey.currentState?.validate();
-              }
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return "Tidak boleh kosong";
-              }
-              return null;
-            },
-            style: GoogleFonts.inter(
-                color: ColorStyle.tulisan_form,
-                fontSize: 13,
-                fontWeight: FontWeight.w400),
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: isi,
-              filled: true,
-              fillColor: ColorStyle.fill_form,
-              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-              hintStyle: GoogleFonts.inter(
-                  color: ColorStyle.tulisan_form,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                borderRadius: BorderRadius.circular(5),
-              ),
-
-              // Border saat ditekan (fokus)
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.black, width: 1),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: ColorStyle.button_red,
-                    width: 1), // Warna biru saat fokus
-                borderRadius: BorderRadius.circular(5),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                    color: ColorStyle.button_red,
-                    width: 1), // Warna biru saat fokus
-                borderRadius: BorderRadius.circular(5),
-              ),
-
-              // Border saat error
-            ),
-          ),
         ],
       ),
     );
@@ -2682,158 +3916,6 @@ class _TransaksiPage extends State<TransaksiPage> {
                       ],
                     ),
                   ))),
-        ],
-      ),
-    );
-  }
-
-  Widget tanggalEdit(String label, String hint, TextEditingController text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14)),
-              Text(
-                " *",
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: ColorStyle.button_red),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Stack(
-              alignment: Alignment.centerRight,
-              children: [
-                TextFormField(
-                  readOnly: true,
-                  controller: text,
-                  onTap: () {
-                    _selectedDate(context);
-                  },
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    contentPadding: EdgeInsets.only(left: 8, bottom: 17),
-                    hintStyle: TextStyle(
-                      color: ColorStyle.tulisan_form,
-                      fontSize: 12,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () {
-                      _selectedDate(context);
-                    },
-                    child: Icon(
-                      Icons.calendar_month_outlined,
-                      color: ColorStyle.tulisan_form,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget tanggalInput(String label, String hint, TextEditingController text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 10.27),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-              Text(
-                " *",
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: ColorStyle.button_red),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            height: 35,
-            // decoration: BoxDecoration(
-            //   border: Border.all(color: ColorStyle.fill_stroke),
-            //   color: ColorStyle.fill_form,
-            //   borderRadius: BorderRadius.circular(8),
-            // ),
-            // padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextFormField(
-              // readOnly: true,
-              controller: text,
-
-              // onTap: () {
-              //   _selectedDate(context);
-              // },
-              decoration: InputDecoration(
-                // isDense: true,
-                filled: true,
-                fillColor: ColorStyle.fill_form,
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    _selectedDate(context);
-                  },
-                  icon: Icon(
-                    Icons.calendar_month_outlined,
-                    color: ColorStyle.tulisan_form,
-                    size: 24,
-                  ),
-                ),
-                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-                hintText: hint,
-                hintStyle: TextStyle(
-                  color: ColorStyle.tulisan_form,
-                  fontSize: 12,
-                ),
-                // Border sebelum ditekan
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat ditekan (fokus)
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black, width: 1), // Warna biru saat fokus
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                // Border saat error
-                errorBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.button_red,
-                      width: 1), // Warna merah jika error
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

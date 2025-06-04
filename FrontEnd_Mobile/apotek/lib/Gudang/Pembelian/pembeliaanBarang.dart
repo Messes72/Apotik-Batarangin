@@ -39,6 +39,8 @@ class pagePembelian extends State<Pembeliaanbarang>
   String? _selectedKategoriEdit;
   String? _selectedSatuanEdit;
   final _formKey = GlobalKey<FormState>();
+  bool loadingData = true;
+
 
   void onMenuPressed() {
     setState(() {

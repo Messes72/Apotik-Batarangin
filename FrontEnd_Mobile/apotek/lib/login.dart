@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:apotek/global.dart' as globals;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Login2 extends StatelessWidget {
@@ -35,6 +36,7 @@ class Login extends StatefulWidget {
 class LoginPage extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   bool _validasiTerisi = false;
+  bool isLoading = false;
 
   var _email = TextEditingController();
   var _password = TextEditingController();
@@ -42,44 +44,58 @@ class LoginPage extends State<Login> {
     if (!_formKey.currentState!.validate()) {
       return; // Hentikan jika form tidak valid
     }
+    setState(() {
+      isLoading = true;
+    });
 
     final username = _email.text.trim();
     final password = _password.text.trim();
 
-    final response = await http.post(
-      Uri.parse('http://leap.crossnet.co.id:2688/login'),
-      headers: {'x-api-key': '${globals.xApiKey}'},
-      body: {"username": username, "password": password},
-    );
-    print(response.body);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print(data['data']['jwttoken']);
-      setState(() {
-        globals.token = data['data']['jwttoken'];
-        globals.nama = data['data']['nama'];
-      });
-      print(globals.token);
-      print(globals.nama);
-
-      // Simpan token di lokal
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', globals.token);
-      await prefs.setString('nama', globals.nama);
-
-      // Navigasi ke halaman utama
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyApp()),
+    try {
+      final response = await http.post(
+        Uri.parse('http://leap.crossnet.co.id:2688/login'),
+        headers: {'x-api-key': '${globals.xApiKey}'},
+        body: {"username": username, "password": password},
       );
-    } else {
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(data['data']['jwttoken']);
+        setState(() {
+          globals.token = data['data']['jwttoken'];
+          globals.nama = data['data']['nama'];
+        });
+        print(globals.token);
+        print(globals.nama);
+
+        // Simpan token di lokal
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', globals.token);
+        await prefs.setString('nama', globals.nama);
+
+        // Navigasi ke halaman utama
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MyApp()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Login gagal, periksa kembali kredensial!")),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Login gagal, periksa kembali kredensial!")),
+        const SnackBar(content: Text("Terjadi kesalahan saat login.")),
       );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
+
   // NANTI DIHAPUS YA jangan LUPAAAAAAAA !!!!!!!!!!!!!!!!!!!!!!!!!!!
   @override
   void initState() {
@@ -408,6 +424,19 @@ class LoginPage extends State<Login> {
               ),
             ),
           ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: LoadingAnimationWidget.flickr(
+                    leftDotColor: Colors.red,
+                    rightDotColor: Colors.blue,
+                    size: 50,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -98,6 +98,7 @@ class Products {
   final double hargaJual;
   final double hargaBeli;
   final int stokMinimum;
+  int? stokObatReal;
   // final double uprate;
   final DateTime createdAt;
   final String createdBy;
@@ -114,6 +115,7 @@ class Products {
     required this.hargaJual,
     required this.hargaBeli,
     required this.stokMinimum,
+    required this.stokObatReal,
     // required this.uprate,
     required this.createdAt,
     required this.createdBy,
@@ -132,6 +134,7 @@ class Products {
       hargaJual: (json['harga_jual'] ?? 0).toDouble(),
       hargaBeli: (json['harga_beli'] ?? 0).toDouble(),
       stokMinimum: json['stok_minimun'] ?? 0,
+      stokObatReal: json['stok_obatReal'] ?? 0,
       // uprate: (json['uprate'] ?? 0).toDouble(),
       createdAt: DateTime.parse(
           json['created_at'] ?? DateTime.now().toIso8601String()),
@@ -163,6 +166,23 @@ class Products {
   static List<Products> fromJsonList(List<dynamic> jsonList) {
     return jsonList.map((json) => Products.fromJson(json)).toList();
   }
+   static Future<int> getDataStok(String idDetail) async {
+  String url = "http://leap.crossnet.co.id:2688/PoS/stok/${idDetail}";
+  var response = await http.get(Uri.parse(url),
+      headers: {'Authorization': '$token', 'x-api-key': '$xApiKey'});
+
+  if (response.statusCode == 200) {
+    var jsonObject = jsonDecode(response.body);
+    var data = jsonObject['data'];
+    int stokObatReal = data['stok_barang'] ?? 0;
+    return stokObatReal;
+  } else {
+    print("Status: ${response.statusCode}");
+    print("Response Body: ${response.body}");
+    // Tidak ditemukan atau error lain → anggap stok = 0
+    return 0;
+  }
+}
 
   static Future<List<Products>> getData() async {
     String url =
@@ -194,15 +214,14 @@ class KategoriObat {
   final String updatedAt;
   final String catatan;
 
-  KategoriObat({
-    required this.id,
-    required this.idDepo,
-    required this.idKategori,
-    required this.nama,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.catatan
-  });
+  KategoriObat(
+      {required this.id,
+      required this.idDepo,
+      required this.idKategori,
+      required this.nama,
+      required this.createdAt,
+      required this.updatedAt,
+      required this.catatan});
 
   factory KategoriObat.fromJson(Map<String, dynamic> json) {
     return KategoriObat(
@@ -223,7 +242,7 @@ class KategoriObat {
         'nama': nama,
         'created_at': createdAt,
         'updated_at': updatedAt,
-        'catatan':catatan
+        'catatan': catatan
       };
 
   static Future<List<KategoriObat>> getDataKategori() async {
@@ -237,7 +256,7 @@ class KategoriObat {
       List<KategoriObat> kategoriList = jsonList
           .map<KategoriObat>((json) => KategoriObat.fromJson(json))
           .toList();
-          print("ppppppppppppppppppppppp");
+      print("ppppppppppppppppppppppp");
       return kategoriList;
     } else {
       throw Exception("Gagal Load Data Kategori");

@@ -12,6 +12,9 @@ import 'package:http/retry.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:apotek/global.dart' as global;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class KwitansiObat extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -46,13 +49,16 @@ class _KwitansiObat extends State<KwitansiObat>
   var text = TextEditingController();
   var text2 = TextEditingController();
 
-  late TabController _tabController;
   final _formKey = GlobalKey<FormState>();
   List<Kustomer> listKustomer = [];
 
   Future<void> getDataKustomer() async {
     try {
-      listKustomer = await Kustomer.getData();
+      Kustomer.getData().then((value) {
+        setState(() {
+          listKustomer = value;
+        });
+      });
     } catch (e) {
       print("Error: $e");
     }
@@ -72,31 +78,76 @@ class _KwitansiObat extends State<KwitansiObat>
         0, (total, item) => total + item.hargaObat * item.kuantitas);
   }
 
+  double hitungTotalHarga2(List<ObatRacik> obatRacik) {
+    double total = 0.0;
+    for (var item in obatRacik) {
+      total += item.totalHarga.toDouble();
+    }
+    return total;
+  }
+
   Future<void> postPembelianObatPOS() async {
     String url = "http://leap.crossnet.co.id:2688/PoS/checkout";
-    // Susun obat_list dari isi dan isi2
-    List<Map<String, dynamic>> pembelianObat = [];
-    // print("ISI LENGTH: ${isi.length}");
-    // print("ISI2 LENGTH: ${isi2.length}");
-    // print("ISI data: ${isi[0]!.namaObat}");
-    // print("ISI LENGTH: ${isi2[0]}");
-
-    for (int i = 0; i < keranjang.length; i++) {
-      pembelianObat.add({
-        "id_obat": keranjang[i]!.idObat,
-        "kuantitas": int.tryParse(keranjang[i]!.kuantitas.toString()),
-        "aturan_pakai": keranjang[i]!.aturanPakai,
-        "cara_pakai": keranjang[i]!.caraPakai,
-        "keterangan_pakai": keranjang[i]!.keteranganPakai
-      });
-    }
-    final isi = {
-      "id_kustomer": _selectedNamaKustomer!.idKustomer,
-      "pembayaran": {
-        "metode_bayar": _selectedMetodePembayaran,
-      },
-      "items": pembelianObat // langsung assign
-    };
+    String temp = '''{"id_kustomer": "${_selectedNamaKustomer!.idKustomer}",
+"pembayaran": { "metode_bayar": "${_selectedMetodePembayaran}"} ,"items": [''';
+    setState(() {
+      for (var i = 0; i < daftarObatRacik.length; i++) {
+        // if (i == daftarObatRacik.length - 1) {
+          temp = temp +
+              '''{
+      "id_obat": "${daftarObatRacik[i].idnamaRacik}",
+      "kuantitas":${daftarObatRacik[i].jumlah},
+      "id_depo": "20",
+      "satuan_racik": "${daftarObatRacik[i].idsatuan}",
+      "dosis": "",                  
+      "aturan_pakai": "${daftarObatRacik[i].aturanPakai}",
+      "cara_pakai": "${daftarObatRacik[i].caraPakai}",
+      "keterangan_pakai": "${daftarObatRacik[i].keteranganPakai}",
+      "ingredients": [
+        ''';
+        // }
+        for (var j = 0; j < daftarObatRacik[i].komposisi.length; j++) {
+          if (j == daftarObatRacik[i].komposisi.length-1) {
+            temp = temp +
+                '''{
+          "id_obat": "${daftarObatRacik[i].komposisi[j].idObat}",
+          "jumlah_decimal": ${daftarObatRacik[i].komposisi[j].jumlah},
+          "dosis": "${daftarObatRacik[i].komposisi[j].dosis}"
+        }]},''';
+          } else
+            temp = temp +
+                '''{
+           "id_obat": "${daftarObatRacik[i].komposisi[j].idObat}",
+          "jumlah_decimal": ${daftarObatRacik[i].komposisi[j].jumlah},
+          "dosis": "${daftarObatRacik[i].komposisi[j].dosis}"
+        },''';
+        }
+        
+      }
+      for (var i = 0; i < keranjang.length; i++) {
+        if (i == keranjang.length - 1) {
+          temp = temp +
+              '''{
+      "id_obat":   "${keranjang[i].idObat}",
+      "kuantitas":       ${keranjang[i].jumlahObatReal},
+      "aturan_pakai":     "${keranjang[i].aturanPakai}",
+      "cara_pakai":       "${keranjang[i].caraPakai}",
+      "keterangan_pakai": "${keranjang[i].keteranganPakai}"
+    }]}''';
+        } else {
+          temp = temp +
+              ''',
+    {
+       "id_obat":   "${keranjang[i].idObat}",
+      "kuantitas":       ${keranjang[i].jumlahObatReal},
+      "aturan_pakai":     "${keranjang[i].aturanPakai}",
+      "cara_pakai":       "${keranjang[i].caraPakai}",
+      "keterangan_pakai": "${keranjang[i].keteranganPakai}"
+    },''';
+        }
+      }
+    });
+    print(temp);
 
     var response = await http.post(Uri.parse(url),
         headers: {
@@ -104,8 +155,10 @@ class _KwitansiObat extends State<KwitansiObat>
           "x-api-key": '${global.xApiKey}',
           "Content-Type": "application/json" // Tambahkan ini juga!
         },
-        body: jsonEncode(isi));
+        body: temp);
+    // print(response.statusCode);
     // print(response.body);
+
     if (response.statusCode == 200) {
       print("✅ Sukses mengirim input data pembelian di POS");
       print(response.body);
@@ -223,6 +276,17 @@ class _KwitansiObat extends State<KwitansiObat>
     keteranganControllers = keranjang
         .map((item) => TextEditingController(text: item.keteranganPakai))
         .toList();
+
+    aturanControllers2 = daftarObatRacik
+        .map((item) => TextEditingController(text: item.aturanPakai))
+        .toList();
+    caraPakaiControllers2 = daftarObatRacik
+        .map((item) => TextEditingController(text: item.caraPakai))
+        .toList();
+    keteranganControllers2 = daftarObatRacik
+        .map((item) => TextEditingController(text: item.keteranganPakai))
+        .toList();
+
     filterData = List.from(keranjang);
   }
 
@@ -245,13 +309,55 @@ class _KwitansiObat extends State<KwitansiObat>
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
   List<TextEditingController> aturanControllers = [];
   List<TextEditingController> caraPakaiControllers = [];
   List<TextEditingController> keteranganControllers = [];
+
+  List<TextEditingController> aturanControllers2 = [];
+  List<TextEditingController> caraPakaiControllers2 = [];
+  List<TextEditingController> keteranganControllers2 = [];
+
+  void generateAndPrintPDF(BuildContext context) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text("Kwitansi Pembelian Obat",
+                  style: pw.TextStyle(
+                      fontSize: 20, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 16),
+              pw.Table.fromTextArray(
+                headers: ["No", "Nama Obat", "Jumlah", "Harga"],
+                data: List.generate(keranjang.length, (index) {
+                  final item = keranjang[index];
+                  return [
+                    "${index + 1}",
+                    item.namaObat,
+                    item.kuantitas.toString(),
+                    "Rp ${item.hargaObat}",
+                  ];
+                }),
+                border: pw.TableBorder.all(),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -476,79 +582,35 @@ class _KwitansiObat extends State<KwitansiObat>
                                                   Center(
                                                     child: SizedBox(
                                                       width: 100,
-                                                      child: SizedBox(
-                                                        width: 100,
-                                                        child: TextFormField(
-                                                          controller:
-                                                              aturanControllers[
-                                                                  index],
-                                                          onChanged: (value) {
-                                                            keranjang[index] =
-                                                                Item(
-                                                              idObat:
-                                                                  item.idObat,
-                                                              namaObat:
-                                                                  item.namaObat,
-                                                              hargaObat: item
-                                                                  .hargaObat,
-                                                              kuantitas: item
-                                                                  .kuantitas,
-                                                              aturanPakai:
-                                                                  value,
-                                                              caraPakai: item
-                                                                  .caraPakai,
-                                                              keteranganPakai: item
-                                                                  .keteranganPakai,
-                                                            );
-                                                          },
-                                                          style: GoogleFonts.inter(
-                                                              color: ColorStyle
-                                                                  .tulisan_form,
-                                                              fontSize: 13,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Center(
-                                                    child: SizedBox(
-                                                      width: 100,
-                                                      child: SizedBox(
-                                                        width: 100,
-                                                        child: TextFormField(
-                                                          controller:
-                                                              caraPakaiControllers[
-                                                                  index],
-                                                          onChanged: (value) {
-                                                            keranjang[index] =
-                                                                Item(
-                                                              idObat:
-                                                                  item.idObat,
-                                                              namaObat:
-                                                                  item.namaObat,
-                                                              hargaObat: item
-                                                                  .hargaObat,
-                                                              kuantitas: item
-                                                                  .kuantitas,
-                                                              aturanPakai: item
-                                                                  .aturanPakai,
-                                                              caraPakai: value,
-                                                              keteranganPakai: item
-                                                                  .keteranganPakai,
-                                                            );
-                                                          },
-                                                          style: GoogleFonts.inter(
-                                                              color: ColorStyle
-                                                                  .tulisan_form,
-                                                              fontSize: 13,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w400),
-                                                        ),
+                                                      child: TextFormField(
+                                                        controller:
+                                                            aturanControllers[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: value,
+                                                          //     caraPakai: item
+                                                          //         .caraPakai,
+                                                          //     keteranganPakai:
+                                                          //         item.keteranganPakai,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
+                                                        },
+                                                        style: GoogleFonts.inter(
+                                                            color: ColorStyle
+                                                                .tulisan_form,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
                                                       ),
                                                     ),
                                                   ),
@@ -559,25 +621,64 @@ class _KwitansiObat extends State<KwitansiObat>
                                                       width: 100,
                                                       child: TextFormField(
                                                         controller:
+                                                            caraPakaiControllers[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: item
+                                                          //         .aturanPakai,
+                                                          //     caraPakai: value,
+                                                          //     keteranganPakai:
+                                                          //         item.keteranganPakai,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
+                                                        },
+                                                        style: GoogleFonts.inter(
+                                                            color: ColorStyle
+                                                                .tulisan_form,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: TextFormField(
+                                                        controller:
                                                             keteranganControllers[
                                                                 index],
                                                         onChanged: (value) {
-                                                          keranjang[index] =
-                                                              Item(
-                                                            idObat: item.idObat,
-                                                            namaObat:
-                                                                item.namaObat,
-                                                            hargaObat:
-                                                                item.hargaObat,
-                                                            kuantitas:
-                                                                item.kuantitas,
-                                                            aturanPakai: item
-                                                                .aturanPakai,
-                                                            caraPakai:
-                                                                item.caraPakai,
-                                                            keteranganPakai:
-                                                                value,
-                                                          );
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: item
+                                                          //         .aturanPakai,
+                                                          //     caraPakai: item
+                                                          //         .caraPakai,
+                                                          //     keteranganPakai:
+                                                          //         value,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
                                                         },
                                                         style: GoogleFonts.inter(
                                                             color: ColorStyle
@@ -620,6 +721,262 @@ class _KwitansiObat extends State<KwitansiObat>
                                   );
                                 }),
                               ),
+                              Expanded(
+                                child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                          minWidth: constraints.maxWidth),
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.vertical,
+                                        child: DataTable(
+                                          // headingRowColor:
+                                          //     MaterialStateProperty.all(
+                                          //         Colors.white),
+                                          columnSpacing:
+                                              60, // Menambah jarak antar kolom
+                                          dataRowMinHeight:
+                                              60, // Menambah tinggi minimum baris
+                                          dataRowMaxHeight:
+                                              60, // Menambah tinggi maksimum baris
+                                          columns: [
+                                            DataColumn(
+                                                label: Expanded(
+                                                    child: Center(
+                                                        child: Text('',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style: GoogleFonts.inter(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600))))),
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text('',
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                              ),
+                                            )),
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text('',
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                              ),
+                                            )),
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text('',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                            )),
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text('',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                            )),
+                                            DataColumn(
+                                                label: Expanded(
+                                              child: Center(
+                                                child: Text('',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)),
+                                              ),
+                                            )),
+                                          ],
+                                          rows: daftarObatRacik
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            int index = entry.key;
+                                            final item = entry.value;
+                                            return DataRow(
+                                              // color: MaterialStateProperty.all(
+                                              //     Colors.white),
+                                              cells: [
+                                                DataCell(Center(
+                                                    child: Text(item.namaRacik,
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          color: ColorStyle
+                                                              .text_secondary,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        )))),
+                                                DataCell(Center(
+                                                    child: Text(
+                                                        item.jumlah.toString(),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        style: TextStyle(
+                                                          color: ColorStyle
+                                                              .text_secondary,
+                                                          fontSize: 14,
+                                                        )))),
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: TextFormField(
+                                                        controller:
+                                                            aturanControllers2[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: value,
+                                                          //     caraPakai: item
+                                                          //         .caraPakai,
+                                                          //     keteranganPakai:
+                                                          //         item.keteranganPakai,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
+                                                        },
+                                                        style: GoogleFonts.inter(
+                                                            color: ColorStyle
+                                                                .tulisan_form,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: TextFormField(
+                                                        controller:
+                                                            caraPakaiControllers2[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: item
+                                                          //         .aturanPakai,
+                                                          //     caraPakai: value,
+                                                          //     keteranganPakai:
+                                                          //         item.keteranganPakai,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
+                                                        },
+                                                        style: GoogleFonts.inter(
+                                                            color: ColorStyle
+                                                                .tulisan_form,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: TextFormField(
+                                                        controller:
+                                                            keteranganControllers2[
+                                                                index],
+                                                        onChanged: (value) {
+                                                          // keranjang[index] = Item(
+                                                          //     idObat:
+                                                          //         item.idObat,
+                                                          //     namaObat:
+                                                          //         item.namaObat,
+                                                          //     hargaObat: item
+                                                          //         .hargaObat,
+                                                          //     kuantitas: item
+                                                          //         .kuantitas,
+                                                          //     aturanPakai: item
+                                                          //         .aturanPakai,
+                                                          //     caraPakai: item
+                                                          //         .caraPakai,
+                                                          //     keteranganPakai:
+                                                          //         value,
+                                                          //     jumlahObatReal: item
+                                                          //         .jumlahObatReal);
+                                                        },
+                                                        style: GoogleFonts.inter(
+                                                            color: ColorStyle
+                                                                .tulisan_form,
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w400),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                // DataCell(Text(item.quantity.toString())),
+
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: Text(
+                                                        "${formatRupiah(item.totalHarga)},00",
+                                                        overflow: TextOverflow
+                                                            .visible,
+                                                        style: TextStyle(
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 2,
+                                                        textAlign: TextAlign
+                                                            .center, // Batas maksimal baris teks
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
                             ],
                           ),
                         ),
@@ -635,7 +992,7 @@ class _KwitansiObat extends State<KwitansiObat>
                             Text("Total Harga",
                                 style: GoogleFonts.inter(fontSize: 18)),
                             Text(
-                              "${formatRupiah(hitungTotalHarga(keranjang))},00",
+                              "${formatRupiah(hitungTotalHarga(keranjang) + hitungTotalHarga2(daftarObatRacik))},00",
                               style: GoogleFonts.inter(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w600,
@@ -855,9 +1212,37 @@ class _KwitansiObat extends State<KwitansiObat>
                         width: 350,
                         child: ElevatedButton.icon(
                           onPressed: () async {
+                            setState(() {
+                              for (int i = 0; i < keranjang.length; i++) {
+                                keranjang[i] = Item(
+                                    idObat: keranjang[i].idObat,
+                                    namaObat: keranjang[i].namaObat,
+                                    hargaObat: keranjang[i].hargaObat,
+                                    kuantitas: keranjang[i].kuantitas,
+                                    aturanPakai: aturanControllers[i].text,
+                                    caraPakai: caraPakaiControllers[i].text,
+                                    keteranganPakai:
+                                        keteranganControllers[i].text,
+                                    jumlahObatReal:
+                                        keranjang[i].jumlahObatReal);
+                              }
+
+                              for (var i = 0; i < daftarObatRacik.length; i++) {
+                                daftarObatRacik[i].aturanPakai =
+                                    aturanControllers2[i].text;
+                                daftarObatRacik[i].caraPakai =
+                                    caraPakaiControllers2[i].text;
+                                daftarObatRacik[i].keteranganPakai =
+                                    keteranganControllers2[i].text;
+                              }
+                            });
                             await postPembelianObatPOS();
                             Navigator.pop(context);
                             _alertDone("diinput");
+                            generateAndPrintPDF(context);
+                            daftarObatRacik.clear();
+                            keranjang.clear();
+
                           },
                           icon:
                               Icon(Icons.print, color: Colors.white, size: 22),

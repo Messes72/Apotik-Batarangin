@@ -38,7 +38,7 @@ class stokPage extends State<stokopname> {
   String? _selectedSatuanEdit;
   var text = TextEditingController();
   var text2 = TextEditingController();
-  List<StokOpnameData> filterData = [];
+  List<StokOpnameModel> filterData = [];
   final List<int> rowItems = [10, 25, 50, 100];
 
   String? selectedValue;
@@ -63,1018 +63,25 @@ class stokPage extends State<stokopname> {
     }
   }
 
-  // final List<StokOpnameData> _data = [
-
-  // ];
-  final List<StokOpnameData> _data = List.generate(
-      30,
-      (index) => StokOpnameData(
-            nama: 'Barang $index',
-            kategori: 'Kategori ${index % 5}',
-            kode: 'KODE$index',
-            harga: (index + 1) * 1000.0,
-            kadaluarsa: DateTime.now().add(Duration(days: index * 30)),
-            stok: (index + 1) * 10,
-            masuk: (index + 1) * 5,
-            keluar: (index + 1) * 3,
-            hargaJual: (index + 1) * 1200.0,
-            hargaBeli: (index + 1) * 900.0,
-            satuan: 'Unit',
-            uprate: (index % 3) * 1.1,
-            noKartu: 'KARTU$index',
-            noBatch: 'BATCH$index',
-            catatan: 'Catatan untuk Barang $index',
-          ));
-
-  void _viewDetails(StokOpnameData item) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                        color: ColorStyle.alert_ungu,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          topRight: Radius.circular(10),
-                        ),
-                      ),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Informasi Stock Opname",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close, color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 8),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            Column(
-                              children: [
-                                detailField("Nomor Kartu", item.noKartu),
-                                detailField("Nomor Batch", item.noBatch),
-                                detailField("Kode Obat", item.kode),
-                                detailField("Kategori Obat", item.kategori),
-                                detailField("Nama Obat", item.kategori),
-                                detailField(
-                                    "Kadarluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa)),
-                                detailField("Satuan", item.satuan),
-                                detailField(
-                                    "Stock Barang", item.stok.toString()),
-                                detailField(
-                                    "Barang Masuk", item.masuk.toString()),
-                                detailField(
-                                    "Barang Keluar", item.keluar.toString()),
-                                detailField(
-                                    "Harga Jual", item.hargaJual.toString()),
-                                detailField(
-                                    "Harga Beli", item.hargaBeli.toString()),
-                                detailField("Uprate", item.uprate.toString()),
-                                buildFormCaraPemakaian(
-                                    "Cara Pemakaian", item.catatan)
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  var nomorKartu_text = TextEditingController();
-  var nomorBatch_text = TextEditingController();
-  var kodeObat_text = TextEditingController();
-  var kategori_text = TextEditingController();
-  var namaObat_text = TextEditingController();
-  var jumlahBarang_text = TextEditingController();
-  var caraPemakaian_text = TextEditingController();
-  var stokBarang_text = TextEditingController();
-  var satuan_text = TextEditingController();
-  void _inputStockOpname() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: ColorStyle.button_grey, width: 1))),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Input Data Obat",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: ColorStyle.text_dalam_kolom,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: ColorStyle.text_dalam_kolom),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            Column(
-                              children: [
-                                inputField("Nomor Kartu", "Nomor Kartu",
-                                    nomorKartu_text),
-                                inputField("Nomor Batch", "Nomor Batch",
-                                    nomorBatch_text),
-                                inputField(
-                                    "Kode Obat", "Kode Obat", kodeObat_text),
-                                dropdownKategori(),
-                                inputField(
-                                    "Nama Obat", "Nama Obat", namaObat_text),
-                                tanggalInput("Kadaluarsa", "DD/MM/YYYY",
-                                    tanggalController),
-                                dropdownSatuan(),
-                                inputField("Stock Barang", "Stock Barang",
-                                    jumlahBarang_text),
-                              ],
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16, right: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox(
-                                    width: 120,
-                                    height: 30,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        // _alertDone(item, "diedit");
-                                        _alertInput();
-                                        // _alertDone("diinput");
-                                        // _updateProduk(
-                                        //     item,
-                                        //     nomorKartuController,
-                                        //     nomorBatchController,
-                                        //     kodeController,
-                                        //     kategoriController,
-                                        //     namaObatController,
-                                        //     kadaluarsaController,
-                                        //     satuanController,
-                                        //     jumlahController,
-                                        //     caraPemakaianController);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        backgroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: const BorderSide(
-                                              color: ColorStyle.button_green,
-                                              width: 1),
-                                        ),
-                                      ),
-                                      child: const Text("KONFIRMASI",
-                                          style: TextStyle(
-                                              color: ColorStyle.button_green,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _updateProduk(
-    StokOpnameData item,
-    TextEditingController nomorKartu,
-    TextEditingController nomorBatch,
-    TextEditingController kode,
-    TextEditingController kategori,
-    TextEditingController namaObat,
-    TextEditingController kadaluarsa,
-    TextEditingController satuan,
-    TextEditingController jumlah,
-    TextEditingController caraPemakaian,
-  ) {
-    setState(() {
-      // 🔹 Ini yang memastikan UI diperbarui
-      item.noKartu = nomorKartu.text;
-      item.noBatch = nomorBatch.text;
-      item.kode = kode.text;
-      item.kategori = kategori.text;
-      item.nama = namaObat.text;
-      item.kadaluarsa = DateTime.parse(kadaluarsa.text);
-      item.satuan = satuan.text;
-      item.stok = int.tryParse(jumlah.text) ?? 0;
-      item.catatan = caraPemakaian.text;
-    });
-
-    // Navigator.pop(context); // 🔹 Menutup dialog setelah menyimpan
-    _alertDone("diedit"); // 🔹 Tampilkan alert bahwa produk telah diedit
-  }
-
-  void _editStockOpname(StokOpnameData item) {
-    TextEditingController nomorKartuController =
-        TextEditingController(text: item.noKartu);
-    TextEditingController nomorBatchController =
-        TextEditingController(text: item.noBatch);
-    TextEditingController kodeController =
-        TextEditingController(text: item.kode);
-    TextEditingController kategoriController =
-        TextEditingController(text: item.kategori);
-    TextEditingController namaObatController =
-        TextEditingController(text: item.nama);
-    TextEditingController hargaControlller =
-        TextEditingController(text: item.harga.toString());
-    TextEditingController kadaluarsaController = TextEditingController(
-        text: DateFormat('dd/MM/yyyy').format(item.kadaluarsa));
-    TextEditingController satuanController =
-        TextEditingController(text: item.satuan);
-    TextEditingController masukController =
-        TextEditingController(text: item.masuk.toString());
-    TextEditingController keluarController =
-        TextEditingController(text: item.keluar.toString());
-    TextEditingController hargaJualController =
-        TextEditingController(text: item.hargaJual.toString());
-    TextEditingController hargaBeliController =
-        TextEditingController(text: item.hargaBeli.toString());
-    TextEditingController uprateController =
-        TextEditingController(text: item.uprate.toString());
-    TextEditingController jumlahController =
-        TextEditingController(text: item.stok.toString());
-    TextEditingController caraPemakaianController =
-        TextEditingController(text: item.catatan);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10),
-                            topRight: Radius.circular(10),
-                          ),
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: ColorStyle.button_grey, width: 1))),
-                      padding:
-                          const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Edit Stock Opname",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: ColorStyle.text_dalam_kolom,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 23),
-                            child: IconButton(
-                              icon: Icon(Icons.close,
-                                  color: ColorStyle.text_dalam_kolom),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            Column(
-                              children: [
-                                editFeld("Nomor Kartu", item.noKartu,
-                                    nomorKartuController),
-                                editFeld("Nomor Batch", item.noBatch,
-                                    nomorBatchController),
-                                editFeld(
-                                    "Kode Obat", item.kode, kodeController),
-                                editFeld(
-                                    "Nama Obat", item.nama, namaObatController),
-                                dropdownKategoriEdit(item.kategori),
-                                // editFeld("Katgeori", item.kategori,
-                                //     kategoriController),
-                                editFeld("Harga", item.harga.toString(),
-                                    hargaControlller),
-                                editFeld(
-                                    "Kadaluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa),
-                                    kadaluarsaController),
-                                editFeld("Stock Obat", item.stok.toString(),
-                                    jumlahController),
-                                editFeld("Obat Masuk", item.masuk.toString(),
-                                    masukController),
-                                editFeld("Obat Keluar", item.keluar.toString(),
-                                    keluarController),
-                                dropdownSatuanEdit(item.satuan),
-                                editFeld(
-                                    "Harga Jual",
-                                    item.hargaJual.toString(),
-                                    hargaJualController),
-                                editFeld(
-                                    "Harga Beli",
-                                    item.hargaBeli.toString(),
-                                    hargaBeliController),
-                                editFeld("Uprate", item.uprate.toString(),
-                                    uprateController),
-                                buildFormCaraPemakaian2("Cara Pmekaian",
-                                    item.catatan, caraPemakaianController),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 16, right: 16, top: 8),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      SizedBox(
-                                        width: 120,
-                                        height: 30,
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            // _alertDone(item, "diedit");
-                                            setState(() {
-                                              // 🔹 Ini yang memastikan UI diperbarui
-                                              item.noKartu =
-                                                  nomorKartuController.text;
-                                              item.noBatch =
-                                                  nomorBatchController.text;
-                                              item.kode = kodeController.text;
-                                              item.kategori =
-                                                  _selectedKategoriEdit ??
-                                                      item.kategori;
-                                              item.nama =
-                                                  namaObatController.text;
-                                              item.kadaluarsa =
-                                                  DateFormat('dd/MM/yyyy')
-                                                      .parse(
-                                                          kadaluarsaController
-                                                              .text);
-                                              item.satuan =
-                                                  _selectedSatuanEdit ??
-                                                      item.satuan;
-                                              item.stok = int.parse(
-                                                  jumlahController.text);
-                                              item.harga = double.parse(
-                                                  hargaControlller.text);
-                                              item.hargaJual = double.parse(
-                                                  hargaJualController.text);
-                                              item.hargaBeli = double.parse(
-                                                  hargaBeliController.text);
-                                              item.uprate = double.parse(
-                                                  uprateController.text);
-                                              item.catatan =
-                                                  caraPemakaianController.text;
-                                            });
-                                            _alertDone("diedit");
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 6),
-                                            backgroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              side: const BorderSide(
-                                                  color:
-                                                      ColorStyle.button_green,
-                                                  width: 1),
-                                            ),
-                                          ),
-                                          child: const Text("SIMPAN",
-                                              style: TextStyle(
-                                                  color:
-                                                      ColorStyle.button_green,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _modalKosongkanObat(StokOpnameData item) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Container(
-                width:
-                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
-                height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Container(
-                      decoration: BoxDecoration(
-                        color: ColorStyle.alert_ungu,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10),
-                          topRight: Radius.circular(10),
-                        ),
-                      ),
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.only(top: 8, left: 23, bottom: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "Alasan Kosongkan Obat",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 23),
-                              child: IconButton(
-                                icon: Icon(Icons.close, color: Colors.white),
-                                onPressed: () => Navigator.pop(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 47),
-
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 42, right: 42),
-                              child: Text(
-                                  "Alasan \"${item.nama}\" Kosongkan Obat",
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                            const SizedBox(height: 8),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 42, right: 42),
-                              child: Container(
-                                height: 150,
-                                // decoration: BoxDecoration(
-                                //   color: ColorStyle.fill_form,
-                                //   border:
-                                //       Border.all(color: ColorStyle.fill_stroke),
-                                //   borderRadius: BorderRadius.circular(8),
-                                // ),
-                                // padding:
-                                //     const EdgeInsets.symmetric(horizontal: 12),
-                                alignment: Alignment.topLeft,
-                                child: TextFormField(
-                                  controller: text2,
-                                  style: TextStyle(fontSize: 13),
-                                  decoration: InputDecoration(
-                                    filled: true,
-                                    fillColor: ColorStyle.fill_form,
-                                    hintText: "Alasan",
-                                    hintStyle: TextStyle(
-                                      color: ColorStyle.tulisan_form,
-                                      fontSize: 12,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: ColorStyle.fill_stroke,
-                                          width: 1), // Warna abu-abu
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-
-                                    // Border saat ditekan (fokus)
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: Colors.black,
-                                          width: 1), // Warna biru saat fokus
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-
-                                    // Border saat error
-                                    errorBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(
-                                          color: ColorStyle.button_red,
-                                          width: 1), // Warna merah jika error
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  maxLines: 10,
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 23, right: 23),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  SizedBox(
-                                    width: 120,
-                                    height: 30,
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        _alertDelete(item);
-                                        // Navigator.pop(
-                                        //     context); // Tutup dialog sebelumnya jika masih terbuka
-                                        // Future.delayed(Duration(milliseconds: 200),
-                                        //     () {
-                                        //   // Delay untuk menghindari error
-                                        //   _alertDelete(item);
-                                        // });
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        backgroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: const BorderSide(
-                                              color: ColorStyle.primary,
-                                              width: 1),
-                                        ),
-                                      ),
-                                      child: Text("KONFIRMASI",
-                                          style: GoogleFonts.inter(
-                                              color: ColorStyle.primary,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _alertDelete(StokOpnameData item) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FractionallySizedBox(
-                widthFactor: 0.5, // 50% dari lebar layar
-                heightFactor: 0.55, // 50% dari tinggi layar
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // Tidak bisa di-scroll
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        "images/delete.png",
-                        width: constraints.maxWidth *
-                            0.08, // Ukuran gambar responsif
-                        height: constraints.maxWidth * 0.08,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Apakah Anda yakin \n mengosongkan \"${item.nama}\" ini?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: constraints.maxWidth *
-                              0.02, // Ukuran teks responsif
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 23),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: constraints.maxWidth *
-                                  0.15, // Ukuran button responsif
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _modalKosongkanObat(item);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.fill_stroke,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Tidak",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: constraints.maxWidth * 0.15,
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _alertDone("dikosongkan");
-                                  text2.clear();
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                        color: ColorStyle.button_red, width: 1),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Iya, hapus",
-                                  style: TextStyle(
-                                    color: ColorStyle.button_red,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  void _alertInput() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FractionallySizedBox(
-                widthFactor: 0.5, // 50% dari lebar layar
-                heightFactor: 0.55, // 50% dari tinggi layar
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min, // Tidak bisa di-scroll
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        "images/input.png",
-                        width: constraints.maxWidth *
-                            0.08, // Ukuran gambar responsif
-                        height: constraints.maxWidth * 0.08,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Apakah Anda yakin akan \nmenginput data ini?",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: constraints.maxWidth *
-                              0.02, // Ukuran teks responsif
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 23),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: constraints.maxWidth *
-                                  0.15, // Ukuran button responsif
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: ColorStyle.fill_stroke,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Tidak",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            SizedBox(
-                              width: constraints.maxWidth * 0.15,
-                              height: 35,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _alertDone("diinput");
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                        color: ColorStyle.button_yellow,
-                                        width: 1),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Iya, input",
-                                  style: TextStyle(
-                                    color: ColorStyle.button_yellow,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  void _alertDone(String isi) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        // Tutup dialog otomatis setelah 2 detik
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.of(context).pop();
+  List<StokOpnameModel> listStokOpname = [];
+  Future<void> getListStockOpname() async {
+    try {
+      StokOpnameModel.getData().then((value) {
+        setState(() {
+          listStokOpname = value;
+          filterData = List.from(listStokOpname);
         });
-
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FractionallySizedBox(
-                widthFactor: 0.5, // 50% dari lebar layar
-                heightFactor: 0.4, // 40% dari tinggi layar
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize:
-                          MainAxisSize.min, // Supaya tidak bisa di-scroll
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          "images/done.png",
-                          width: constraints.maxWidth *
-                              0.08, // Sesuaikan ukuran gambar
-                          height: constraints.maxWidth * 0.08,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Data berhasil $isi !",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: constraints.maxWidth *
-                                0.025, // Ukuran teks dinamis
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
   }
+
+String convertTanggal(String input) {
+  final parsedDate = DateTime.parse(input); // parse ISO 8601 format
+  final formatter = DateFormat('dd-MM-yyyy');
+  return formatter.format(parsedDate);
+}
 
   int _rowsPerPage = 10;
   int _currentPage = 0;
@@ -1082,17 +89,17 @@ class stokPage extends State<stokopname> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    filterData = List.from(_data);
+    getListStockOpname();
+    filterData = List.from(listStokOpname);
   }
 
   void filtering(String query) {
     setState(() {
       if (query.isEmpty) {
-        filterData = List.from(_data);
+        filterData = List.from(listStokOpname);
       } else {
-        filterData = _data.where((item) {
-          return item.nama.toLowerCase().contains(query.toLowerCase()) ||
-              item.stok.toString().contains(query);
+        filterData = listStokOpname.where((item) {
+          return item.idStokOpname.toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
       _currentPage = 0; // Reset ke halaman pertama setelah filter
@@ -1104,7 +111,7 @@ class stokPage extends State<stokopname> {
     int totalPages = (filterData.length / _rowsPerPage).ceil();
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex = (startIndex + _rowsPerPage).clamp(0, filterData.length);
-    List<StokOpnameData> paginatedData =
+    List<StokOpnameModel> paginatedData =
         filterData.sublist(startIndex, endIndex);
     return Scaffold(
       // appBar: NavbarTop(
@@ -1287,7 +294,7 @@ class stokPage extends State<stokopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Jumlah Barang',
+                                          child: Text('Total Selisih',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
@@ -1296,7 +303,7 @@ class stokPage extends State<stokopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Jumlah Update Stock',
+                                          child: Text('Catatan',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
@@ -1314,13 +321,18 @@ class stokPage extends State<stokopname> {
                                         ),
                                       )),
                                     ],
-                                    rows: paginatedData.map((item) {
+                                    rows: paginatedData
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                      int index = entry.key;
+                                      StokOpnameModel item = entry.value;
                                       return DataRow(
                                         color: MaterialStateProperty.all(
                                             Colors.white),
                                         cells: [
                                           DataCell(Center(
-                                            child: Text(item.noKartu,
+                                            child: Text("${index + 1}",
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w700,
@@ -1331,7 +343,7 @@ class stokPage extends State<stokopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.nama,
+                                              item.idStokOpname,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1342,7 +354,7 @@ class stokPage extends State<stokopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.kategori,
+                                              convertTanggal(item.tanggalStokOpname.toString()),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1353,7 +365,7 @@ class stokPage extends State<stokopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.stok.toString(),
+                                              item.totalSelisih.toString(),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1364,7 +376,7 @@ class stokPage extends State<stokopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.stok.toString(),
+                                              item.catatan,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1392,6 +404,7 @@ class stokPage extends State<stokopname> {
                                                             5; // ini halaman yang ditampilkan
                                                         global.selectedScreen =
                                                             1; // ini di sidebarnya
+                                                        global.idStockOpnameInfo = item.idStokOpname;
                                                       });
                                                       Navigator.pushReplacement(
                                                           context,
@@ -1401,39 +414,39 @@ class stokPage extends State<stokopname> {
                                                                       MyApp()));
                                                       // _viewDetails(item);
                                                     }),
-                                                IconButton(
-                                                    icon: Icon(
-                                                      Icons.edit_outlined,
-                                                      color: ColorStyle
-                                                          .text_secondary,
-                                                      size: 24,
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        global.selectedIndex =
-                                                            6; // ini halaman yang ditampilkan
-                                                        global.selectedScreen =
-                                                            1; // ini di sidebarnya
-                                                      });
-                                                      Navigator.pushReplacement(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      MyApp()));
-                                                      // _editStockOpname(item);
-                                                    }),
-                                                IconButton(
-                                                    icon: Icon(
-                                                      Icons
-                                                          .delete_outline_outlined,
-                                                      color: ColorStyle
-                                                          .text_secondary,
-                                                      size: 24,
-                                                    ),
-                                                    onPressed: () {
-                                                      _modalKosongkanObat(item);
-                                                    }),
+                                                // IconButton(
+                                                //     icon: Icon(
+                                                //       Icons.edit_outlined,
+                                                //       color: ColorStyle
+                                                //           .text_secondary,
+                                                //       size: 24,
+                                                //     ),
+                                                //     onPressed: () {
+                                                //       setState(() {
+                                                //         global.selectedIndex =
+                                                //             6; // ini halaman yang ditampilkan
+                                                //         global.selectedScreen =
+                                                //             1; // ini di sidebarnya
+                                                //       });
+                                                //       Navigator.pushReplacement(
+                                                //           context,
+                                                //           MaterialPageRoute(
+                                                //               builder:
+                                                //                   (context) =>
+                                                //                       MyApp()));
+                                                //       // _editStockOpname(item);
+                                                //     }),
+                                                // IconButton(
+                                                //     icon: Icon(
+                                                //       Icons
+                                                //           .delete_outline_outlined,
+                                                //       color: ColorStyle
+                                                //           .text_secondary,
+                                                //       size: 24,
+                                                //     ),
+                                                //     onPressed: () {
+                                                //       _modalKosongkanObat(item);
+                                                //     }),
                                               ],
                                             ),
                                           ))

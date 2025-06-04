@@ -801,10 +801,10 @@ class pagePembelian extends State<Pembeliaanbarang>
     String url = "http://leap.crossnet.co.id:2688/pembelianbarang/create";
     // Susun obat_list dari isi dan isi2
     List<Map<String, dynamic>> obatList = [];
-    print("ISI LENGTH: ${isi.length}");
-    print("ISI2 LENGTH: ${isi2.length}");
-    print("ISI data: ${isi[0]!.namaObat}");
-    print("ISI LENGTH: ${isi2[0]}");
+    // print("ISI LENGTH: ${isi.length}");
+    // print("ISI2 LENGTH: ${isi2.length}");
+    // print("ISI data: ${isi[0]!.namaObat}");
+    // print("ISI LENGTH: ${isi2[0]}");
 
     for (int i = 0; i < isi.length; i++) {
       if (isi[i] != null && isi2[i].text.isNotEmpty) {

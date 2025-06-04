@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:apotek/Apotik/Riwayat/RiwayatTransaksi.dart';
+import 'package:apotek/Apotik/Obat%20Racik/obatRacik.dart';
 import 'package:apotek/Apotik/Transaksi/KwitansiObat.dart';
 import 'package:apotek/Apotik/Transaksi/inputTransaksi.dart';
 import 'package:apotek/Apotik/Transaksi/transaksi.dart';
@@ -60,7 +60,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
     isExpanded = widget.isExpanded;
     screenApp = [
       TransaksiPage(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //0
-      KustomerApotek(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //1
+      obatRacik(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //1
       inputTransaksi(isExpanded: isExpanded, toggleSidebar: toggleSidebar), //2
       KwitansiObat(isExpanded: isExpanded, toggleSidebar: toggleSidebar) // 3
     ];
@@ -136,7 +136,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
               //   Padding(padding: EdgeInsets.only(bottom: 8)),
               buildMenuItem("images/transaksi.png", "Transaksi", 0),
               Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/kustomer.png", "Riwayat Transaksi", 1),
+              buildMenuItem("images/drug.png", "Obat Racik", 1),
               Spacer(),
               Divider(color: Colors.white, thickness: 2),
               buildMenuItem2(Icons.logout, "Keluar", 3),
@@ -152,7 +152,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
                     title: pageIndex == 0
                         ? "TRANSAKSI"
                         : pageIndex == 1
-                            ? "RIWAYAT TRANSAKSI"
+                            ? "Obat Racik"
                             : pageIndex == 2
                                 ? "PENERIMAAN BARANG"
                                 : pageIndex == 3 ? "KWITANSI OBAT" : "TIDAK ADA",

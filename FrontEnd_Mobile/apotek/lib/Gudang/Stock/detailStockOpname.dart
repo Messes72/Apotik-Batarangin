@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:apotek/global.dart' as global;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class Detailstockopname extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -42,7 +43,6 @@ class detailStock extends State<Detailstockopname> {
   var tanggalOpname = TextEditingController();
   var jumlahUpdate = TextEditingController();
 
-  List<StokOpnameData> filterData = [];
   final List<int> rowItems = [10, 25, 50, 100];
 
   String? selectedValue;
@@ -67,30 +67,45 @@ class detailStock extends State<Detailstockopname> {
     }
   }
 
-  // final List<StokOpnameData> _data = [
+  StokOpnameDetailResponse? stokDataDetail;
+  bool loadingData = false;
 
-  // ];
-  final List<StokOpnameData> _data = List.generate(
-      30,
-      (index) => StokOpnameData(
-            nama: 'Barang $index',
-            kategori: 'Kategori ${index % 5}',
-            kode: 'KODE$index',
-            harga: (index + 1) * 1000.0,
-            kadaluarsa: DateTime.now().add(Duration(days: index * 30)),
-            stok: (index + 1) * 10,
-            masuk: (index + 1) * 5,
-            keluar: (index + 1) * 3,
-            hargaJual: (index + 1) * 1200.0,
-            hargaBeli: (index + 1) * 900.0,
-            satuan: 'Unit',
-            uprate: (index % 3) * 1.1,
-            noKartu: 'KARTU$index',
-            noBatch: 'BATCH$index',
-            catatan: 'Catatan untuk Barang $index',
-          ));
+  Future<void> getDetailStockOpname() async {
+    try {
+      setState(() => loadingData = true); // Mulai loading
 
-  void _viewDetails(StokOpnameData item) {
+      StokOpnameDetailResponse.getDetailStockOpname(global.idStockOpnameInfo)
+          .then((value) {
+        // if (!mounted) return; // ⛑️ Hindari error jika widget sudah disposed
+        setState(() {
+          stokDataDetail = value;
+          loadingData = false;
+        });
+      });
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+
+  List<StokOpnameObatItem> _data = [];
+  List<StokOpnameObatItem> filterData = [];
+  Future<void> fetchDetailBatchData() async {
+    try {
+      setState(() => loadingData = true);
+      final result = await StokOpnameResponseDetail.getDetailStockOpname(
+          global.idStockOpnameInfo);
+      setState(() {
+        _data = result.items;
+        filterData = List.from(_data);
+        loadingData = false;
+        // inisialisasi filter awal
+      });
+    } catch (e) {
+      print("Gagal fetch data: $e");
+    }
+  }
+
+  void _viewDetails(String nama, StokOpnameObatItem item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -104,7 +119,7 @@ class detailStock extends State<Detailstockopname> {
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.9, // Batasi tinggi agar tidak terlalu besar
+                    0.7, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -128,7 +143,7 @@ class detailStock extends State<Detailstockopname> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Stock Opname",
+                            "Informasi Data ${nama} Stock Opname",
                             style: GoogleFonts.montserrat(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -156,29 +171,231 @@ class detailStock extends State<Detailstockopname> {
                           children: [
                             Column(
                               children: [
-                                detailField("Nomor Kartu", item.noKartu),
-                                detailField("Nomor Batch", item.noBatch),
-                                detailField("Kode Obat", item.kode),
-                                detailField("Kategori Obat", item.kategori),
-                                detailField("Nama Obat", item.kategori),
-                                detailField(
-                                    "Kadarluarsa",
-                                    DateFormat('dd/MM/yyyy')
-                                        .format(item.kadaluarsa)),
-                                detailField("Satuan", item.satuan),
-                                detailField(
-                                    "Stock Barang", item.stok.toString()),
-                                detailField(
-                                    "Barang Masuk", item.masuk.toString()),
-                                detailField(
-                                    "Barang Keluar", item.keluar.toString()),
-                                detailField(
-                                    "Harga Jual", item.hargaJual.toString()),
-                                detailField(
-                                    "Harga Beli", item.hargaBeli.toString()),
-                                detailField("Uprate", item.uprate.toString()),
-                                buildFormCaraPemakaian(
-                                    "Cara Pemakaian", item.catatan)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      return SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: DataTable(
+                                          columnSpacing: 16,
+                                          headingRowHeight: 48,
+                                          dataRowMinHeight: 36,
+                                          dataRowMaxHeight: 40,
+                                          headingRowColor: MaterialStateProperty
+                                              .resolveWith<Color?>(
+                                            (Set<MaterialState> states) {
+                                              return Colors.grey
+                                                  .shade300; // Warna latar seluruh baris header
+                                            },
+                                          ),
+                                          columns: [
+                                            DataColumn(
+                                              label: Container(
+                                                color: Colors.grey.shade300,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 8),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Nomor Batch",
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DataColumn(
+                                              label: Container(
+                                                color: Colors.grey.shade300,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 8),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Kuantitas Sistem",
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DataColumn(
+                                              label: Container(
+                                                color: Colors.grey.shade300,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 8),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Kuantitas Fisik",
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DataColumn(
+                                              label: Container(
+                                                color: Colors.grey.shade300,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 8),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Selisih",
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DataColumn(
+                                              label: Container(
+                                                color: Colors.grey.shade300,
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                    horizontal: 8),
+                                                child: Center(
+                                                  child: Text(
+                                                    "Catatan Batch",
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // DataColumn(
+                                            //   label: Container(
+                                            //     color: Colors.grey.shade300,
+                                            //     padding: EdgeInsets.symmetric(
+                                            //         vertical: 12,
+                                            //         horizontal: 8),
+                                            //     child: Center(
+                                            //       child: Text(
+                                            //         "Status",
+                                            //         textAlign:
+                                            //             TextAlign.center,
+                                            //         style: GoogleFonts.inter(
+                                            //           fontWeight:
+                                            //               FontWeight.w600,
+                                            //           fontSize: 13,
+                                            //         ),
+                                            //       ),
+                                            //     ),
+                                            //   ),
+                                            // ),
+                                          ],
+                                          rows: item!.detailBatch
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            final obat = entry.value;
+                                            return DataRow(
+                                              cells: [
+                                                DataCell(Text(
+                                                  obat.noBatch,
+                                                  style: GoogleFonts.inter(
+                                                    fontWeight: FontWeight.w400,
+                                                    fontSize: 12,
+                                                  ),
+                                                )),
+                                                DataCell(Center(
+                                                  child: Text(
+                                                    obat.kuantitasSistem
+                                                        .toString(),
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                )),
+                                                DataCell(Center(
+                                                  child: Text(
+                                                    obat.kuantitasFisik
+                                                        .toString(),
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                )),
+                                                DataCell(Center(
+                                                  child: Text(
+                                                    obat.selisih.toString(),
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                )),
+                                                DataCell(Center(
+                                                  child: Text(
+                                                    obat.catatan.toString(),
+                                                    textAlign: TextAlign.center,
+                                                    style: GoogleFonts.inter(
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                )),
+                                              ],
+                                            );
+                                          }).toList(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                item.detailBatch.isEmpty
+                                    ? Padding(
+                                      padding: const EdgeInsets.only(top: 16.0),
+                                      child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Center(
+                                              child: Text(
+                                                "Tidak ada data batch",
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                    fontStyle: FontStyle.italic),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                    )
+                                    : SizedBox(
+                                        height: 1,
+                                      ),
                               ],
                             )
                           ],
@@ -1080,12 +1297,20 @@ class detailStock extends State<Detailstockopname> {
     );
   }
 
+  String convertTanggal(String input) {
+    final parsedDate = DateTime.parse(input); // parse ISO 8601 format
+    final formatter = DateFormat('dd-MM-yyyy');
+    return formatter.format(parsedDate);
+  }
+
   int _rowsPerPage = 10;
   int _currentPage = 0;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    getDetailStockOpname();
+    fetchDetailBatchData();
     filterData = List.from(_data);
   }
 
@@ -1095,8 +1320,7 @@ class detailStock extends State<Detailstockopname> {
         filterData = List.from(_data);
       } else {
         filterData = _data.where((item) {
-          return item.nama.toLowerCase().contains(query.toLowerCase()) ||
-              item.stok.toString().contains(query);
+          return item.namaObat.toLowerCase().contains(query.toLowerCase());
         }).toList();
       }
       _currentPage = 0; // Reset ke halaman pertama setelah filter
@@ -1108,8 +1332,24 @@ class detailStock extends State<Detailstockopname> {
     int totalPages = (filterData.length / _rowsPerPage).ceil();
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex = (startIndex + _rowsPerPage).clamp(0, filterData.length);
-    List<StokOpnameData> paginatedData =
+    List<StokOpnameObatItem> paginatedData =
         filterData.sublist(startIndex, endIndex);
+
+    if (stokDataDetail == null && loadingData) {
+      return Positioned.fill(
+        child: Container(
+          color: Colors.white.withOpacity(0.7),
+          child: Center(
+            child: LoadingAnimationWidget.flickr(
+              leftDotColor: Colors.red,
+              rightDotColor: Colors.blue,
+              size: 50,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       // appBar: NavbarTop(
       //     title: "INFORMASI DATA STOCK OPNAME",
@@ -1147,60 +1387,104 @@ class detailStock extends State<Detailstockopname> {
                 ),
               ),
               Padding(padding: EdgeInsets.only(top: 25)),
-              InputForm("Nomor Opname", "0977656", "Tanggal Stock Opname",
-                  "21/01/2025", nomorOpname, tanggalOpname),
-              InputForm("Jumlah Barang", "10", "Jumlah Update Stock", "10",
-                  jumlahBarang, jumlahUpdate),
-              Divider(),
-              Container(
-                height: 40,
-                // width: 242,
-                // decoration: BoxDecoration(
-                //   border:
-                //       Border.all(color: ColorStyle.fill_stroke, width: 1),
-                //   color: ColorStyle.fill_form,
-                //   borderRadius: BorderRadius.circular(4),
-                // ),
-
-                child: TextFormField(
-                  controller: text,
-                  onChanged: filtering,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    filled: true,
-                    fillColor: ColorStyle.fill_form,
-
-                    // Menambahkan ikon di dalam TextField
-                    prefixIcon: Padding(
-                      padding: EdgeInsets.only(left: 8, right: 8),
-                      child: Icon(
-                        Icons.search_outlined,
-                        color: Color(0XFF1B1442),
-                        size: 30, // Sesuaikan ukuran ikon
-                      ),
-                    ),
-
-                    hintText: "Search",
-                    contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-
-                    hintStyle: TextStyle(
-                      color: ColorStyle.text_hint,
-                      fontSize: 16,
-                    ),
-
-                    enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: ColorStyle.fill_stroke, width: 1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.black, width: 1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+              Row(
+                children: [
+                  detailField(
+                      "Nomor Opname", stokDataDetail!.stokOpname!.idStokopname),
+                  SizedBox(
+                    width: 16,
                   ),
-                ),
+                  detailField("Nama Depo", stokDataDetail!.stokOpname!.namaDepo)
+                ],
               ),
+              SizedBox(
+                height: 8,
+              ),
+              Row(
+                children: [
+                  detailField(
+                      "Tanggal Stock Opname",
+                      convertTanggal(stokDataDetail!
+                          .stokOpname!.tanggalStokopname
+                          .toString())),
+                  SizedBox(
+                    width: 16,
+                  ),
+                  detailField("Total Selisih",
+                      stokDataDetail!.stokOpname!.totalSelisih.toString())
+                ],
+              ),
+              SizedBox(
+                height: 8,
+              ),
+
+              Row(
+                children: [
+                  detailField("Catatan",
+                      stokDataDetail!.stokOpname!.catatan.toString()),
+                ],
+              ),
+
+              // InputForm("Nomor Opname", "0977656", "Tanggal Stock Opname",
+              //     "21/01/2025", nomorOpname, tanggalOpname),
+              // InputForm("Jumlah Barang", "10", "Jumlah Update Stock", "10",
+              //     jumlahBarang, jumlahUpdate),
+              SizedBox(
+                height: 16,
+              ),
+              Divider(),
+              // SizedBox(
+              //   height: 16,
+              // ),
+              // Container(
+              //   height: 40,
+              //   // width: 242,
+              //   // decoration: BoxDecoration(
+              //   //   border:
+              //   //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+              //   //   color: ColorStyle.fill_form,
+              //   //   borderRadius: BorderRadius.circular(4),
+              //   // ),
+
+              //   child: TextFormField(
+              //     controller: text,
+              //     onChanged: filtering,
+              //     decoration: InputDecoration(
+              //       isDense: true,
+              //       filled: true,
+              //       fillColor: ColorStyle.fill_form,
+
+              //       // Menambahkan ikon di dalam TextField
+              //       prefixIcon: Padding(
+              //         padding: EdgeInsets.only(left: 8, right: 8),
+              //         child: Icon(
+              //           Icons.search_outlined,
+              //           color: Color(0XFF1B1442),
+              //           size: 30, // Sesuaikan ukuran ikon
+              //         ),
+              //       ),
+
+              //       hintText: "Search",
+              //       contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+
+              //       hintStyle: TextStyle(
+              //         color: ColorStyle.text_hint,
+              //         fontSize: 16,
+              //       ),
+
+              //       enabledBorder: OutlineInputBorder(
+              //         borderSide:
+              //             BorderSide(color: ColorStyle.fill_stroke, width: 1),
+              //         borderRadius: BorderRadius.circular(4),
+              //       ),
+
+              //       focusedBorder: OutlineInputBorder(
+              //         borderSide: BorderSide(color: Colors.black, width: 1),
+              //         borderRadius: BorderRadius.circular(4),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               Padding(padding: EdgeInsets.only(top: 25)),
               Expanded(
                 child: Container(
@@ -1255,7 +1539,7 @@ class detailStock extends State<Detailstockopname> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Nomer Obat',
+                                            'Nama Obat',
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
                                                 fontWeight: FontWeight.w600),
@@ -1266,7 +1550,7 @@ class detailStock extends State<Detailstockopname> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Jumlah Stock',
+                                            'Jumlah Stock Fisik',
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
                                                 fontWeight: FontWeight.w600),
@@ -1276,7 +1560,7 @@ class detailStock extends State<Detailstockopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Jumlah Barang Asli',
+                                          child: Text('Jumlah Stock Sistem',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
@@ -1285,20 +1569,34 @@ class detailStock extends State<Detailstockopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Keterangan',
+                                          child: Text('Selisih',
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600)),
+                                        ),
+                                      )),
+                                      DataColumn(
+                                          label: Expanded(
+                                        child: Center(
+                                          child: Text('Catatan',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                     ],
-                                    rows: paginatedData.map((item) {
+                                    rows: paginatedData
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                      int index = entry.key;
+                                      StokOpnameObatItem item = entry.value;
                                       return DataRow(
                                         color: MaterialStateProperty.all(
                                             Colors.white),
                                         cells: [
                                           DataCell(Center(
-                                            child: Text(item.noKartu,
+                                            child: Text("${index + 1}",
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w700,
@@ -1307,9 +1605,37 @@ class detailStock extends State<Detailstockopname> {
                                                   fontSize: 14,
                                                 )),
                                           )),
+                                          DataCell(
+                                            Center(
+                                              child: InkWell(
+                                                onTap: () {
+                                                  // Aksi ketika teks diklik
+                                                  _viewDetails(
+                                                      item.namaObat, item);
+                                                  // atau bisa navigasi/detail
+                                                },
+                                                child: Text(
+                                                  item.namaObat,
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.inter(
+                                                    color: Colors
+                                                        .blue, // Sesuaikan dengan ColorStyle.text_secondary jika perlu
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400,
+                                                    decoration: TextDecoration
+                                                        .underline, // 🔽 GARIS BAWAH
+                                                    decorationColor:
+                                                        Colors.blue,
+                                                    decorationThickness:
+                                                        1.5, // Optional: tebal garis
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                           DataCell(Center(
                                             child: Text(
-                                              item.nama,
+                                              item.kuantitasFisik.toString(),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1320,7 +1646,7 @@ class detailStock extends State<Detailstockopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.kategori,
+                                              item.kuantitasSistem.toString(),
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1330,59 +1656,31 @@ class detailStock extends State<Detailstockopname> {
                                             ),
                                           )),
                                           DataCell(Center(
-                                              child: SizedBox(
+                                            child: Text(
+                                              item.selisih.toString(),
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.inter(
+                                                  color:
+                                                      ColorStyle.text_secondary,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w400),
+                                            ),
+                                          )),
+                                          DataCell(SizedBox(
                                             width: 100,
-                                            height: 35,
-                                            child: TextFormField(
-                                              initialValue:
-                                                  item.stok.toString(),
-                                              textAlign: TextAlign.center,
-                                              decoration: InputDecoration(
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 8),
-                                                border: OutlineInputBorder(),
+                                            child: Center(
+                                              child: Text(
+                                                item.catatan,
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.inter(
+                                                    color: ColorStyle
+                                                        .text_secondary,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400),
                                               ),
                                             ),
-                                          )
-                                              // child: Text(
-                                              //   item.stok.toString(),
-                                              //   textAlign: TextAlign.center,
-                                              //   style: GoogleFonts.inter(
-                                              //     color:
-                                              //         ColorStyle.text_secondary,
-                                              //     fontSize: 14,fontWeight: FontWeight.w400
-                                              //   ),
-                                              // ),
-                                              )),
-                                          DataCell(Center(
-                                              child: SizedBox(
-                                            width: 250,
-                                            height: 35,
-                                            child: TextFormField(
-                                              initialValue:
-                                                  item.catatan.toString(),
-                                              textAlign: TextAlign.center,
-                                              decoration: InputDecoration(
-                                                contentPadding:
-                                                    EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 8),
-                                                border: OutlineInputBorder(),
-                                              ),
-                                            ),
-                                          )
-                                              // child: Text(
-                                              //   item.stok.toString(),
-                                              //   textAlign: TextAlign.center,
-                                              //   style: GoogleFonts.inter(
-                                              //     color:
-                                              //         ColorStyle.text_secondary,
-                                              //     fontSize: 14,fontWeight: FontWeight.w400
-                                              //   ),
-                                              // ),
-                                              )),
+                                          )),
                                         ],
                                       );
                                     }).toList(),
@@ -1520,8 +1818,7 @@ class detailStock extends State<Detailstockopname> {
   }
 
   Widget detailField(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+    return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

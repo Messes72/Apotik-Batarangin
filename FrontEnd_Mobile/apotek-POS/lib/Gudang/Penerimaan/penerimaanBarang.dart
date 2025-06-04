@@ -4172,8 +4172,8 @@ class pagePenerimaan extends State<PenerimaanBarang>
     //     ),
     //   );
     // }
-    print("ZZZZZZZZZZZ");
-    print(detailBarangPembelian2!.keterangan);
+    // print("ZZZZZZZZZZZ");
+    // print(detailBarangPembelian2!.keterangan);
     // Jika sudah ada data, tampilkan dropdown seperti biasa
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

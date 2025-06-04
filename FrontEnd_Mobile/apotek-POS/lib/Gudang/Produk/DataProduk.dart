@@ -87,7 +87,6 @@ class Metadata {
       };
 }
 
-//
 
 class Products {
   final int id;
@@ -98,7 +97,7 @@ class Products {
   final double hargaJual;
   final double hargaBeli;
   final int stokMinimum;
-  // final double uprate;
+  final double uprate;
   final DateTime createdAt;
   final String createdBy;
   final String linkGambarObat;
@@ -114,7 +113,7 @@ class Products {
     required this.hargaJual,
     required this.hargaBeli,
     required this.stokMinimum,
-    // required this.uprate,
+    required this.uprate,
     required this.createdAt,
     required this.createdBy,
     required this.linkGambarObat,
@@ -132,7 +131,7 @@ class Products {
       hargaJual: (json['harga_jual'] ?? 0).toDouble(),
       hargaBeli: (json['harga_beli'] ?? 0).toDouble(),
       stokMinimum: json['stok_minimun'] ?? 0,
-      // uprate: (json['uprate'] ?? 0).toDouble(),
+      uprate: (json['uprate'] ?? 0).toDouble(),
       createdAt: DateTime.parse(
           json['created_at'] ?? DateTime.now().toIso8601String()),
       createdBy: json['created_by'] ?? '',
@@ -152,6 +151,7 @@ class Products {
       'harga_jual': hargaJual,
       'harga_beli': hargaBeli,
       'stok_minimun': stokMinimum,
+      'uprate' : uprate,
       'created_at': createdAt.toIso8601String(),
       'created_by': createdBy,
       'link_gambar_obat': linkGambarObat,
