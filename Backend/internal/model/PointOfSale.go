@@ -610,25 +610,30 @@ func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, erro
 	// 2) Load detail
 	qItems := `
 	SELECT
-		d.id_kartustok,
-		COALESCE(r.nama_racik, o.nama_obat) AS nama_obat,
-		d.jumlah,
-		d.total_harga,
-		ap.aturan_pakai,
-		cp.nama_cara_pakai,
-		kp.nama_keterangan_pakai,
-		d.id_obat_racik,
-		d.dosis,
-		d.jumlah_racik,
-		d.satuan_racik
-	FROM detail_transaksi_penjualan_obat d
-	LEFT JOIN obat_jadi o ON d.id_kartustok = o.id_obat
-	LEFT JOIN obat_racik r ON d.id_obat_racik = r.id_obat_racik
-	LEFT JOIN aturan_pakai ap ON d.id_aturan_pakai = ap.id_aturan_pakai
-	LEFT JOIN cara_pakai cp ON d.id_cara_pakai = cp.id_cara_pakai
-	LEFT JOIN keterangan_pakai kp ON d.id_keterangan_pakai = kp.id_keterangan_pakai
-	WHERE d.id_transaksi = ?
-	ORDER BY d.id
+	d.id_kartustok,
+	CASE
+		WHEN d.id_kartustok IS NULL AND d.id_obat_racik IS NOT NULL THEN r.nama_racik
+		WHEN d.id_kartustok IS NOT NULL AND d.id_obat_racik IS NOT NULL THEN o.nama_obat -- komposisi
+		WHEN d.id_kartustok IS NOT NULL AND d.id_obat_racik IS NULL THEN o.nama_obat -- plain
+		ELSE NULL
+	END AS nama_obat,
+	d.jumlah,
+	d.total_harga,
+	ap.aturan_pakai,
+	cp.nama_cara_pakai,
+	kp.nama_keterangan_pakai,
+	d.id_obat_racik,
+	d.dosis,
+	d.jumlah_racik,
+	d.satuan_racik
+FROM detail_transaksi_penjualan_obat d
+LEFT JOIN obat_jadi o ON d.id_kartustok = o.id_obat
+LEFT JOIN obat_racik r ON d.id_obat_racik = r.id_obat_racik
+LEFT JOIN aturan_pakai ap ON d.id_aturan_pakai = ap.id_aturan_pakai
+LEFT JOIN cara_pakai cp ON d.id_cara_pakai = cp.id_cara_pakai
+LEFT JOIN keterangan_pakai kp ON d.id_keterangan_pakai = kp.id_keterangan_pakai
+WHERE d.id_transaksi = ?
+ORDER BY d.id
 	`
 	rows, err := con.QueryContext(ctx, qItems, idTransaksi)
 	if err != nil {
@@ -673,7 +678,6 @@ func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, erro
 		isKartustokEmpty := !rawKartustok.Valid || rawKartustok.String == ""
 		isRacikRow := rawRacikID.Valid && rawRacikID.String != ""
 
-		// 2a) Racikan header
 		if isKartustokEmpty && isRacikRow {
 			ti.IsRacikan = true
 			if dosisRacik.Valid {
@@ -685,13 +689,13 @@ func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, erro
 			}
 			if satuanRacik.Valid {
 				ti.SatuanRacik = &satuanRacik.String
+
 			}
 			td.Items = append(td.Items, ti)
 			currentRacikIdx = len(td.Items) - 1
 			continue
 		}
 
-		// 2b) Komposisi line
 		if !isKartustokEmpty && isRacikRow && currentRacikIdx >= 0 {
 			master := &td.Items[currentRacikIdx]
 			ingID := rawKartustok.String

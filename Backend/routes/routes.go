@@ -44,7 +44,6 @@ func Init() *echo.Echo {
 	routePrivilege.Use(middleware.CheckAPIKey)
 	routePrivilege.Use(middleware.JWTMiddleware)
 	routePrivilege.Use(middleware.CheckPrivilege("Privilege"))
-
 	routePrivilege.POST("/create", controller.CreatePrivilege)
 	routePrivilege.GET("", controller.GetAllPrivilege)
 	routePrivilege.GET("/:id_privilege/info", controller.GetPrivilegeByID)
@@ -54,13 +53,14 @@ func Init() *echo.Echo {
 	routeKustomer := e.Group("/kustomer")
 	routeKustomer.Use(middleware.CheckAPIKey)
 	routeKustomer.Use(middleware.JWTMiddleware)
+	routeKustomer.Use(middleware.CheckPrivilege("Kustomer"))
 	routeKustomer.GET("", controller.GetKustomer)
 	routeKustomer.POST("/create", controller.AddKustomer)
 	routeKustomer.PUT("/:id_kustomer/edit", controller.UpdateKustomer)
 	routeKustomer.PUT("/:id_kustomer/delete", controller.DeleteKustomer)
 
 	routeSupplier := e.Group("/supplier")
-	routeSupplier.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeSupplier.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Supplier"))
 	routeSupplier.GET("", controller.GetAllSupplier)
 	routeSupplier.GET("/:id_supplier/info", controller.GetSupplier)
 	routeSupplier.POST("/create", controller.AddSupplier)
@@ -70,6 +70,7 @@ func Init() *echo.Echo {
 	routeKategori := e.Group("/category")
 	routeKategori.Use(middleware.CheckAPIKey)
 	routeKategori.Use(middleware.JWTMiddleware)
+	routeKategori.Use(middleware.CheckPrivilege("Kategori"))
 	routeKategori.GET("", controller.GetKategori)
 	routeKategori.POST("/create", controller.AddKategori)
 	routeKategori.PUT("/:id_kategori/edit", controller.UpdateKategori)
@@ -78,15 +79,17 @@ func Init() *echo.Echo {
 	routesatuan := e.Group("/satuan")
 	routesatuan.Use(middleware.CheckAPIKey)
 	routesatuan.Use(middleware.JWTMiddleware)
+	routesatuan.Use(middleware.CheckPrivilege("Satuan"))
 	routesatuan.GET("", controller.GetSatuan)
 
 	routedepo := e.Group("/depo")
 	routedepo.Use(middleware.CheckAPIKey)
 	routedepo.Use(middleware.JWTMiddleware)
+	routedepo.Use(middleware.CheckPrivilege("Depo"))
 	routedepo.GET("", controller.GetDepo)
 
 	routeProduk := e.Group("/product")
-	routeProduk.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeProduk.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Product"))
 	routeProduk.POST("/create", controller.AddObat)
 	routeProduk.GET("/info", controller.GetObat)
 	routeProduk.POST("/:id_obat/edit", controller.UpdateObat)
@@ -99,13 +102,13 @@ func Init() *echo.Echo {
 	routeProduk.GET("/batch", controller.GetAllBatch)
 
 	routePembelianPenjualan := e.Group("/pembelianbarang")
-	routePembelianPenjualan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routePembelianPenjualan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Pembelian"))
 	routePembelianPenjualan.POST("/create", controller.CreatePembelian)
 	routePembelianPenjualan.GET("", controller.GetAllPembelian)
 	routePembelianPenjualan.GET("/:id_pembelian_penerimaan_obat", controller.GetPembelianDetail)
 
 	routePenerimaanBarang := e.Group("/penerimaanbarang")
-	routePenerimaanBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routePenerimaanBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Penerimaan"))
 	routePenerimaanBarang.POST("/create", controller.CreatePenerimaan)
 	routePenerimaanBarang.PUT("/:id_pembelian_penerimaan/edit", controller.EditPenerimaan)
 
@@ -119,7 +122,7 @@ func Init() *echo.Echo {
 	routePOS.POST("/calculateharga", controller.CalculateObatRacik)
 
 	routeRequestBarang := e.Group("/requestbarang")
-	routeRequestBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeRequestBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Request Barang"))
 	routeRequestBarang.POST("/apotikrequest", controller.RequestBarangApotikKeGudang)
 	routeRequestBarang.GET("/:id", controller.GetRequestByID)
 	routeRequestBarang.GET("", controller.GetRequest)
@@ -128,7 +131,7 @@ func Init() *echo.Echo {
 	routeRequestBarang.PUT("/edit", controller.EditRequest)
 
 	routeStokOpname := e.Group("/stokopname")
-	routeStokOpname.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeStokOpname.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Stok Opname"))
 	routeStokOpname.POST("/create", controller.CreateStokOpname)
 	routeStokOpname.GET("/batch", controller.GetNomorBatch)
 	routeStokOpname.GET("/all/:depo", controller.GetAllStokOpname)
@@ -137,13 +140,13 @@ func Init() *echo.Echo {
 	// get stok sekarang untuk saat crate stok opname
 
 	routeReturBarang := e.Group("/retur")
-	routeReturBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routeReturBarang.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Retur"))
 	routeReturBarang.POST("/create", controller.ReturObatApotik)
 	routeReturBarang.GET("/:id_depo", controller.GetAllRetur)
 	routeReturBarang.GET("/get", controller.GetReturById)
 
 	routelaporan := e.Group("/laporan")
-	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware)
+	routelaporan.Use(middleware.CheckAPIKey, middleware.JWTMiddleware, middleware.CheckPrivilege("Laporan"))
 	routelaporan.GET("", controller.Laporan)
 	routelaporan.GET("/dashboard-management", controller.DashboardManagement)
 	routelaporan.GET("/dashboard-gudang", controller.DashboardGudang)

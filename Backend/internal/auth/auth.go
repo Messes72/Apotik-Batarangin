@@ -20,7 +20,7 @@ type Claims struct {
 
 func GenerateJWTToken(userid string, privileges []class.Privilege, depos []class.Depo) (string, error) {
 	jwtkey := []byte(os.Getenv("JWT_SECRET_KEY"))
-	fmt.Println("JWT_SECRET_KEY:GenerateJWTToken", string(jwtkey))
+	// fmt.Println("JWT_SECRET_KEY:GenerateJWTToken", string(jwtkey))
 
 	privilege := []map[string]interface{}{} //slice of map dimana {} pertama itu bagian syntx dri map trs yg {} kedua itu kita declare isinya kosongan
 	for _, p := range privileges {
@@ -62,7 +62,7 @@ func GenerateJWTToken(userid string, privileges []class.Privilege, depos []class
 
 func ValidateJWTToken(tokenString string) (*Claims, error) {
 	jwtkey := []byte(os.Getenv("JWT_SECRET_KEY"))
-	fmt.Println("JWT_SECRET_KEY ValidateJWTToken:", string(jwtkey))
+	// fmt.Println("JWT_SECRET_KEY ValidateJWTToken:", string(jwtkey))
 	if string(jwtkey) == "" {
 		return nil, fmt.Errorf("JWT secret key is missing")
 	}
