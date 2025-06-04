@@ -2,21 +2,32 @@
 	import { page } from '$app/state';
 	import { mutateQueryParams } from '$lib';
 
-	interface Props {
-		total_content: number;
+	interface Metadata {
+		current_page: number;
+		page_size: number;
+		total_pages: number;
+		total_records: number;
 	}
 
-	const { total_content }: Props = $props();
+	interface Props {
+		total_content: number;
+		metadata?: Metadata | null;
+	}
+
+	const { total_content, metadata = null }: Props = $props();
 
 	let interval = $state<string>(page.url.searchParams.get('limit') || '10');
-
-	const max_page = $derived<number>(Math.ceil(total_content / Number(interval)));
+	
+	// Gunakan metadata jika tersedia, jika tidak gunakan perhitungan lama
+	const max_page = $derived<number>(
+		metadata ? metadata.total_pages : Math.ceil(total_content / Number(interval))
+	);
+	
 	const page_now = $derived<number>(
-		Math.floor(Number(page.url.searchParams.get('offset')) / Number(interval) + 1)
+		metadata ? metadata.current_page : Math.floor(Number(page.url.searchParams.get('offset')) / Number(interval) + 1)
 	);
 </script>
 
-<!-- svelte-ignore a11y_consider_explicit_label -->
 <div class="my-4 flex items-center gap-3 pr-8">
 	<div class="font-notosans text-[14px] text-[#6E6E71]">Rows per page:</div>
 	<select
@@ -48,13 +59,7 @@
 					);
 			}}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-			>
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
 				<g id="Backward">
 					<rect x="0.25" y="0.25" width="23.5" height="23.5" stroke="#6E6E71" stroke-width="0.5" />
 					<mask
@@ -87,7 +92,7 @@
 				</g>
 			</svg>
 		</button>
-
+	
 		<button
 			class="w-3"
 			onclick={() => {
@@ -95,13 +100,7 @@
 				else mutateQueryParams('offset', () => (page_now * Number(interval)).toString());
 			}}
 		>
-			<svg
-				xmlns="http://www.w3.org/2000/svg"
-				width="24"
-				height="24"
-				viewBox="0 0 24 24"
-				fill="none"
-			>
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
 				<g id="Forward">
 					<rect x="0.25" y="0.25" width="23.5" height="23.5" stroke="#6E6E71" stroke-width="0.5" />
 					<mask

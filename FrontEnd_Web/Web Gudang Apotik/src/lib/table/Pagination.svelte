@@ -2,17 +2,29 @@
 	import { page } from '$app/state';
 	import { mutateQueryParams } from '$lib';
 
-	interface Props {
-		total_content: number;
+	interface Metadata {
+		current_page: number;
+		page_size: number;
+		total_pages: number;
+		total_records: number;
 	}
 
-	const { total_content }: Props = $props();
+	interface Props {
+		total_content: number;
+		metadata?: Metadata | null;
+	}
+
+	const { total_content, metadata = null }: Props = $props();
 
 	let interval = $state<string>(page.url.searchParams.get('limit') || '15');
-
-	const max_page = $derived<number>(Math.ceil(total_content / Number(interval)));
+	
+	// Gunakan metadata jika tersedia, jika tidak gunakan perhitungan lama
+	const max_page = $derived<number>(
+		metadata ? metadata.total_pages : Math.ceil(total_content / Number(interval))
+	);
+	
 	const page_now = $derived<number>(
-		Math.floor(Number(page.url.searchParams.get('offset')) / Number(interval) + 1)
+		metadata ? metadata.current_page : Math.floor(Number(page.url.searchParams.get('offset')) / Number(interval) + 1)
 	);
 </script>
 

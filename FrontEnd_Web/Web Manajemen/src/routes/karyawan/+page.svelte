@@ -149,9 +149,9 @@
 				privilege_karyawan: '',
 				general: ''
 			};
-			
+
 			const errorMsg = form.message || '';
-			
+
 			if (errorMsg.toLowerCase().includes('username')) {
 				inputErrors.username_karyawan = errorMsg;
 			} else if (errorMsg.toLowerCase().includes('password')) {
@@ -165,10 +165,12 @@
 			} else {
 				inputErrors.general = errorMsg;
 			}
-			
-			const formHasKaryawanId = form.values && 'karyawan_id' in (form.values as Record<string, unknown>);
-			const formHasAlasanDelete = form.values && 'alasan_delete' in (form.values as Record<string, unknown>);
-			
+
+			const formHasKaryawanId =
+				form.values && 'karyawan_id' in (form.values as Record<string, unknown>);
+			const formHasAlasanDelete =
+				form.values && 'alasan_delete' in (form.values as Record<string, unknown>);
+
 			if (formHasKaryawanId) {
 				editErrors = {
 					nama_karyawan: inputErrors.nama_karyawan,
@@ -271,30 +273,6 @@
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'karyawan'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'karyawan';
-				goto('/karyawan');
-			}}
-		>
-			Karyawan
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/karyawan/riwayat_karyawan');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-2 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
@@ -433,7 +411,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination20 total_content={data?.total_content} />
+		<Pagination20 total_content={data?.total_content} metadata={data?.metadata} />
 	</div>
 
 	{#if isModalInputOpen}
@@ -1203,25 +1181,25 @@
 									privilege_karyawan: '',
 									general: ''
 								};
-								
+
 								// Validasi
 								let isValid = true;
-								
+
 								if (!currentKaryawan?.nama) {
 									editErrors.nama_karyawan = 'Nama karyawan tidak boleh kosong';
 									isValid = false;
 								}
-								
+
 								if (selectedRoles.length === 0) {
 									editErrors.role_karyawan = 'Pilih minimal satu role karyawan';
 									isValid = false;
 								}
-								
+
 								if (selectedPrivileges.length === 0) {
 									editErrors.privilege_karyawan = 'Pilih minimal satu privilege karyawan';
 									isValid = false;
 								}
-								
+
 								// Jika semua validasi lulus, buka modal konfirmasi
 								if (isValid) {
 									isModalKonfirmEditOpen = true;
@@ -1343,9 +1321,9 @@
 		<div class="fixed inset-0 z-[10000] flex items-center justify-center" on:click|stopPropagation>
 			<div class="w-80 rounded-md bg-red-100 p-4 text-center text-sm text-red-700">
 				{deleteError}
-				<button 
+				<button
 					class="mt-2 rounded-md bg-red-500 px-4 py-2 text-white"
-					on:click={() => deleteError = ''}
+					on:click={() => (deleteError = '')}
 				>
 					Tutup
 				</button>

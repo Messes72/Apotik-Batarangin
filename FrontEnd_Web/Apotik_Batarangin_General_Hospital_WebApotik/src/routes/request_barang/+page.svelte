@@ -293,30 +293,6 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'request_barang'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'request_barang';
-				goto('/request_barang');
-			}}
-		>
-			Request Barang
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/request_barang/riwayat_request_barang');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
@@ -330,11 +306,6 @@
 			</button>
 		</div>
 		<div class="flex-1"><Search2 /></div>
-		<Dropdown
-			options={statusOptions}
-			placeholder="-- Pilih Status --"
-			bind:selectedValue={selectedStatus}
-		/>
 	</div>
 
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md">
@@ -470,10 +441,59 @@
 							if (result.type === 'success') {
 								isModalSuccessInputOpen = true;
 								resetForm();
+								console.log('[Input RB - Konfirmasi Click] request_barang_items:', JSON.parse(JSON.stringify(request_barang_items)));
+								console.log('[Input RB - Konfirmasi Click] inputForm.keterangan:', inputForm.keterangan);
+
+								let valid = true;
+
+								const validItems = request_barang_items.filter(
+									(item) => item.id_obat && item.jumlah_diminta > 0
+								);
+
+								if (validItems.length === 0) {
+									inputErrors.list_permintaan_obat = 'Minimal satu obat harus ditambahkan';
+									valid = false;
+								}
+
+								if (!inputForm.keterangan.trim()) {
+									inputErrors.keterangan = 'Keterangan wajib diisi';
+									valid = false;
+								}
+
+								console.log('[Input RB - Konfirmasi Click] After validation - valid:', valid);
+								console.log('[Input RB - Konfirmasi Click] After validation - inputErrors:', JSON.parse(JSON.stringify(inputErrors)));
+
+								if (valid) {
+									const itemsForSubmit = validItems.map((item) => ({
+										id_obat: item.id_obat || '',
+										jumlah_diminta: Number(item.jumlah_diminta) || 0,
+										catatan_apotik: item.catatan_apotik || ''
+									}));
+									console.log('[Input RB - Konfirmasi Click] itemsForSubmit:', itemsForSubmit);
+
+									const obatListInput = document.createElement('input');
+									obatListInput.type = 'hidden';
+									obatListInput.name = 'detail_distibusi_list';
+									obatListInput.value = JSON.stringify(itemsForSubmit);
+									console.log('[Input RB - Konfirmasi Click] obatListInput.name:', obatListInput.name);
+									console.log('[Input RB - Konfirmasi Click] obatListInput.value:', obatListInput.value);
+
+									const form = document.getElementById('requestBarangForm');
+									const oldObatListInput = form?.querySelector(
+										'input[name="detail_distibusi_list"]'
+									);
+									if (oldObatListInput) {
+										form?.removeChild(oldObatListInput);
+									}
+
+									form?.appendChild(obatListInput);
+									isModalKonfirmInputOpen = true;
+								}
 								setTimeout(() => {
 									window.location.reload();
 								}, 2500);
 							} else if (result.type === 'failure') {
+								console.error('[Input RB - Enhance Failure] Server error result:', result);
 								if (result.data && typeof result.data === 'object' && 'message' in result.data && typeof result.data.message === 'string') {
 									showWarningMessage(result.data.message);
 								} else {
@@ -657,6 +677,9 @@
 									general: ''
 								};
 
+								console.log('[Input RB - Konfirmasi Click] request_barang_items:', JSON.parse(JSON.stringify(request_barang_items)));
+								console.log('[Input RB - Konfirmasi Click] inputForm.keterangan:', inputForm.keterangan);
+
 								let valid = true;
 
 								const validItems = request_barang_items.filter(
@@ -673,20 +696,28 @@
 									valid = false;
 								}
 
+								console.log('[Input RB - Konfirmasi Click] After validation - valid:', valid);
+								console.log('[Input RB - Konfirmasi Click] After validation - inputErrors:', JSON.parse(JSON.stringify(inputErrors)));
+
 								if (valid) {
 									const itemsForSubmit = validItems.map((item) => ({
 										id_obat: item.id_obat || '',
 										jumlah_diminta: Number(item.jumlah_diminta) || 0,
 										catatan_apotik: item.catatan_apotik || ''
 									}));
+									console.log('[Input RB - Konfirmasi Click] itemsForSubmit:', itemsForSubmit);
 
 									const obatListInput = document.createElement('input');
 									obatListInput.type = 'hidden';
-									obatListInput.name = 'obat_list';
+									obatListInput.name = 'detail_distibusi_list';
 									obatListInput.value = JSON.stringify(itemsForSubmit);
+									console.log('[Input RB - Konfirmasi Click] obatListInput.name:', obatListInput.name);
+									console.log('[Input RB - Konfirmasi Click] obatListInput.value:', obatListInput.value);
 
 									const form = document.getElementById('requestBarangForm');
-									const oldObatListInput = form?.querySelector('input[name="obat_list"]');
+									const oldObatListInput = form?.querySelector(
+										'input[name="detail_distibusi_list"]'
+									);
 									if (oldObatListInput) {
 										form?.removeChild(oldObatListInput);
 									}
@@ -902,6 +933,9 @@
 									general: ''
 								};
 
+								console.log('[Edit RB - Konfirmasi Click] request_barang_items:', JSON.parse(JSON.stringify(edit_request_barang_items)));
+								console.log('[Edit RB - Konfirmasi Click] editKeterangan:', editKeterangan);
+
 								let valid = true;
 
 								const validItems = edit_request_barang_items.filter(
@@ -919,14 +953,19 @@
 										jumlah_diminta: Number(item.jumlah_diminta) || 0,
 										catatan_apotik: item.catatan_apotik || ''
 									}));
+									console.log('[Edit RB - Konfirmasi Click] itemsForSubmit:', itemsForSubmit);
 
 									const detailDistribusiInput = document.createElement('input');
 									detailDistribusiInput.type = 'hidden';
 									detailDistribusiInput.name = 'detail_distribusi_list';
 									detailDistribusiInput.value = JSON.stringify(itemsForSubmit);
+									console.log('[Edit RB - Konfirmasi Click] detailDistribusiInput.name:', detailDistribusiInput.name);
+									console.log('[Edit RB - Konfirmasi Click] detailDistribusiInput.value:', detailDistribusiInput.value);
 
 									const form = document.getElementById('editRequestBarangForm');
-									const oldDetailInput = form?.querySelector('input[name="detail_distribusi_list"]');
+									const oldDetailInput = form?.querySelector(
+										'input[name="detail_distribusi_list"]'
+									);
 									if (oldDetailInput) {
 										form?.removeChild(oldDetailInput);
 									}
@@ -934,6 +973,9 @@
 									form?.appendChild(detailDistribusiInput);
 									isModalKonfirmEditOpen = true;
 								}
+
+								console.log('[Edit RB - Konfirmasi Click] After validation - valid:', valid);
+								console.log('[Edit RB - Konfirmasi Click] After validation - editErrors:', JSON.parse(JSON.stringify(editErrors)));
 							}}
 						>
 							KONFIRMASI

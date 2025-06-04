@@ -15,11 +15,13 @@
 	let showLayout = $derived(
 		$page.url.pathname.startsWith('/dashboard') ||
 			$page.url.pathname.startsWith('/product') ||
+			$page.url.pathname.startsWith('/obat_racik') ||
 			$page.url.pathname.startsWith('/stock_opname') ||
 			$page.url.pathname.startsWith('/customer') ||
 			$page.url.pathname.startsWith('/transaksi') ||
 			$page.url.pathname.startsWith('/request_barang') ||
-			$page.url.pathname.startsWith('/return_barang')
+			$page.url.pathname.startsWith('/return_barang') ||
+			$page.url.pathname.startsWith('/riwayat_transaksi')
 	);
 
 	let activeHoverValue = $derived(getActivePage($page.url.pathname));
@@ -132,6 +134,21 @@
 											Product
 										</a>
 									</li>
+									<li class={$activeHover === 'obat_racik' ? 'rounded-md bg-[#003349]' : ''}>
+										<a
+											href="/obat_racik"
+											class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
+											onclick={() => ($activeHover = 'obat_racik')}
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><path
+													fill="#fff"
+													d="M16.2 3.5c-1-1-2.3-1.5-3.5-1.5s-2.6.5-3.5 1.5L3.4 9.1c-2 2-2 5.1 0 7.1s5.1 2 7.1 0l5.7-5.7c1.9-1.9 1.9-5.1 0-7m-1.4 5.6L12 11.9 8.4 8.4 4 12.8c0-.8.2-1.7.9-2.3l5.7-5.7c.5-.5 1.3-.8 2-.8s1.5.3 2.1.8c1.2 1.3 1.2 3.1.1 4.3m4.8-2c0 .8-.2 1.5-.4 2.3 1 1.2 1 3-.1 4.1l-2.8 2.8-1.5-1.5-2.8 2.8c-1.3 1.3-3.1 2-4.8 2 .2.3.4.6.7.9 2 2 5.1 2 7.1 0l5.7-5.7c2-2 2-5.1 0-7.1-.5-.2-.8-.4-1.1-.6"
+												/></svg
+											>
+											Obat Racik
+										</a>
+									</li>
 									<li class={$activeHover === 'stock_opname' ? 'rounded-md bg-[#003349]' : ''}>
 										<a
 											href="/stock_opname"
@@ -239,6 +256,21 @@
 											Return Barang
 										</a>
 									</li>
+									<li class={$activeHover === 'riwayat_transaksi' ? 'rounded-md bg-[#003349]' : ''}>
+										<a
+											href="/riwayat_transaksi"
+											class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
+											onclick={() => ($activeHover = 'riwayat_transaksi')}
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><path
+													fill="#fff"
+													d="M12 21q-3.45 0-6.012-2.287T3.05 13H5.1q.35 2.6 2.313 4.3T12 19q2.925 0 4.963-2.037T19 12q0-2.926-2.037-4.962T12 5a6.75 6.75 0 0 0-3.225.8A7.4 7.4 0 0 0 6.25 8H9v2H3V4h2v2.35a8.7 8.7 0 0 1 3.113-2.475A8.9 8.9 0 0 1 12 3q1.875 0 3.513.713a9.2 9.2 0 0 1 2.85 1.924 9.1 9.1 0 0 1 1.925 2.85A8.7 8.7 0 0 1 21 12q0 1.874-.712 3.513a9.1 9.1 0 0 1-1.925 2.85 9.2 9.2 0 0 1-2.85 1.925A8.7 8.7 0 0 1 12 21m2.8-4.8L11 12.4V7h2v4.6l3.2 3.2z"
+												/></svg
+											>
+											Riwayat Transaksi
+										</a>
+									</li>
 								</ul>
 							</div>
 							<div class="absolute bottom-0 w-full">
@@ -332,6 +364,24 @@
 													d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"
 												/>
 											</svg>
+										</a>
+									</li>
+									<li
+										class={$activeHover === 'obat_racik'
+											? 'flex w-12 justify-center rounded-md bg-[#003349]'
+											: 'flex w-12 justify-center'}
+									>
+										<a
+											href="/obat_racik"
+											class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
+											onclick={() => ($activeHover = 'obat_racik')}
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><path
+													fill="#fff"
+													d="M16.2 3.5c-1-1-2.3-1.5-3.5-1.5s-2.6.5-3.5 1.5L3.4 9.1c-2 2-2 5.1 0 7.1s5.1 2 7.1 0l5.7-5.7c1.9-1.9 1.9-5.1 0-7m-1.4 5.6L12 11.9 8.4 8.4 4 12.8c0-.8.2-1.7.9-2.3l5.7-5.7c.5-.5 1.3-.8 2-.8s1.5.3 2.1.8c1.2 1.3 1.2 3.1.1 4.3m4.8-2c0 .8-.2 1.5-.4 2.3 1 1.2 1 3-.1 4.1l-2.8 2.8-1.5-1.5-2.8 2.8c-1.3 1.3-3.1 2-4.8 2 .2.3.4.6.7.9 2 2 5.1 2 7.1 0l5.7-5.7c2-2 2-5.1 0-7.1-.5-.2-.8-.4-1.1-.6"
+												/></svg
+											>
 										</a>
 									</li>
 									<li
@@ -453,6 +503,24 @@
 											</svg>
 										</a>
 									</li>
+									<li
+										class={$activeHover === 'riwayat_transaksi'
+											? 'flex w-12 justify-center rounded-md bg-[#003349]'
+											: 'flex w-12 justify-center'}
+									>
+										<a
+											href="/riwayat_transaksi"
+											class="font-montserrat flex w-full items-center gap-3 rounded p-2 text-base hover:bg-[#003349]"
+											onclick={() => ($activeHover = 'riwayat_transaksi')}
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+												><path
+													fill="#fff"
+													d="M12 21q-3.45 0-6.012-2.287T3.05 13H5.1q.35 2.6 2.313 4.3T12 19q2.925 0 4.963-2.037T19 12q0-2.926-2.037-4.962T12 5a6.75 6.75 0 0 0-3.225.8A7.4 7.4 0 0 0 6.25 8H9v2H3V4h2v2.35a8.7 8.7 0 0 1 3.113-2.475A8.9 8.9 0 0 1 12 3q1.875 0 3.513.713a9.2 9.2 0 0 1 2.85 1.924 9.1 9.1 0 0 1 1.925 2.85A8.7 8.7 0 0 1 21 12q0 1.874-.712 3.513a9.1 9.1 0 0 1-1.925 2.85 9.2 9.2 0 0 1-2.85 1.925A8.7 8.7 0 0 1 12 21m2.8-4.8L11 12.4V7h2v4.6l3.2 3.2z"
+												/></svg
+											>
+										</a>
+									</li>
 								</ul>
 							</div>
 							<div class="absolute bottom-4 flex w-full justify-center">
@@ -527,6 +595,8 @@
 						<h1 class="font-montserrat text-xl font-bold">
 							{#if $page.url.pathname === '/'}
 								HOME
+							{:else if $page.url.pathname === '/obat_racik'}
+								OBAT RACIK
 							{:else if $page.url.pathname === '/stock_opname'}
 								STOCK OPNAME
 							{:else if $page.url.pathname === '/customer'}
@@ -549,6 +619,8 @@
 								RIWAYAT RETURN BARANG
 							{:else if $page.url.pathname === '/product/input_product'}
 								INPUT PRODUCT
+							{:else if $page.url.pathname === '/riwayat_transaksi'}
+								RIWAYAT TRANSAKSI
 							{:else}
 								{$page.url.pathname.slice(1).toUpperCase()}
 							{/if}

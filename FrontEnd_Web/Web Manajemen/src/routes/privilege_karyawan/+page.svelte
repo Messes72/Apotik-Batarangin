@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Detail from '$lib/info/Detail.svelte';
@@ -218,7 +217,7 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.total_content} />
+		<Pagination10 total_content={data.total_content} metadata={data.metadata} />
 	</div>
 	{#if isModalOpen}
 		<div

@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { createEventDispatcher } from 'svelte';
+
 	export let isOpen = false;
 	export let width = 'w-[606px]';
 	export let isSuccess = false;
+	export let kustomerId = '';
+	export let alasanDelete = '';
+
+	const dispatch = createEventDispatcher();
 </script>
 
 {#if isOpen}
@@ -39,19 +46,43 @@
 					Apakah anda yakin <br />
 					akan menghapus data ini?
 				</div>
-				<div class="flex flex-row items-center justify-center gap-6">
-					<button
-						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
-						on:click={() => (isOpen = false)}>Tidak</button
-					>
-					<button
-						class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#FF3B30] text-center text-[16px] text-white"
-						on:click={() => {
+				<form
+					method="POST"
+					action="?/deleteKustomer"
+					use:enhance={() => {
+						return async ({ result }) => {
 							isOpen = false;
-							isSuccess = true;
-						}}>Iya, hapus</button
-					>
-				</div>
+
+							if (result.type === 'success') {
+								isSuccess = true;
+								dispatch('confirm');
+
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							}
+						};
+					}}
+					id="deleteKustomerForm"
+				>
+					<input type="hidden" name="kustomer_id" value={kustomerId} />
+					<input type="hidden" name="alasan_delete" value={alasanDelete} />
+					<div class="flex flex-row items-center justify-center gap-6">
+						<button
+							type="button"
+							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#AFAFAF] text-center text-[16px] text-white"
+							on:click={() => {
+								isOpen = false;
+								dispatch('closed');
+							}}>Tidak</button
+						>
+						<button
+							type="submit"
+							class="font-intersemi h-[31px] w-[101px] flex-shrink-0 rounded-md bg-[#FF3B30] text-center text-[16px] text-white"
+							>Iya, hapus</button
+						>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>

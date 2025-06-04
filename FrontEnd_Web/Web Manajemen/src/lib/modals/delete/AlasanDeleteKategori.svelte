@@ -49,7 +49,7 @@
 				<div class="mt-2 flex flex-col gap-2">
 					<TextArea
 						id="alasan"
-						label="Alasan Data Kategori  ini Dihapus"
+						label="Alasan Data Kategori ini Dihapus"
 						placeholder="Alasan"
 						bind:value={alasanValue}
 					/>

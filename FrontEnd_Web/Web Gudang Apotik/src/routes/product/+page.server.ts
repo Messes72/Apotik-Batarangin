@@ -58,13 +58,43 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 				}))
 				: [];
 
+			// Fetch stok for each product
+			const productsWithStock = await Promise.all(
+				processedData.map(async (product: any) => {
+					try {
+						// Get product ID
+						const productId = product.id_obat;
+						if (productId) {
+							// Fetch stok from API
+							const stokUrl = `${env.BASE_URL3}/PoS/stok/${productId}`;
+							const stokResponse = await fetchWithAuth(stokUrl, {}, locals.token, fetch);
+							
+							if (stokResponse.ok) {
+								const stokData = await stokResponse.json();
+								if (stokData.status === 200 && stokData.data) {
+									// Add stok to product data
+									return {
+										...product,
+										stok_barang: stokData.data.stok_barang || 0
+									};
+								}
+							}
+						}
+						return product;
+					} catch (err) {
+						console.error(`Failed to fetch stock for product ${product.id_obat || product.id}`, err);
+						return product;
+					}
+				})
+			);
+
 			// Filter data by nama_obat if keyword is provided
 			const filteredData = keyword
-				? processedData.filter((item: any) => 
+				? productsWithStock.filter((item: any) => 
 					item.nama.toLowerCase().includes(keyword.toLowerCase()) ||
 					(item.nama_obat && item.nama_obat.toLowerCase().includes(keyword.toLowerCase()))
 				)
-				: processedData;
+				: productsWithStock;
 
 			const totalRecords = data.metadata?.total_records || filteredData.length;
 
@@ -72,7 +102,13 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 				data: filteredData,
 				total_content: keyword ? filteredData.length : totalRecords,
 				categories,
-				satuans
+				satuans,
+				metadata: data.metadata || {
+					current_page: page,
+					page_size,
+					total_pages: Math.ceil(totalRecords / page_size),
+					total_records: totalRecords
+				}
 			};
 
 			console.log('Returning data structure:', JSON.stringify(result, null, 2).substring(0, 200) + '...');

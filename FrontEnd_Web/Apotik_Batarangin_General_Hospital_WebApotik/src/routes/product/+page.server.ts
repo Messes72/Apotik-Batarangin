@@ -7,7 +7,7 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 
 	const limit = Number(url.searchParams.get('limit') || '15');
 	const offset = Number(url.searchParams.get('offset') || '0');
-	
+
 	const page = Math.floor(offset / limit) + 1;
 	const page_size = limit;
 	const keyword = url.searchParams.get('keyword') || '';
@@ -58,13 +58,43 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 				}))
 				: [];
 
+			// Fetch stok for each product
+			const productsWithStock = await Promise.all(
+				processedData.map(async (product: any) => {
+					try {
+						// Get product ID
+						const productId = product.id_obat;
+						if (productId) {
+							// Fetch stok from API
+							const stokUrl = `${env.BASE_URL3}/PoS/stok/${productId}`;
+							const stokResponse = await fetchWithAuth(stokUrl, {}, locals.token, fetch);
+
+							if (stokResponse.ok) {
+								const stokData = await stokResponse.json();
+								if (stokData.status === 200 && stokData.data) {
+									// Add stok to product data
+									return {
+										...product,
+										stok_barang: stokData.data.stok_barang || 0
+									};
+								}
+							}
+						}
+						return product;
+					} catch (err) {
+						console.error(`Failed to fetch stock for product ${product.id_obat || product.id}`, err);
+						return product;
+					}
+				})
+			);
+
 			// Filter data by nama_obat if keyword is provided
 			const filteredData = keyword
-				? processedData.filter((item: any) => 
+				? productsWithStock.filter((item: any) =>
 					item.nama.toLowerCase().includes(keyword.toLowerCase()) ||
 					(item.nama_obat && item.nama_obat.toLowerCase().includes(keyword.toLowerCase()))
 				)
-				: processedData;
+				: productsWithStock;
 
 			const totalRecords = data.metadata?.total_records || filteredData.length;
 
@@ -72,7 +102,13 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 				data: filteredData,
 				total_content: keyword ? filteredData.length : totalRecords,
 				categories,
-				satuans
+				satuans,
+				metadata: data.metadata || {
+					current_page: page,
+					page_size,
+					total_pages: Math.ceil(totalRecords / page_size),
+					total_records: totalRecords
+				}
 			};
 
 			console.log('Returning data structure:', JSON.stringify(result, null, 2).substring(0, 200) + '...');
@@ -101,118 +137,118 @@ export const actions: Actions = {
 	createProduct: async ({ request, fetch, locals }) => {
 		// Get the form data from the request
 		const formData = await request.formData();
-		
+
 		try {
 			// Send the formData directly to the API
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/product/create`, 
+				`${env.BASE_URL3}/product/create`,
 				{
 					method: 'POST',
 					body: formData,
-				}, 
+				},
 				locals.token,
 				fetch
 			);
 
 			const result = await response.json();
-			
+
 			if (!response.ok) {
 				console.error('Error creating product:', result);
-				return fail(response.status, { 
-					error: true, 
-					message: result.message || 'Failed to create product' 
+				return fail(response.status, {
+					error: true,
+					message: result.message || 'Failed to create product'
 				});
 			}
-			
-			return { 
-				success: true, 
+
+			return {
+				success: true,
 				data: result
 			};
-			
+
 		} catch (err) {
 			console.error('Error in createProduct action:', err);
-			return fail(500, { 
-				error: true, 
-				message: err instanceof Error ? err.message : 'Unknown error occurred' 
+			return fail(500, {
+				error: true,
+				message: err instanceof Error ? err.message : 'Unknown error occurred'
 			});
 		}
 	},
-	
+
 	editProduct: async ({ request, fetch, locals }) => {
 		// Get the form data from the request
 		const formData = await request.formData();
-		
+
 		// Get the product ID from the form data
 		const productId = formData.get('product_id');
 		if (!productId) {
-			return fail(400, { 
-				error: true, 
-				message: 'Product ID is required' 
+			return fail(400, {
+				error: true,
+				message: 'Product ID is required'
 			});
 		}
-		
+
 		try {
 			// Send the formData directly to the API
 			const response = await fetchWithAuth(
-				`${env.BASE_URL3}/product/${productId}/edit`, 
+				`${env.BASE_URL3}/product/${productId}/edit`,
 				{
 					method: 'POST',
 					body: formData,
-				}, 
+				},
 				locals.token,
 				fetch
 			);
 
 			const result = await response.json();
-			
+
 			if (!response.ok) {
 				console.error('Error updating product:', result);
-				return fail(response.status, { 
-					error: true, 
-					message: result.message || 'Failed to update product' 
+				return fail(response.status, {
+					error: true,
+					message: result.message || 'Failed to update product'
 				});
 			}
-			
-			return { 
-				success: true, 
+
+			return {
+				success: true,
 				data: result
 			};
-			
+
 		} catch (err) {
 			console.error('Error in editProduct action:', err);
-			return fail(500, { 
-				error: true, 
-				message: err instanceof Error ? err.message : 'Unknown error occurred' 
+			return fail(500, {
+				error: true,
+				message: err instanceof Error ? err.message : 'Unknown error occurred'
 			});
 		}
 	},
-	
+
 	deleteProduct: async ({ request, fetch, locals }) => {
 		// Get the form data from the request
 		const formData = await request.formData();
-		
+
 		// Get the product ID from the form data
 		const productId = formData.get('product_id');
 		const reason = formData.get('keterangan_hapus');
-		
+
 		if (!productId) {
-			return fail(400, { 
-				error: true, 
-				message: 'ID produk diperlukan' 
+			return fail(400, {
+				error: true,
+				message: 'ID produk diperlukan'
 			});
 		}
-		
+
 		try {
 			// Build API URL
 			const apiUrl = `${env.BASE_URL3}/product/${productId}/delete`;
-			
+
 			// Send the formData with deletion reason directly to the API
 			const response = await fetchWithAuth(
-				apiUrl, 
+				apiUrl,
 				{
 					method: 'DELETE',
 					body: formData, // This will include keterangan_hapus
-				}, 
+				},
 				locals.token,
 				fetch
 			);
@@ -225,25 +261,25 @@ export const actions: Actions = {
 				const text = await response.text();
 				result = { message: text };
 			}
-			
+
 			if (!response.ok) {
 				console.error('Error deleting product:', result);
-				return fail(response.status, { 
-					error: true, 
-					message: result.message || 'Gagal menghapus produk' 
+				return fail(response.status, {
+					error: true,
+					message: result.message || 'Gagal menghapus produk'
 				});
 			}
-			
-			return { 
-				success: true, 
+
+			return {
+				success: true,
 				data: result
 			};
-			
+
 		} catch (err) {
 			console.error('Error in deleteProduct action:', err);
-			return fail(500, { 
-				error: true, 
-				message: err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus produk' 
+			return fail(500, {
+				error: true,
+				message: err instanceof Error ? err.message : 'Terjadi kesalahan saat menghapus produk'
 			});
 		}
 	}

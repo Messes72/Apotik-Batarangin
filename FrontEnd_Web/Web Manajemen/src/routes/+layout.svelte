@@ -632,7 +632,7 @@
 							{:else if $page.url.pathname === '/privilege_karyawan'}
 								PRIVILEGE KARYAWAN
 							{:else if $page.url.pathname === '/laporan'}
-								LAPORAN STATISTIK
+								LAPORAN 
 							{:else if $page.url.pathname === '/laporan/laporan_gudang'}
 								LAPORAN GUDANG
 							{:else if $page.url.pathname === '/laporan/laporan_apotik'}
@@ -647,11 +647,6 @@
 
 					<div class="mr-4 flex items-center gap-3">
 						<div class="h-10 w-10 overflow-hidden rounded-full bg-gray-200 drop-shadow-md">
-							<img
-								src="https://ui-avatars.com/api/?name=NAMA"
-								alt="Profile"
-								class="h-full w-full object-cover"
-							/>
 						</div>
 						<span class="font-montserrat font-medium">NAMA</span>
 					</div>

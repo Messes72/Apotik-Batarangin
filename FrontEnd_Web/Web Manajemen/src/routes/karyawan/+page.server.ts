@@ -4,7 +4,7 @@ import { fetchWithAuth } from '$lib/api';
 import { fail } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
-	const limit = Number(url.searchParams.get('limit') || '15');
+	const limit = Number(url.searchParams.get('limit') || '20');
 	const offset = Number(url.searchParams.get('offset') || '0');
 	
 	const page = Math.floor(offset / limit) + 1;
@@ -76,7 +76,13 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 			total_content: keyword ? filteredData.length : totalRecords,
 			roles,
 			privileges,
-			depos
+			depos,
+			metadata: data.metadata || {
+				current_page: page,
+				page_size,
+				total_pages: Math.ceil(totalRecords / page_size),
+				total_records: totalRecords
+			}
 		};
 
 		return result;

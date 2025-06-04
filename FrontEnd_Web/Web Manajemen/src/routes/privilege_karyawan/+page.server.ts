@@ -4,14 +4,14 @@ import type { PageServerLoad } from './$types';
 import { fetchWithAuth } from '$lib/api';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
-	const limit = Number(url.searchParams.get('limit') || '15');
+	const limit = Number(url.searchParams.get('limit') || '10');
 	const offset = Number(url.searchParams.get('offset') || '0');
 
 	const page = Math.floor(offset / limit) + 1;
-	const page_size = limit;
 	const keyword = url.searchParams.get('keyword') || '';
 
-	const apiUrl = `${env.BASE_URL3}/privilege?page=${page}&page_size=${page_size}`;
+	// Ambil semua data terlebih dahulu
+	const apiUrl = `${env.BASE_URL3}/privilege`;
 
 	try {
 		const response = await fetchWithAuth(apiUrl, {}, locals.token, fetch);
@@ -24,27 +24,49 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 			throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
 		}
 		
-		const data = await response.json();
+		const allData = await response.json();
 
+		// Filter data berdasarkan keyword jika ada
 		const filteredData = keyword
-			? data.filter((item: any) => 
-				item.nama.toLowerCase().includes(keyword.toLowerCase())
+			? allData.filter((item: any) => 
+				item.nama_privilege?.toLowerCase().includes(keyword.toLowerCase())
 			)
-			: data;
+			: allData;
 
-		const totalRecords = data.metadata?.total_records || filteredData.length;
-
-		const result = {
-			data: filteredData,
-			total_content: keyword ? filteredData.length : totalRecords
-		};
-
-		return result;
+		// Hitung total records setelah filter
+		const totalRecords = filteredData.length;
+		const totalPages = Math.ceil(totalRecords / limit);
 		
+		// Paginate data secara manual di sisi server
+		const paginatedData = filteredData.slice(offset, offset + limit);
+		
+		// Buat metadata pagination secara manual
+		const metadata = {
+			current_page: page,
+			page_size: limit,
+			total_pages: totalPages,
+			total_records: totalRecords
+		};
+		
+		console.log('Client-side pagination metadata:', metadata);
+		console.log(`Showing items ${offset + 1}-${offset + paginatedData.length} of ${totalRecords}`);
+
+		return {
+			data: paginatedData,
+			total_content: totalRecords,
+			metadata: metadata
+		};
 	} catch (err) {
+		console.error('Error loading privileges:', err);
 		return {
 			data: [],
-			total_content: 0
+			total_content: 0,
+			metadata: {
+				current_page: 1,
+				page_size: limit,
+				total_pages: 1,
+				total_records: 0
+			}
 		};
 	}
 };

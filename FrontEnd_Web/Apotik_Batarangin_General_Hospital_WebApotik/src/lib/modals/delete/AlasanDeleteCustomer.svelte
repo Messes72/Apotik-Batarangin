@@ -1,9 +1,25 @@
 <script lang="ts">
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	export let isOpen = false;
 	export let width = 'w-[800px]';
 	export let isKonfirmDeleteOpen = false;
+	export let kustomerId = '';
+	export let alasanValue = '';
+
+	const dispatch = createEventDispatcher();
+
+	function handleConfirmClick() {
+		if (!alasanValue.trim()) {
+			alert('Harap isi alasan penghapusan');
+			return;
+		}
+
+		dispatch('reason', alasanValue);
+		isOpen = false;
+		isKonfirmDeleteOpen = true;
+	}
 </script>
 
 {#if isOpen}
@@ -16,7 +32,7 @@
 	>
 		<div class="my-auto {width} rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 			<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data Customer</div>
+				<div class="font-montserrat text-[26px] text-white">Alasan Hapus Data Kustomer</div>
 				<button
 					class="rounded-xl hover:bg-gray-100 hover:bg-opacity-20"
 					on:click={() => (isOpen = false)}
@@ -31,15 +47,17 @@
 			</div>
 			<form class="mb-4 mt-6 px-8 pb-3">
 				<div class="mt-2 flex flex-col gap-2">
-					<TextArea id="alasan" label="Alasan Data Customer ini Dihapus" placeholder="Alasan" />
+					<TextArea
+						id="alasan"
+						label="Alasan Data Kustomer ini Dihapus"
+						placeholder="Alasan"
+						bind:value={alasanValue}
+					/>
 				</div>
 				<div class="mt-2 flex justify-end">
 					<button
 						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white shadow-xl"
-						on:click={() => {
-							isOpen = false;
-							isKonfirmDeleteOpen = true;
-						}}>KONFIRMASI</button
+							on:click={handleConfirmClick}>KONFIRMASI</button
 					>
 				</div>
 			</form>

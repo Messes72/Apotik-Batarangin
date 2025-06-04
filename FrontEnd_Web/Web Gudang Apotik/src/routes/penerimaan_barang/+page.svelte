@@ -460,49 +460,9 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'penerimaan_barang'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'penerimaan_barang';
-				goto('/penerimaan_barang');
-			}}
-		>
-			Penerimaan Barang
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'statistik'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'statistik';
-				goto('/penerimaan_barang/statistik');
-			}}
-		>
-			Statistik
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/penerimaan_barang/riwayat_penerimaan_barang');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
 		<div class="flex h-10"></div>
 		<div class="flex-1"><Search2 /></div>
-		<Dropdown
-			options={statusOptions}
-			placeholder="-- Pilih Status --"
-			on:change={(e) => (selectedStatus = e.detail.value)}
-		/>
 	</div>
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">

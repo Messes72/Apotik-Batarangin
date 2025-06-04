@@ -13,8 +13,52 @@
 	import Pagination10 from '$lib/table/Pagination10.svelte';
 	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
+	import { browser } from '$app/environment'; // Import browser for client-side checks
 
-	const { data } = $props();
+	// Interface definitions for the detail data
+	interface StokOpnameInfo {
+		id_stokopname: string;
+		nama_depo: string;
+		tanggal_stokopname: string; // API returns string, formatting handled in template
+		catatan: string;
+		// Add other fields from stok_opname if needed
+	}
+
+	interface OpnameBatch {
+		id_nomor_batch: string;
+		no_batch: string;
+		kuantitas_sistem: number | null;
+		kuantitas_fisik: number | null;
+		selisih: number | null;
+		catatan: string; 
+	}
+
+	interface OpnameItem {
+		id_kartustok?: string; // Assuming this might be used as a key or is available
+		nama_obat: string;
+		kuantitas_sistem: number | null;
+		kuantitas_fisik: number | null;
+		catatan: string;
+		batches: OpnameBatch[] | null; // Added batches to OpnameItem
+		// Add other fields from items if needed
+	}
+
+	interface DetailData {
+		stok_opname: StokOpnameInfo;
+		items: OpnameItem[];
+	}
+
+	// Define the overall shape of the `data` prop from `load` function
+	interface PageLoadData {
+		data: any[]; // For the main list of stock opnames
+		total_content: number;
+		detail?: DetailData | null; // `detail` is optional and can be null
+		// Include other properties that `data` might have from the load function
+	}
+
+	const { data }: { data: PageLoadData } = $props();
+
+	// console.log('Data prop received in component:', data); // Removed general console.log
 
 	let isModalOpen = $state(false);
 	let isModalEditOpen = $state(false);
@@ -27,6 +71,10 @@
 	let isModalSuccessEditOpen = $state(false);
 	let isModalSuccessDeleteOpen = $state(false);
 
+	// State for Batch Detail Modal
+	let isBatchDetailModalOpen = $state(false);
+	let selectedItemForBatchView = $state<OpnameItem | null>(null);
+
 	let selectedKategori = '';
 
 	const kategoriOptions = [
@@ -35,6 +83,43 @@
 		{ value: 'Obat Sakit Kepala', label: 'Obat Sakit Kepala' },
 		{ value: 'Obat Diare', label: 'Obat Diare' }
 	];
+
+	function handleCloseDetailModal() {
+		// Navigating will trigger the $effect below to set isModalDetailOpen = false
+		goto('/stock_opname', { replaceState: true });
+	}
+
+	function openBatchDetailModal(item: OpnameItem) {
+		selectedItemForBatchView = item;
+		isBatchDetailModalOpen = true;
+	}
+
+	$effect(() => {
+		if (browser && isModalDetailOpen) { // This effect might run when data.detail is still null from a previous state
+			console.log('Data detail when modal opens (inside isModalDetailOpen effect):', data.detail);
+		}
+	});
+
+	// Effect to open/close modal based on URL and data.detail readiness
+	$effect(() => {
+		if (browser) { // Ensure this runs only on the client
+			const url = new URL(window.location.href);
+			const detailIdFromUrl = url.searchParams.get('detail');
+
+			if (detailIdFromUrl && data.detail && data.detail.stok_opname && data.detail.stok_opname.id_stokopname === detailIdFromUrl) {
+				console.log('data.detail is populated, opening modal:', data.detail);
+				isModalDetailOpen = true;
+			} else if (!detailIdFromUrl) {
+				// If detailId is removed from URL, ensure modal is closed
+				if (isModalDetailOpen) {
+					console.log('detailId removed from URL, closing modal.');
+					isModalDetailOpen = false;
+				}
+			}
+		} 
+	});
+
+	$inspect(data);
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -59,37 +144,48 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'Nomor Opname'],
+					['children', 'Tanggal Opaname'],
+					['children', 'Catatan'],
 					['children', 'Action']
 				]}
+				column_widths={['25%','25%', '30%', '20%']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'Nomor Opname'}
+						<div>{body.id_stokopname}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
-						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
+					{#if head === 'Tanggal Opaname'}
+						<div>
+							{#if body.tanggal_stokopname}
+								{new Date(body.tanggal_stokopname).toLocaleDateString('id-ID', {
+									day: '2-digit',
+									month: '2-digit',
+									year: 'numeric'
+								}).replace(/\//g, '-')}
+							{:else}
+								-
+							{/if}
+						</div>
 					{/if}
-
-					{#if head === 'Timer'}
-						00:00:00
-					{/if}
-
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Catatan'}
+						<div>{body.catatan}</div>
 					{/if}
 
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={async () => {
+								console.log(`Opening detail for: ${body.id_stokopname}`);
+								await goto(`/stock_opname?detail=${body.id_stokopname}`, { replaceState: true, invalidateAll: true });
+								// data.detail might not be updated yet here.
+								// The $effect reacting to data.detail changing is a better place to open the modal
+								// or rely on Svelte's reactivity to update the modal content when data.detail is populated.
+								isModalDetailOpen = true; // Consider if this should be set based on data.detail population
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -100,55 +196,13 @@
 								/></svg
 							>
 						</button>
-						<button
-							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalEditOpen = true)}
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
-								><mask
-									id="a"
-									width="24"
-									height="24"
-									x="2"
-									y="2"
-									maskUnits="userSpaceOnUse"
-									style="mask-type:alpha"><path fill="#D9D9D9" d="M2 2h24v24H2z" /></mask
-								><g mask="url(#a)"
-									><path
-										fill="#35353A"
-										d="M7 21h1.261l10.237-10.237-1.261-1.261L7 19.738V21Zm-.596 1.5a.874.874 0 0 1-.644-.26.874.874 0 0 1-.26-.644v-1.733a1.801 1.801 0 0 1 .527-1.275L18.69 5.931a1.7 1.7 0 0 1 .501-.319 1.5 1.5 0 0 1 .575-.112c.2 0 .395.036.583.107.188.07.354.184.499.34l1.221 1.236c.155.145.266.311.332.5.066.188.099.377.099.565 0 .201-.034.393-.103.576-.069.183-.178.35-.328.501L9.411 21.973a1.801 1.801 0 0 1-1.274.527H6.403Zm11.452-12.356-.62-.642 1.262 1.261-.642-.62Z"
-									/></g
-								></svg
-							>
-						</button>
-						<button
-							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalAlasanOpen = true)}
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
-								><mask
-									id="a"
-									width="24"
-									height="24"
-									x="2"
-									y="2"
-									maskUnits="userSpaceOnUse"
-									style="mask-type:alpha"><path fill="#D9D9D9" d="M2 2h24v24H2z" /></mask
-								><g mask="url(#a)"
-									><path
-										fill="#35353A"
-										d="M9.308 22.5a1.74 1.74 0 0 1-1.277-.531 1.74 1.74 0 0 1-.531-1.277V8h-.25a.726.726 0 0 1-.534-.216.726.726 0 0 1-.216-.534c0-.213.072-.391.216-.535A.726.726 0 0 1 7.25 6.5H11a.85.85 0 0 1 .259-.626.853.853 0 0 1 .626-.259h4.23a.85.85 0 0 1 .626.26A.852.852 0 0 1 17 6.5h3.75c.212 0 .39.072.534.216a.726.726 0 0 1 .216.534.726.726 0 0 1-.216.535.726.726 0 0 1-.534.215h-.25v12.692c0 .497-.177.923-.531 1.277a1.74 1.74 0 0 1-1.277.531H9.308ZM19 8H9v12.692a.3.3 0 0 0 .087.221.3.3 0 0 0 .22.087h9.385a.3.3 0 0 0 .221-.087.3.3 0 0 0 .087-.22V8Zm-6.846 11c.213 0 .39-.072.534-.216a.726.726 0 0 0 .216-.534v-7.5a.726.726 0 0 0-.216-.534.726.726 0 0 0-.535-.216.725.725 0 0 0-.534.216.726.726 0 0 0-.215.534v7.5c0 .212.072.39.216.534a.726.726 0 0 0 .534.216Zm3.692 0a.726.726 0 0 0 .535-.216.726.726 0 0 0 .215-.534v-7.5a.726.726 0 0 0-.216-.534.726.726 0 0 0-.534-.216.725.725 0 0 0-.534.216.726.726 0 0 0-.216.534v7.5c0 .212.072.39.216.534a.727.727 0 0 0 .534.216Z"
-									/></g
-								></svg
-							>
-						</button>
 					{/if}
 				{/snippet}
 			</Table>
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data.total_content} />
 	</div>
 	{#if isModalOpen}
 		<div
@@ -273,14 +327,14 @@
 	{#if isModalDetailOpen}
 		<div
 			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-5"
-			on:click={() => (isModalDetailOpen = false)}
+			on:click={handleCloseDetailModal}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
 					<div class="font-montserrat text-[26px] text-white">Informasi Data Stock Opname</div>
 					<button
 						class="rounded-xl hover:bg-gray-100/20"
-						on:click={() => (isModalDetailOpen = false)}
+						on:click={handleCloseDetailModal}
 					>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -291,16 +345,68 @@
 					</button>
 				</div>
 				<div class="my-6 px-8">
-					<form class="mt-2 flex flex-col gap-2" on:submit|preventDefault>
-						<Detail label="Nomor Kartu" value="APT-0001" />
-						<Detail label="Nomor Batch" value="BATCH-0001" />
-						<Detail label="Kode Obat" value="OB001" />
-						<Detail label="Kategori Obat" value="Obat Panas" />
-						<Detail label="Nama Obat" value="Paracetamol" />
-						<Detail label="Kadaluarsa" value="2025/01/01" />
-						<Detail label="Satuan" value="Tablet" />
-						<Detail label="Stock Barang" value="100" />
-					</form>
+					{#if data.detail && data.detail.stok_opname && data.detail.items}
+						{@const stokOpname = data.detail.stok_opname}
+						{@const items = data.detail.items}
+						<div class="grid grid-cols-1 gap-x-2 gap-y-2 md:grid-cols-2">
+							<Detail label="Nomor Opname" value={stokOpname.id_stokopname || '-'} />
+							<Detail 
+								label="Tanggal Stock Opname" 
+								value={
+									stokOpname.tanggal_stokopname ? 
+									new Date(stokOpname.tanggal_stokopname).toLocaleDateString('id-ID', {
+										day: '2-digit', month: 'long', year: 'numeric'
+									}) : '-'
+								}
+							/>
+							<Detail label="Nama Depo" value={stokOpname.nama_depo || '-'} />
+							<Detail label="Catatan" value={stokOpname.catatan || '-'} />
+						</div>
+
+						<div class="my-5 h-0.5 w-full bg-[#AFAFAF]"></div>
+
+						<div class="font-montserrat mb-3 text-[20px] text-[#515151]">Detail Item Opname</div>
+						<div class="overflow-x-auto">
+							<table class="w-full min-w-[700px] border-collapse text-left">
+								<thead>
+									<tr class="font-intersemi border-b border-gray-300 bg-gray-50 text-center text-[14px]">
+										<th class="p-2 text-gray-700">No</th>
+										<th class="p-2 text-gray-700">Nama Obat</th>
+										<th class="p-2 text-gray-700">Jumlah Stock (Sistem)</th>
+										<th class="p-2 text-gray-700">Jumlah Barang Asli (Fisik)</th>
+										<th class="p-2 text-gray-700">Keterangan</th>
+									</tr>
+								</thead>
+								<tbody>
+									{#if items.length > 0}
+										{#each items as item, i (item.id_kartustok || i)}
+											<tr class="font-inter border-b border-gray-200 text-center text-[14px] hover:bg-gray-50">
+												<td class="p-2">{i + 1}</td>
+												<td class="p-2 text-left">
+													{#if item.batches && item.batches.length > 0}
+														<button class="text-blue-500 hover:underline" on:click={() => openBatchDetailModal(item)}>
+															{item.nama_obat || '-'}
+														</button>
+													{:else}
+														{item.nama_obat || '-'}
+													{/if}
+												</td>
+												<td class="p-2">{item.kuantitas_sistem != null ? item.kuantitas_sistem : '-'}</td>
+												<td class="p-2">{item.kuantitas_fisik != null ? item.kuantitas_fisik : '-'}</td>
+												<td class="p-2 text-left">{item.catatan || '-'}</td>
+											</tr>
+										{/each}
+									{:else}
+										<tr>
+											<td colspan="5" class="font-inter p-4 text-center text-[14px]">Tidak ada item untuk stok opname ini.</td>
+										</tr>
+									{/if}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="font-inter p-4 text-center text-[14px]">Data detail tidak tersedia atau tidak lengkap.</div>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -313,6 +419,56 @@
 	<KonfirmDelete bind:isOpen={isModalKonfirmDeleteOpen} bind:isSuccess={isModalSuccessDeleteOpen} />
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>
+
+{#if isBatchDetailModalOpen && selectedItemForBatchView}
+<div
+	class="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-black bg-opacity-25 p-4"
+	on:click={() => isBatchDetailModalOpen = false}
+>
+	<div class="my-auto w-[900px] max-w-4xl rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
+		<div class="flex items-center justify-between rounded-t-xl bg-[#7C90DC] p-6">
+			<div class="font-montserrat text-[22px] text-white">
+				Detail Batch untuk: {selectedItemForBatchView.nama_obat}
+			</div>
+			<button class="rounded-xl p-1 hover:bg-gray-100/20" on:click={() => isBatchDetailModalOpen = false}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none">
+					<path fill="#fff" d="M9.86667 23.8667L8 22L14.6667 15.3333L8 8.66667L9.86667 6.8L16.5333 13.4667L23.2 6.8L25.0667 8.66667L18.4 15.3333L25.0667 22L23.2 23.8667L16.5333 17.2L9.86667 23.8667Z"/>
+				</svg>
+			</button>
+		</div>
+		<div class="p-6">
+			{#if selectedItemForBatchView.batches && selectedItemForBatchView.batches.length > 0}
+				<div class="overflow-x-auto">
+					<table class="w-full min-w-[600px] border-collapse text-left">
+						<thead>
+							<tr class="font-intersemi border-b border-gray-300 bg-gray-50 text-center text-[13px]">
+								<th class="p-2 text-gray-600">No. Batch</th>
+								<th class="p-2 text-gray-600">Kuantitas Sistem</th>
+								<th class="p-2 text-gray-600">Kuantitas Fisik</th>
+								<th class="p-2 text-gray-600">Selisih</th>
+								<th class="p-2 text-gray-600">Catatan Batch</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each selectedItemForBatchView.batches as batch, i (batch.id_nomor_batch)}
+								<tr class="font-inter border-b border-gray-200 text-center text-[13px] hover:bg-gray-50">
+									<td class="p-2 text-left">{batch.no_batch || '-'}</td>
+									<td class="p-2">{batch.kuantitas_sistem != null ? batch.kuantitas_sistem : '-'}</td>
+									<td class="p-2">{batch.kuantitas_fisik != null ? batch.kuantitas_fisik : '-'}</td>
+									<td class="p-2">{batch.selisih != null ? batch.selisih : '-'}</td>
+									<td class="p-2 text-left">{batch.catatan || '-'}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<p class="font-inter p-4 text-center text-[14px]">Tidak ada data batch untuk item ini.</p>
+			{/if}
+		</div>
+	</div>
+</div>
+{/if}
 
 <style>
 	select option {

@@ -1,9 +1,25 @@
 <script lang="ts">
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	export let isOpen = false;
 	export let width = 'w-[800px]';
 	export let isKonfirmDeleteOpen = false;
+	export let supplierId = '';
+	export let alasanValue = '';
+
+	const dispatch = createEventDispatcher();
+
+	function handleConfirmClick() {
+		if (!alasanValue.trim()) {
+			alert('Harap isi alasan penghapusan');
+			return;
+		}
+
+		dispatch('reason', alasanValue);
+		isOpen = false;
+		isKonfirmDeleteOpen = true;
+	}
 </script>
 
 {#if isOpen}
@@ -31,15 +47,18 @@
 			</div>
 			<form class="mb-4 mt-6 px-8 pb-3">
 				<div class="mt-2 flex flex-col gap-2">
-					<TextArea id="alasan" label="Alasan Data Supplier ini Dihapus" placeholder="Alasan" />
+					<TextArea
+						id="alasan"
+						label="Alasan Data Supplier ini Dihapus"
+						placeholder="Alasan"
+						bind:value={alasanValue}
+					/>
 				</div>
 				<div class="mt-2 flex justify-end">
 					<button
+						type="button"
 						class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white shadow-xl"
-						on:click={() => {
-							isOpen = false;
-							isKonfirmDeleteOpen = true;
-						}}>KONFIRMASI</button
+						on:click={handleConfirmClick}>KONFIRMASI</button
 					>
 				</div>
 			</form>

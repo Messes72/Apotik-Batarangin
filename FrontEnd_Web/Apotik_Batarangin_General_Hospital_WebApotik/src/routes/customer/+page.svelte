@@ -129,30 +129,6 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'customer'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'customer';
-				goto('/customer');
-			}}
-		>
-			Kustomer
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/customer/riwayat_customer');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button

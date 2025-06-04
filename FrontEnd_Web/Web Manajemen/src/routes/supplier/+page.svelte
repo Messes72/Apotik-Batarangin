@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import Detail from '$lib/info/Detail.svelte';
 	import Input from '$lib/info/inputEdit/Input.svelte';
 	import TextArea from '$lib/info/inputEdit/TextArea.svelte';
@@ -14,7 +14,7 @@
 	import Search2 from '$lib/table/Search2.svelte';
 	import Table from '$lib/table/Table.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 
 	// Modal Input
 	let isModalOpen = $state(false);
@@ -34,8 +34,117 @@
 	// Modal Detail
 	let isModalDetailOpen = $state(false);
 
-	let active_button = $state('supplier');
+	let currentSupplier = $state<any>(null);
+	let currentDeleteSupplierId = $state<string>('');
+	let alasanDeleteSupplier = $state<string>('');
+
+	interface Supplier {
+		id_supplier: string;
+		nama: string;
+		alamat: string;
+		no_telp: string;
+		catatan: string;
+	}
+
+	let currentDetailSupplier = $state<Supplier | null>(null);
+
+	let inputForm = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: ''
+	});
+
+	let inputErrors = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: '',
+		general: ''
+	});
+
+	let editErrors = $state({
+		nama: '',
+		alamat: '',
+		no_telp: '',
+		catatan: '',
+		general: ''
+	});
+
+	let deleteError = $state('');
+
+	function setSupplierForEdit(supplier: any) {
+		currentSupplier = supplier;
+		isModalEditOpen = true;
+	}
+
+	function showDetailSupplier(supplier: any) {
+		currentSupplier = supplier;
+		currentDetailSupplier = {
+			id_supplier: supplier.id_supplier || '',
+			nama: supplier.nama || '',
+			alamat: supplier.alamat || '',
+			no_telp: supplier.no_telp || '',
+			catatan: supplier.catatan || ''
+		};
+		isModalDetailOpen = true;
+	}
+
+	$effect(() => {
+		if (form?.values) {
+			try {
+				inputForm.nama = String((form.values as any)['nama'] || '');
+				inputForm.alamat = String((form.values as any)['alamat'] || '');
+				inputForm.no_telp = String((form.values as any)['no-telp'] || '');
+				inputForm.catatan = String((form.values as any)['catatan'] || '');
+			} catch (e) {}
+		}
+
+		if (form?.error && form.message) {
+			const errorMsg = form.message || '';
+
+			const newInputErrors = {
+				nama: '',
+				alamat: '',
+				no_telp: '',
+				catatan: '',
+				general: ''
+			};
+
+			if (errorMsg.toLowerCase().includes('nama')) {
+				newInputErrors.nama = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('alamat')) {
+				newInputErrors.alamat = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('no_telp')) {
+				newInputErrors.no_telp = errorMsg;
+			} else if (errorMsg.toLowerCase().includes('catatan')) {
+				newInputErrors.catatan = errorMsg;
+			} else {
+				newInputErrors.general = errorMsg;
+			}
+
+			inputErrors = newInputErrors;
+
+			const formValues = form.values as Record<string, unknown> | undefined;
+
+			if (formValues && 'id_supplier' in formValues) {
+				editErrors = { ...newInputErrors };
+				isModalEditOpen = true;
+			} else if (formValues && 'alasan_delete' in formValues) {
+				deleteError = errorMsg;
+				isModalKonfirmDeleteOpen = true;
+			} else {
+				isModalOpen = true;
+			}
+		}
+	});
+
+	$inspect(data);
 </script>
+
+<svelte:head>
+	<title>Manajemen - Manajemen Supplier</title>
+</svelte:head>
 
 <!-- svelte-ignore event_directive_deprecated -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
@@ -43,32 +152,8 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'supplier'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'supplier';
-				goto('/supplier');
-			}}
-		>
-			Supplier
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/supplier/riwayat_supplier');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
-		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#329B0D]">
+		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
 				class="font-intersemi flex w-full items-center justify-center pr-2 text-[14px] text-white"
 				on:click={() => (isModalOpen = true)}
@@ -85,37 +170,42 @@
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
 			<Table
-				table_data={data.data_table.data}
+				table_data={data.data}
 				table_header={[
-					['children', 'Gender'],
-					['children', 'Nama Lengkap'],
-					['children', 'Timer'],
-					['children', 'NIK'],
+					['children', 'ID Supplier'],
+					['children', 'Nama Supplier'],
+					['children', 'Nomor Telepon Supplier'],
+					['children', 'Alamat Supplier'],
+					['children', 'Catatan'],
 					['children', 'Action']
 				]}
+				column_widths={['16%', '16%', '16%', '16%', '16%', '20%']}
 			>
 				{#snippet children({ head, body })}
-					{#if head === 'Gender'}
-						<div>{body.gender}</div>
+					{#if head === 'ID Supplier'}
+						<div>{body.id_supplier}</div>
 					{/if}
 
-					{#if head === 'Nama Lengkap'}
+					{#if head === 'Nama Supplier'}
 						<div>{body.nama}</div>
-						<div>({body.nnama})</div>
 					{/if}
 
-					{#if head === 'Timer'}
-						00:00:00
+					{#if head === 'Nomor Telepon Supplier'}
+						<div>{body.no_telp}</div>
 					{/if}
 
-					{#if head === 'NIK'}
-						<div>{body.nik}</div>
+					{#if head === 'Alamat Supplier'}
+						<div>{body.alamat}</div>
+					{/if}
+
+					{#if head === 'Catatan'}
+						<div>{body.catatan}</div>
 					{/if}
 
 					{#if head === 'Action'}
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalDetailOpen = true)}
+							on:click={() => showDetailSupplier(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><path
@@ -128,7 +218,7 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalEditOpen = true)}
+							on:click={() => setSupplierForEdit(body)}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -149,7 +239,10 @@
 						</button>
 						<button
 							class="rounded-full p-2 hover:bg-gray-200"
-							on:click={() => (isModalAlasanOpen = true)}
+							on:click={() => {
+								currentDeleteSupplierId = body.id_supplier || '';
+								isModalAlasanOpen = true;
+							}}
 						>
 							<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none"
 								><mask
@@ -174,16 +267,20 @@
 		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination10 total_content={data.data_table.total_content} />
+		<Pagination10 total_content={data?.total_content} metadata={data?.metadata} />
 	</div>
 	{#if isModalOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmInputOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
-				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Input Data Customer</div>
+				<div class="flex items-center justify-between p-10">
+					<div class="font-montserrat text-[26px] leading-normal text-[#515151]">
+						Input Data Supplier
+					</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -194,30 +291,121 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8">
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="nama_supplier" label="Nama Supplier" placeholder="Nama Supplier" />
-						<Input id="kode_supplier" label="Kode Supplier" placeholder="Kode Supplier" />
-						<Input id="alamat_supplier" label="Alamat Supplier" placeholder="Alamat Supplier" />
-						<Input
-							id="nomor_telepon_supplier"
-							label="Nomor Telepon Supplier"
-							placeholder="Nomor Telepon Kustomer"
-						/>
-						<TextArea
-							id="catatan_supplier"
-							label="Catatan Supplier"
-							placeholder="Catatan Supplier"
-						/>
-						<div class="mt-6 flex justify-end">
-							<button
-								class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
-								on:click={() => {
-									isModalOpen = false;
+				<form
+					method="POST"
+					action="?/createSupplier"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalOpen = false;
+						isModalKonfirmInputOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Create Supplier result:', result);
+							if (result.type === 'success') {
+								isModalSuccessInputOpen = true;
+								inputForm = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: ''
+								};
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								await update();
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="supplierForm"
+				>
+					<Input
+						id="nama"
+						name="nama"
+						label="Nama Supplier"
+						placeholder="Nama Supplier"
+						bind:value={inputForm.nama}
+					/>
+					{#if inputErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.nama}</div>
+					{/if}
+
+					<Input
+						id="alamat"
+						name="alamat"
+						label="Alamat Supplier"
+						placeholder="Alamat Supplier"
+						bind:value={inputForm.alamat}
+					/>
+					{#if inputErrors.alamat}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.alamat}</div>
+					{/if}
+
+					<Input
+						id="no_telp"
+						name="no_telp"
+						label="Nomor Telepon Supplier"
+						placeholder="Nomor Telepon Supplier"
+						bind:value={inputForm.no_telp}
+					/>
+					{#if inputErrors.no_telp}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.no_telp}</div>
+					{/if}
+
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan"
+						placeholder="Catatan"
+						bind:value={inputForm.catatan}
+					/>
+					{#if inputErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.catatan}</div>
+					{/if}
+
+					{#if inputErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{inputErrors.general}</div>
+					{/if}
+					<div class="flex items-center justify-end">
+						<button
+							type="button"
+							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
+							on:click={() => {
+								inputErrors = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: '',
+									general: ''
+								};
+
+								let isValid = true;
+
+								if (!inputForm.nama) {
+									inputErrors.nama = 'Nama Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (!inputForm.alamat) {
+									inputErrors.alamat = 'Alamat Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (!inputForm.no_telp) {
+									inputErrors.no_telp = 'Nomor Telepon Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (isValid) {
 									isModalKonfirmInputOpen = true;
-								}}>KONFIRMASI</button
-							>
-						</div>
+								}
+							}}
+						>
+							KONFIRMASI
+						</button>
+						<button type="submit" id="hiddenSubmitSupplier" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -225,12 +413,14 @@
 	{/if}
 	{#if isModalEditOpen}
 		<div
-			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4"
+			class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black bg-opacity-10 p-4 {isModalKonfirmEditOpen
+				? 'pointer-events-none opacity-0'
+				: ''}"
 			on:click={() => (isModalEditOpen = false)}
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between p-8">
-					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Customer</div>
+					<div class="font-montserrat text-[26px] text-[#515151]">Edit Data Supplier</div>
 					<button class="rounded-xl hover:bg-gray-100" on:click={() => (isModalEditOpen = false)}>
 						<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none"
 							><path
@@ -241,30 +431,118 @@
 					</button>
 				</div>
 				<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-				<form class="my-6 px-8">
-					<div class="mt-2 flex flex-col gap-2">
-						<Input id="nama_supplier" label="Nama Supplier" placeholder="Nama Supplier" />
-						<Input id="kode_supplier" label="Kode Supplier" placeholder="Kode Supplier" />
-						<Input id="alamat_supplier" label="Alamat Supplier" placeholder="Alamat Supplier" />
-						<Input
-							id="nomor_telepon_supplier"
-							label="Nomor Telepon Supplier"
-							placeholder="Nomor Telepon Kustomer"
-						/>
-						<TextArea
-							id="catatan_supplier"
-							label="Catatan Supplier"
-							placeholder="Catatan Supplier"
-						/>
-						<div class="mt-6 flex justify-end">
-							<button
-								class="font-intersemi flex h-10 w-40 items-center justify-center rounded-md bg-[#329B0D] text-[16px] text-white"
-								on:click={() => {
-									isModalOpen = false;
-									isModalKonfirmInputOpen = true;
-								}}>KONFIRMASI</button
-							>
-						</div>
+				<form
+					method="POST"
+					action="?/editSupplier"
+					class="flex flex-col gap-4 px-10 py-6"
+					use:enhance={() => {
+						isModalEditOpen = false;
+						isModalKonfirmEditOpen = false;
+
+						return async ({ result, update }) => {
+							console.log('Edit supplier result:', result);
+							if (result.type === 'success') {
+								isModalSuccessEditOpen = true;
+								setTimeout(() => {
+									window.location.reload();
+								}, 2500);
+							} else if (result.type === 'failure') {
+								console.error('Edit supplier failed:', result.data);
+								await update();
+								isModalEditOpen = true;
+							} else {
+								await update();
+							}
+						};
+					}}
+					id="editSupplierForm"
+				>
+					<input type="hidden" name="id_supplier" value={currentSupplier?.id_supplier || ''} />
+					<Input
+						id="nama"
+						name="nama"
+						label="Nama Kategori"
+						placeholder="Nama Kategori"
+						value={currentSupplier?.nama || ''}
+					/>
+					{#if editErrors.nama}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.nama}</div>
+					{/if}
+
+					<Input
+						id="alamat"
+						name="alamat"
+						label="Alamat Supplier"
+						placeholder="Alamat Supplier"
+						value={currentSupplier?.alamat || ''}
+					/>
+					{#if editErrors.alamat}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.alamat}</div>
+					{/if}
+
+					<Input
+						id="no_telp"
+						name="no_telp"
+						label="Nomor Telepon Supplier"
+						placeholder="Nomor Telepon Supplier"
+						value={currentSupplier?.no_telp || ''}
+					/>
+					{#if editErrors.no_telp}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.no_telp}</div>
+					{/if}
+
+					<TextArea
+						id="catatan"
+						name="catatan"
+						label="Catatan"
+						placeholder="Catatan"
+						value={currentSupplier?.catatan || ''}
+					/>
+					{#if editErrors.catatan}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.catatan}</div>
+					{/if}
+
+					{#if editErrors.general}
+						<div class="mt-[-8px] text-xs text-red-500">{editErrors.general}</div>
+					{/if}
+					<div class="flex items-center justify-end">
+						<button
+							type="button"
+							class="font-intersemi flex h-10 w-[121.469px] items-center justify-center rounded-xl border-2 border-[#6988DC] bg-white text-[16px] text-[#6988DC] shadow-md hover:bg-[#6988DC] hover:text-white"
+							on:click={() => {
+								editErrors = {
+									nama: '',
+									alamat: '',
+									no_telp: '',
+									catatan: '',
+									general: ''
+								};
+								let isValid = true;
+
+								if (!currentSupplier?.nama) {
+									editErrors.nama = 'Nama Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (!currentSupplier?.alamat) {
+									editErrors.alamat = 'Alamat Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (!currentSupplier?.no_telp) {
+									editErrors.no_telp = 'Nomor Telepon Supplier diperlukan';
+									isValid = false;
+								}
+
+								if (isValid) {
+									console.log('Validation passed, opening confirm modal');
+									isModalKonfirmEditOpen = true;
+								} else {
+									console.log('Validation failed:', editErrors);
+								}
+							}}>KONFIRMASI</button
+						>
+						<button type="submit" id="hiddenSubmitEditSupplier" class="hidden">Submit</button>
 					</div>
 				</form>
 			</div>
@@ -277,7 +555,9 @@
 		>
 			<div class="my-auto w-[1000px] rounded-xl bg-white drop-shadow-lg" on:click|stopPropagation>
 				<div class="flex items-center justify-between rounded-t-xl bg-[#6988DC] p-8">
-					<div class="font-montserrat text-[26px] text-white">Informasi Data Kustomer</div>
+					<div class="font-montserrat text-[26px] text-white">
+						Informasi Data Privilege Karyawan
+					</div>
 					<button
 						class="rounded-xl hover:bg-gray-100/20"
 						on:click={() => (isModalDetailOpen = false)}
@@ -292,10 +572,15 @@
 				</div>
 				<form class="my-6 px-8 pb-3">
 					<div class="mt-2 flex flex-col gap-2">
-						<Detail label="Nama Kustomer" value="Nama Kustomer" />
-						<Detail label="Alamat Kustomer" value="Alamat Kustomer" />
-						<Detail label="Nomor Telepon Kustomer" value="Nomor Telepon Kustomer" />
-						<Detail label="Catatan Customer" value="Catatan Customer" />
+						{#if currentDetailSupplier}
+							<Detail label="ID Supplier" value={currentDetailSupplier.id_supplier || '-'} />
+							<Detail label="Nama Supplier" value={currentDetailSupplier.nama || '-'} />
+							<Detail label="Alamat Supplier" value={currentDetailSupplier.alamat || '-'} />
+							<Detail label="Nomor Telepon Supplier" value={currentDetailSupplier.no_telp || '-'} />
+							<Detail label="Catatan Supplier" value={currentDetailSupplier.catatan || '-'} />
+						{:else}
+							<p>Memuat data...</p>
+						{/if}
 					</div>
 				</form>
 			</div>
@@ -303,21 +588,57 @@
 	{/if}
 
 	<!-- Modal Input -->
-	<KonfirmInput bind:isOpen={isModalKonfirmInputOpen} bind:isSuccess={isModalSuccessInputOpen} />
+	<KonfirmInput
+		bind:isOpen={isModalKonfirmInputOpen}
+		bind:isSuccess={isModalSuccessInputOpen}
+		on:confirm={() => {
+			console.log('Confirming input submission');
+			document.getElementById('hiddenSubmitSupplier')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmInputOpen = false;
+		}}
+	/>
 	<Inputt bind:isOpen={isModalSuccessInputOpen} />
 
 	<!-- Modal Edit -->
-	<KonfirmEdit bind:isOpen={isModalKonfirmEditOpen} bind:isSuccess={isModalSuccessEditOpen} />
+	<KonfirmEdit
+		bind:isOpen={isModalKonfirmEditOpen}
+		bind:isSuccess={isModalSuccessEditOpen}
+		on:confirm={() => {
+			console.log('Confirming edit submission');
+			document.getElementById('hiddenSubmitEditSupplier')?.click();
+		}}
+		on:closed={() => {
+			isModalKonfirmEditOpen = false;
+		}}
+	/>
 	<Edit bind:isOpen={isModalSuccessEditOpen} />
 
 	<!-- Modal Delete -->
-	<AlasanDeleteSupplier	
+	<AlasanDeleteSupplier
 		bind:isOpen={isModalAlasanOpen}
 		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
+		bind:supplierId={currentDeleteSupplierId}
+		bind:alasanValue={alasanDeleteSupplier}
+		on:reason={(e) => {
+			alasanDeleteSupplier = e.detail;
+			console.log('Alasan delete:', alasanDeleteSupplier);
+		}}
 	/>
 	<KonfirmDeleteSupplier
 		bind:isOpen={isModalKonfirmDeleteOpen}
 		bind:isSuccess={isModalSuccessDeleteOpen}
+		supplierId={currentDeleteSupplierId}
+		alasanDelete={alasanDeleteSupplier}
+		on:confirm={() => {
+			console.log('Delete confirmed for supplier:', currentDeleteSupplierId);
+			currentDeleteSupplierId = '';
+			alasanDeleteSupplier = '';
+		}}
+		on:closed={() => {
+			isModalKonfirmDeleteOpen = false;
+		}}
 	/>
 	<Hapus bind:isOpen={isModalSuccessDeleteOpen} />
 </div>

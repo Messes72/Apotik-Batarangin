@@ -4,7 +4,7 @@ import type { PageServerLoad } from './$types';
 import { fetchWithAuth } from '$lib/api';
 
 export const load: PageServerLoad = async ({ fetch, url, locals }) => {
-	const limit = Number(url.searchParams.get('limit') || '15');
+	const limit = Number(url.searchParams.get('limit') || '10');
 	const offset = Number(url.searchParams.get('offset') || '0');
 
 	const page = Math.floor(offset / limit) + 1;
@@ -34,7 +34,13 @@ export const load: PageServerLoad = async ({ fetch, url, locals }) => {
 
 		const result = {
 			data: filteredData,
-			total_content: keyword ? filteredData.length : totalRecords
+			total_content: keyword ? filteredData.length : totalRecords,
+			metadata: data.metadata || {
+				current_page: page,
+				page_size,
+				total_pages: Math.ceil(totalRecords / page_size),
+				total_records: totalRecords
+			}
 		};
 
 		return result;

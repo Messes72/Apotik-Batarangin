@@ -224,6 +224,7 @@
 			// Tidak perlu melakukan apa-apa
 		}
 	});
+	$inspect(data);
 </script>
 
 <!-- svelte-ignore event_directive_deprecated -->
@@ -231,41 +232,6 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="mb-16">
-	<div class="font-montserrat mb-6 flex gap-4 text-[16px]">
-		<button
-			class="px-4 py-2 {active_button === 'pembelian_barang'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'pembelian_barang';
-				goto('/pembelian_barang');
-			}}
-		>
-			Pembelian Barang
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'statistik'
-				? 'border-b-2 border-[#048BC2] text-[#048BC2]'
-				: 'text-black hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'statistik';
-				goto('/pembelian_barang/statistik');
-			}}
-		>
-			Statistik
-		</button>
-		<button
-			class="px-4 py-2 {active_button === 'riwayat'
-				? 'border-b-2 border-blue-500 text-blue-500'
-				: 'text-black	 hover:border-b-2 hover:text-gray-500'}"
-			on:click={() => {
-				active_button = 'riwayat';
-				goto('/pembelian_barang/riwayat_pembelian_barang');
-			}}
-		>
-			Riwayat
-		</button>
-	</div>
 	<div class="flex w-full items-center justify-between gap-4 pb-8">
 		<div class="flex h-10 w-[213px] items-center justify-center rounded-md bg-[#003349] opacity-70">
 			<button
@@ -279,11 +245,6 @@
 			</button>
 		</div>
 		<div class="flex-1"><Search2 /></div>
-		<Dropdown
-			options={statusOptions}
-			placeholder="-- Pilih Status --"
-			on:change={(e) => (selectedStatus = e.detail.value)}
-		/>
 	</div>
 	<div class="block items-center rounded-xl border px-8 pb-5 pt-5 shadow-md drop-shadow-md">
 		<div class="w-full">
@@ -303,18 +264,7 @@
 					{/if}
 
 					{#if head === 'Nama Supplier'}
-						<div>
-							{#if body.id_supplier}
-								{#if body.id_supplier.startsWith('SUP')}
-									{body.supplier?.nama || 'Supplier'}
-								{:else}
-									{data.karyawan.find((k: any) => k.id_karyawan === body.id_supplier)?.nama ||
-										body.id_supplier}
-								{/if}
-							{:else}
-								-
-							{/if}
-						</div>
+						<div>{body.nama_supplier || body.nama || '(Tidak ada nama)'}</div>
 					{/if}
 
 					{#if head === 'Tanggal Pembelian'}
@@ -460,8 +410,8 @@
 								id="tanggal_pembayaran"
 								name="tanggal_pembayaran"
 								type="date"
-								label="Tanggal Penerimaan"
-								placeholder="Tanggal Penerimaan"
+								label="Tanggal Pembayaran"
+								placeholder="Tanggal Pembayaran"
 								bind:value={inputForm.tanggal_pembayaran}
 							/>
 							<div class="font-inter text-[12px] text-[#515151]">
@@ -476,12 +426,12 @@
 							<select
 								id="supplier"
 								name="supplier"
-								class="font-inter h-10 rounded-md border border-[#AFAFAF] px-2 py-1 text-[14px] text-[#515151]"
+								class="font-inter h-10 w-full rounded-md border border-[#AFAFAF] px-2 py-1 text-[14px] text-[#515151]"
 								on:change={handleSupplierChange}
 							>
 								<option value="">-- Pilih Supplier --</option>
-								{#each data.karyawan as supplier}
-									<option value={supplier.id_karyawan || supplier.nik}>{supplier.nama}</option>
+								{#each data.supplier as supplier}
+									<option value={supplier.id_supplier}>{supplier.nama}</option>
 								{/each}
 							</select>
 							{#if inputErrors.supplier}
@@ -755,8 +705,8 @@
 							<Detail
 								label="Nama Supplier"
 								value={detail.nama_supplier ||
-									(data.karyawan &&
-										data.karyawan.find((k: any) => k.id_karyawan === detail.id_supplier)?.nama) ||
+									(data.supplier &&
+										data.supplier.find((k: any) => k.id_supplier === detail.id_supplier)?.nama) ||
 									detail.id_supplier ||
 									''}
 							/>
@@ -764,8 +714,8 @@
 							<Detail label="Tanggal Pembayaran" value={detail.tanggal_pembayaran || ''} />
 							<Detail
 								label="Pemesan"
-								value={(data.karyawan &&
-									data.karyawan.find((k: any) => k.id_karyawan === detail.pemesan)?.nama) ||
+								value={(data.supplier &&
+									data.supplier.find((k: any) => k.id_supplier === detail.pemesan)?.nama) ||
 									detail.pemesan ||
 									''}
 							/>

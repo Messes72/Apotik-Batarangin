@@ -20,13 +20,13 @@ export const load: PageServerLoad = async ({ fetch, url, locals, params }) => {
 
 	const apiUrl = `${env.BASE_URL3}/pembelianbarang?page=${page}&page_size=${page_size}`;
 	const productUrl = `${env.BASE_URL3}/product/info?page=1&page_size=100`;
-	const karyawanUrl = `${env.BASE_URL3}/karyawan`;
+	const supplierUrl = `${env.BASE_URL3}/supplier`;
 
 	try {
-		const [pembelianbarangResponse, productResponse, karyawanResponse] = await Promise.all([
+		const [pembelianbarangResponse, productResponse, supplierResponse] = await Promise.all([
 			fetchWithAuth(apiUrl, {}, locals.token, fetch),
 			fetchWithAuth(productUrl, {}, locals.token, fetch),
-			fetchWithAuth(karyawanUrl, {}, locals.token, fetch)
+			fetchWithAuth(supplierUrl, {}, locals.token, fetch)
 		]);
 
 		if (!pembelianbarangResponse.ok) {
@@ -57,22 +57,30 @@ export const load: PageServerLoad = async ({ fetch, url, locals, params }) => {
 			} catch (e) {}
 		}
 
-		let karyawan = [];
-		if (karyawanResponse.ok) {
-			const karyawanText = await karyawanResponse.text();
+		let supplier = [];
+		if (supplierResponse.ok) {
+			const supplierText = await supplierResponse.text();
 			try {
-				const karyawanData = JSON.parse(karyawanText);
-				karyawan = Array.isArray(karyawanData)
-					? karyawanData
-					: karyawanData?.data || Object.values(karyawanData).find((v) => Array.isArray(v)) || [];
+				const supplierData = JSON.parse(supplierText);
+				supplier = Array.isArray(supplierData)
+					? supplierData
+					: supplierData?.data || Object.values(supplierData).find((v) => Array.isArray(v)) || [];
 			} catch (e) {}
 		}
 
+		const enrichedItems = items.map((item: any) => {
+			const matchingSupplier = supplier.find((s: any) => s.id_supplier === item.id_supplier);
+			return {
+				...item,
+				nama_supplier: matchingSupplier ? matchingSupplier.nama : '(Supplier tidak ditemukan)'
+			};
+		});
+
 		const result = {
-			data: items,
+			data: enrichedItems,
 			total_content: totalItems,
 			products,
-			karyawan,
+			supplier,
 			detail: null
 		};
 
@@ -83,7 +91,16 @@ export const load: PageServerLoad = async ({ fetch, url, locals, params }) => {
 
 				if (detailResponse.ok) {
 					const detailData = await detailResponse.json();
-					result.detail = detailData.data;
+					const detailItem = detailData.data;
+					
+					if (detailItem && detailItem.id_supplier) {
+						const matchingSupplier = supplier.find((s: any) => s.id_supplier === detailItem.id_supplier);
+						if (matchingSupplier) {
+							detailItem.nama_supplier = matchingSupplier.nama;
+						}
+					}
+					
+					result.detail = detailItem;
 				}
 			} catch (e) {}
 		}
@@ -94,7 +111,7 @@ export const load: PageServerLoad = async ({ fetch, url, locals, params }) => {
 			data: [],
 			total_content: 0,
 			products: [],
-			karyawan: [],
+			supplier: [],
 			detail: null
 		};
 	}
@@ -137,10 +154,6 @@ export const actions: Actions = {
 				} catch (e) {
 					payload.id_supplier = supplierIdJson;
 				}
-			}
-
-			if (!payload.id_supplier.toString().startsWith('SUP')) {
-				payload.id_supplier = 'SUP123';
 			}
 
 			if (obat_listJson) {

@@ -222,9 +222,9 @@
 	// Helper for image URLs
 	function formatImageUrl(url: string | null): string | null {
 		if (!url || url === 'null' || url === 'undefined') return null;
-		
+
 		const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://leap.crossnet.co.id:2688';
-		
+
 		if (url.startsWith('http')) {
 			return url;
 		} else if (url.startsWith('/')) {
@@ -233,7 +233,7 @@
 			return `${API_BASE_URL}/${url}`;
 		}
 	}
-	
+
 	function isValidImageUrl(url: string | null | undefined): boolean {
 		if (!url) return false;
 		if (url === 'null' || url === 'undefined' || url === '') return false;
@@ -266,16 +266,23 @@
 
 	// Add these state variables for editing
 	let currentProductData = $state<ProductData | null>(null);
+	let currentDetailData = $state<ProductData | null>(null);
 	let editingImage = $state<string | null>(null);
 	let originalImageRemoved = $state(false);
-	let productToDelete = $state<{id: string, name: string} | null>(null);
+	let productToDelete = $state<{ id: string; name: string } | null>(null);
 	let deleteReason = $state('');
-	
+
 	// Clear all image states
 	function resetImageStates() {
 		selectedImage = null;
 		editingImage = null;
 		originalImageRemoved = false;
+	}
+
+	function openDetailModal(product: any) {
+		// Set the current product data for detail viewing
+		currentDetailData = { ...product };
+		isModalDetailOpen = true;
 	}
 
 	function openEditModal(product: any) {
@@ -290,15 +297,15 @@
 		selectedCategory = product.id_kategori || '';
 		selectedSatuan = product.id_satuan || '';
 		selectedImage = null;
-		
+
 		// Only set editingImage if product has a valid image
 		const imageUrl = product.link_gambar_obat || product.image_url || null;
-		console.log('Edit modal - Image URL check:', { 
+		console.log('Edit modal - Image URL check:', {
 			raw: imageUrl,
 			isValid: isValidImageUrl(imageUrl),
 			formatted: formatImageUrl(imageUrl)
 		});
-		
+
 		if (isValidImageUrl(imageUrl)) {
 			editingImage = formatImageUrl(imageUrl);
 			originalImageRemoved = false;
@@ -306,10 +313,10 @@
 			editingImage = null;
 			originalImageRemoved = true;
 		}
-		
+
 		isModalEditOpen = true;
 	}
-	
+
 	function openDeleteModal(product: any) {
 		productToDelete = {
 			id: product.id || product.id_obat, // Use either id or id_obat
@@ -317,17 +324,17 @@
 		};
 		isModalAlasanOpen = true;
 	}
-	
+
 	function handleDeleteConfirm() {
 		if (!productToDelete || !deleteReason.trim()) {
 			alert('Data tidak lengkap untuk menghapus produk');
 			return;
 		}
-		
+
 		// Set values in the form and submit
 		document.getElementById('deleteProductId')!.setAttribute('value', productToDelete.id);
 		document.getElementById('deleteReason')!.setAttribute('value', deleteReason);
-		
+
 		// Submit the form
 		const form = document.getElementById('mainDeleteForm') as HTMLFormElement;
 		if (form) {
@@ -413,16 +420,11 @@
 				</button>
 			{/if}
 		</div>
-		<Dropdown
-			options={statusOptions}
-			placeholder="-- Pilih Status --"
-			bind:selectedValue={selectedStatus}
-		/>
 	</div>
 
 	<!-- Card Obat -->
 	<div class="flex">
-		<div class="w-10/12 justify-start">
+		<div class="w-full justify-start">
 			{#if !isLoading}
 				<CardObat card_data={sortedData}>
 					{#snippet children({ body })}
@@ -439,7 +441,7 @@
 									{body.id_obat}
 								</span>
 								<span class="font-inter mt-3 text-[12px] leading-normal text-black">
-									Stock : {body.stok_minimun}
+									Stock : {body.stok_barang !== undefined ? body.stok_barang : body.stok_minimun}
 									{body.nama_satuan}
 								</span>
 							</div>
@@ -450,7 +452,7 @@
 							<button
 								class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 								on:click={() => {
-									isModalDetailOpen = true;
+									openDetailModal(body);
 									closeDropdown();
 								}}
 								><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
@@ -498,148 +500,9 @@
 				</CardObat>
 			{/if}
 		</div>
-		<div class="flex w-2/12 flex-col gap-2 px-8">
-			<div class="justify flex">
-				<div class="flex gap-2">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="21"
-						height="21"
-						viewBox="0 0 21 21"
-						fill="none"
-					>
-						<g id="mdi:filter">
-							<path
-								id="Vector"
-								d="M12.1668 10.5V17.0667C12.2001 17.3167 12.1168 17.5833 11.9251 17.7583C11.848 17.8356 11.7564 17.8969 11.6556 17.9387C11.5548 17.9805 11.4467 18.002 11.3376 18.002C11.2285 18.002 11.1204 17.9805 11.0196 17.9387C10.9188 17.8969 10.8272 17.8356 10.7501 17.7583L9.07511 16.0833C8.98427 15.9944 8.9152 15.8858 8.87328 15.7658C8.83136 15.6458 8.81773 15.5178 8.83344 15.3917V10.5H8.80844L4.00844 4.35C3.87312 4.17628 3.81205 3.95605 3.8386 3.73744C3.86514 3.51883 3.97714 3.31962 4.15011 3.18333C4.30844 3.06667 4.48344 3 4.66678 3H16.3334C16.5168 3 16.6918 3.06667 16.8501 3.18333C17.0231 3.31962 17.1351 3.51883 17.1616 3.73744C17.1882 3.95605 17.1271 4.17628 16.9918 4.35L12.1918 10.5H12.1668Z"
-								fill="#171717"
-							/>
-						</g>
-					</svg>
-					<span class="font-interbold text-[15px] leading-normal text-black">Filter</span>
-				</div>
-			</div>
-			<div class="h-0.5 w-full bg-[#AFAFAF]"></div>
-			<div class="flex flex-col gap-3">
-				<span class="font-montserrat text-[13px] leading-[18px]">Kategori Obat</span>
-				<Checkbox label="Obat Panas" />
-				<Checkbox label="Obat Flu" />
-				<Checkbox label="Obat Batuk" />
-				<Checkbox label="Suplemen" />
-				<div class="relative">
-					<button
-						class="font-inter flex items-center gap-2 text-[13px] leading-normal"
-						on:click={() => (isSearchOpen = !isSearchOpen)}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
-							viewBox="0 0 16 16"
-							fill="none"
-						>
-							<g id="fe:arrow-down">
-								<path
-									id="Vector"
-									fill-rule="evenodd"
-									clip-rule="evenodd"
-									d="M4.81055 3.96021L8.67418 7.71021L4.81055 11.4602L6.09843 12.7102L11.2499 7.71021L6.09843 2.71021L4.81055 3.96021Z"
-									fill="#515151"
-								/>
-							</g>
-						</svg>
-						<span>Lainnya</span>
-					</button>
-					{#if isSearchOpen}
-						<div class="mt-2 w-auto rounded-md border border-[#AFAFAF] bg-[#F6F6F7]">
-							<Search />
-						</div>
-					{/if}
-				</div>
-			</div>
-			<div class="flex flex-col gap-2">
-				<div class="mt-[2px] h-0.5 w-full bg-[#AFAFAF]"></div>
-				<div class="flex items-center gap-1">
-					<span class="font-montserrat text-[13px] leading-[18px]">Nomor Batch</span>
-					<button class="rounded-md p-1 hover:bg-gray-200" on:click={toggleSort}>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="15"
-							height="15"
-							viewBox="0 0 15 15"
-							fill="none"
-						>
-							<g id="icons8:numerical-sorting-12">
-								<path
-									id="Vector"
-									d="M4.02844 2.34375L3.95531 2.70938C3.95531 2.70938 3.8775 2.97937 3.69141 3.25172C3.50531 3.525 3.27188 3.75 2.8125 3.75V4.6875C3.4575 4.6875 3.9 4.37109 4.21875 4.02844V7.03125H5.15625V2.34375H4.02844ZM10.3125 2.34375V11.1038L9.09656 9.88781L8.4375 10.5469L10.4438 12.5686L10.7812 12.8906L11.1187 12.5681L13.125 10.5469L12.4659 9.88781L11.25 11.1033V2.34375H10.3125ZM3.98438 7.96875C3.54963 7.96999 3.13305 8.14324 2.82564 8.45064C2.51823 8.75805 2.34499 9.17463 2.34375 9.60938V9.84375H3.28125V9.60938C3.28125 9.19875 3.57375 8.90625 3.98438 8.90625H4.45312C4.86375 8.90625 5.15625 9.19875 5.15625 9.60938C5.15625 9.82312 4.99078 10.0687 4.71656 10.2394C4.13813 10.5956 3.63094 10.8225 3.20812 11.0597C2.99625 11.1783 2.80172 11.2922 2.63625 11.4698C2.47219 11.6466 2.34375 11.9152 2.34375 12.187V12.6558H6.09375V11.7183H3.95484C4.29984 11.5411 4.69547 11.3639 5.21484 11.0442C5.69062 10.7475 6.09375 10.2398 6.09375 9.60938C6.09375 8.7075 5.355 7.96875 4.45312 7.96875H3.98438Z"
-									fill="black"
-								/>
-							</g>
-						</svg>
-					</button>
-				</div>
-				<div class="mt-[2px] h-0.5 w-full bg-[#AFAFAF]"></div>
-				<div class="flex items-center gap-1">
-					<span class="font-montserrat text-[13px] leading-[18px]">Kadaluarsa Obat</span>
-					<button class="rounded-md p-1 hover:bg-gray-200" on:click={toggleSort}>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="15"
-							height="15"
-							viewBox="0 0 15 15"
-							fill="none"
-						>
-							<g id="icons8:numerical-sorting-12">
-								<path
-									id="Vector"
-									d="M4.02844 2.34375L3.95531 2.70938C3.95531 2.70938 3.8775 2.97937 3.69141 3.25172C3.50531 3.525 3.27188 3.75 2.8125 3.75V4.6875C3.4575 4.6875 3.9 4.37109 4.21875 4.02844V7.03125H5.15625V2.34375H4.02844ZM10.3125 2.34375V11.1038L9.09656 9.88781L8.4375 10.5469L10.4438 12.5686L10.7812 12.8906L11.1187 12.5681L13.125 10.5469L12.4659 9.88781L11.25 11.1033V2.34375H10.3125ZM3.98438 7.96875C3.54963 7.96999 3.13305 8.14324 2.82564 8.45064C2.51823 8.75805 2.34499 9.17463 2.34375 9.60938V9.84375H3.28125V9.60938C3.28125 9.19875 3.57375 8.90625 3.98438 8.90625H4.45312C4.86375 8.90625 5.15625 9.19875 5.15625 9.60938C5.15625 9.82312 4.99078 10.0687 4.71656 10.2394C4.13813 10.5956 3.63094 10.8225 3.20812 11.0597C2.99625 11.1783 2.80172 11.2922 2.63625 11.4698C2.47219 11.6466 2.34375 11.9152 2.34375 12.187V12.6558H6.09375V11.7183H3.95484C4.29984 11.5411 4.69547 11.3639 5.21484 11.0442C5.69062 10.7475 6.09375 10.2398 6.09375 9.60938C6.09375 8.7075 5.355 7.96875 4.45312 7.96875H3.98438Z"
-									fill="black"
-								/>
-							</g>
-						</svg>
-					</button>
-				</div>
-				<div class="mt-[2px] h-0.5 w-full bg-[#AFAFAF]"></div>
-			</div>
-			<div class=" mt-1 flex flex-col gap-3">
-				<span class="font-montserrat text-[13px] leading-[18px]">Jumlah Stock</span>
-				<Checkbox label=">5" />
-				<Checkbox label=">10" />
-				<Checkbox label="<5" />
-				<Checkbox label="<10" />
-				<div class="mt-[2px] h-0.5 w-full bg-[#AFAFAF]"></div>
-			</div>
-			<div class="mt-1 flex flex-col gap-3">
-				<div class="font-montserrat text-[13px] leading-[18px]">Satuan</div>
-				<Dropdown
-					options={satuanOptions}
-					placeholder="-- Pilih Satuan --"
-					bind:selectedValue={selectedSatuan}
-				/>
-				<div class="mt-2 h-0.5 w-full bg-[#AFAFAF]"></div>
-			</div>
-			<div class="mt-1 flex flex-col gap-3">
-				<div class="font-montserrat text-[13px] leading-[18px]">Batas Harga</div>
-				<div class="font-inter flex items-center text-[11px] text-[#515151]">
-					<input
-						type="text"
-						class="h-8 w-full rounded-md border border-[#AFAFAF] bg-[#F6F6F7] px-3 py-1 text-[14px]"
-						placeholder="Rp. Minimum"
-					/>
-				</div>
-				<div class="font-inter mt-2 flex items-center text-[11px] text-[#515151]">
-					<input
-						type="text"
-						class="h-8 w-full rounded-md border border-[#AFAFAF] bg-[#F6F6F7] px-3 py-1 text-[14px]"
-						placeholder="Rp. Maksimum"
-					/>
-				</div>
-			</div>
-		</div>
 	</div>
 	<div class="mt-4 flex justify-end">
-		<Pagination total_content={data?.total_content} />
+		<Pagination total_content={data?.total_content} metadata={data?.metadata} />
 	</div>
 	{#if isModalInputOpen}
 		<div
@@ -1146,45 +1009,75 @@
 					</button>
 				</div>
 				<form class="mb-4 flex flex-col gap-4 px-10 py-6">
-					<Detail label="Nama Obat" value="Paracetamol" />
-					<Detail label="Kategori Obat" value="Obat Panas" />
-					<Detail label="Harga Beli" value="10.000" />
-					<Detail label="Harga Jual" value="12.000" />
-					<Detail label="Satuan" value="Tablet" />
-					<Detail label="Jumlah Barang" value="100" />
-					<Detail label="Gambar Obat" value="https://via.placeholder.com/150" />
-					<Detail label="Keterangan" value="Digunakan untuk meredakan nyeri dan demam" />
+					<Detail label="Nama Obat" value={currentDetailData?.nama_obat || 'N/A'} />
+					<Detail
+						label="Kategori Obat"
+						value={categoryOptions.find((c) => c.value === currentDetailData?.id_kategori)?.label ||
+							'N/A'}
+					/>
+					<Detail
+						label="Harga Beli"
+						value={`Rp ${currentDetailData?.harga_beli?.toLocaleString() || 'N/A'}`}
+					/>
+					<Detail
+						label="Harga Jual"
+						value={`Rp ${currentDetailData?.harga_jual?.toLocaleString() || 'N/A'}`}
+					/>
+					<Detail
+						label="Satuan"
+						value={satuanOptions.find((s) => s.value === currentDetailData?.id_satuan)?.label ||
+							'N/A'}
+					/>
+					<Detail
+						label="Stock Minimum"
+						value={`${currentDetailData?.stok_minimun || 0} ${satuanOptions.find((s) => s.value === currentDetailData?.id_satuan)?.label || ''}`}
+					/>
+					<Detail
+						label="Stok Tersedia"
+						value={`${currentDetailData?.stok_barang !== undefined ? currentDetailData.stok_barang : 'N/A'} ${satuanOptions.find((s) => s.value === currentDetailData?.id_satuan)?.label || ''}`}
+					/>
+					<Detail
+						label="Gambar Obat"
+						value={currentDetailData?.link_gambar_obat || currentDetailData?.image_url || 'N/A'}
+					/>
+					<Detail label="Keterangan" value={currentDetailData?.keterangan || 'N/A'} />
 				</form>
 			</div>
 		</div>
 	{/if}
 	<!-- Hidden delete form -->
-	<form id="mainDeleteForm" method="POST" action="?/deleteProduct" class="hidden" use:enhance={() => {
-		// Before form submission
-		isModalAlasanOpen = false;
-		isModalKonfirmDeleteOpen = false;
-		
-		return ({ result }) => {
-			if (result.type === 'success') {
-				isModalSuccessDeleteOpen = true;
-				// Reload page after a short delay
-				setTimeout(() => {
-					window.location.reload();
-				}, 1500);
-			} else if (result.type === 'failure' && result.data) {
-				alert(result.data.message || 'Gagal menghapus produk');
-			} else {
-				alert('Gagal menghapus produk');
-			}
-		};
-	}}>
+	<form
+		id="mainDeleteForm"
+		method="POST"
+		action="?/deleteProduct"
+		class="hidden"
+		use:enhance={() => {
+			// Before form submission
+			isModalAlasanOpen = false;
+			isModalKonfirmDeleteOpen = false;
+
+			return ({ result }) => {
+				if (result.type === 'success') {
+					isModalSuccessDeleteOpen = true;
+					// Reload page after a short delay
+					setTimeout(() => {
+						window.location.reload();
+					}, 1500);
+				} else if (result.type === 'failure' && result.data) {
+					alert(result.data.message || 'Gagal menghapus produk');
+				} else {
+					alert('Gagal menghapus produk');
+				}
+			};
+		}}
+	>
 		<input type="hidden" name="product_id" id="deleteProductId" />
 		<input type="hidden" name="keterangan_hapus" id="deleteReason" />
 	</form>
-	
-	<Alasan 
-		bind:isOpen={isModalAlasanOpen} 
-		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen} 
+
+	<Alasan
+		bind:isOpen={isModalAlasanOpen}
+		bind:isKonfirmDeleteOpen={isModalKonfirmDeleteOpen}
 		productId={productToDelete?.id || ''}
 		productName={productToDelete?.name || ''}
 		bind:alasanValue={deleteReason}
@@ -1192,9 +1085,9 @@
 			deleteReason = e.detail;
 		}}
 	/>
-	<KonfirmDelete 
-		bind:isOpen={isModalKonfirmDeleteOpen} 
-		bind:isSuccess={isModalSuccessDeleteOpen} 
+	<KonfirmDelete
+		bind:isOpen={isModalKonfirmDeleteOpen}
+		bind:isSuccess={isModalSuccessDeleteOpen}
 		on:confirm={handleDeleteConfirm}
 		on:closed={() => {
 			// Show alasan modal again if user cancels
@@ -1214,10 +1107,13 @@
 			isModalKonfirmInputOpen = false;
 		}}
 	/>
-	<Inputt bind:isOpen={isModalSuccessInputOpen} on:closed={() => {
-		resetImageStates();
-		window.location.reload();
-	}} />
+	<Inputt
+		bind:isOpen={isModalSuccessInputOpen}
+		on:closed={() => {
+			resetImageStates();
+			window.location.reload();
+		}}
+	/>
 	<KonfirmEdit
 		bind:isOpen={isModalKonfirmEditOpen}
 		bind:isSuccess={isModalSuccessEditOpen}
@@ -1230,17 +1126,20 @@
 			isModalKonfirmEditOpen = false;
 		}}
 	/>
-	<Edit bind:isOpen={isModalSuccessEditOpen} on:closed={() => {
-		resetImageStates();
-		window.location.reload();
-	}} />
-	<Hapus 
-		bind:isOpen={isModalSuccessDeleteOpen} 
+	<Edit
+		bind:isOpen={isModalSuccessEditOpen}
+		on:closed={() => {
+			resetImageStates();
+			window.location.reload();
+		}}
+	/>
+	<Hapus
+		bind:isOpen={isModalSuccessDeleteOpen}
 		on:closed={() => {
 			resetImageStates();
 			productToDelete = null;
 			window.location.reload();
-		}} 
+		}}
 	/>
 </div>
 

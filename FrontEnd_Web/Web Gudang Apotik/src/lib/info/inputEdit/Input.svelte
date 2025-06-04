@@ -5,6 +5,7 @@
 	export let placeholder: string;
 	export let value: string = '';
 	export let name: string = '';
+	export let readonly: boolean = false;
 </script>
 
 <div class="flex flex-col gap-2">
@@ -17,6 +18,7 @@
 			{id}
 			bind:value
 			min="0"
+			{readonly}
 			on:input={(e) => {
 				const value = Number((e.target as HTMLInputElement).value);
 				if (value < 0) {
@@ -35,6 +37,7 @@
 			{placeholder}
 			{id}
 			bind:value
+			{readonly}
 			class="font-inter w-full rounded-[13px] border border-[#AFAFAF] bg-[#F4F4F4] px-4 text-[13px]"
 		/>
 	{/if}
