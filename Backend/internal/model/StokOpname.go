@@ -504,6 +504,7 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 		headerstokopname.Catatan = &catatan.String
 	}
 
+	// var listsort []class.StokOpnameObat
 	obatmap := map[string]*class.StokOpnameObat{}
 	totalselisih := 0
 
@@ -511,7 +512,8 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 	FROM detail_stokopname ds 
 	JOIN kartu_stok ks ON ks.id_kartustok = ds.id_kartustok AND ks.id_depo = ?
 	JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
-	WHERE ds.id_stokopname = ?`
+	WHERE ds.id_stokopname = ?
+	ORDER BY LOWER(oj.nama_obat) ASC`
 
 	rows, err := con.QueryContext(ctx, qeuerydetailstokopname, headerstokopname.IDDepo, idstokopname)
 	if err != nil {

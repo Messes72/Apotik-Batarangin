@@ -526,7 +526,7 @@ type BatchUsage struct {
 type Ingredient struct {
 	ObatID     string       `json:"id_obat"`
 	NamaObat   string       `json:"nama_obat"`
-	Dosis      *string      `json:"dosis,omitempty"`
+	Dosis      *string      `json:"dosis"`
 	Catatan    *string      `json:"catatan,omitempty"`
 	BatchUsage []BatchUsage `json:"batch_usage"`
 }
@@ -623,7 +623,7 @@ func GetTransaksi(ctx context.Context, idTransaksi string) (class.Response, erro
 	cp.nama_cara_pakai,
 	kp.nama_keterangan_pakai,
 	d.id_obat_racik,
-	d.dosis,
+	d.Dosis,
 	d.jumlah_racik,
 	d.satuan_racik
 FROM detail_transaksi_penjualan_obat d
@@ -674,15 +674,19 @@ ORDER BY d.id
 			log.Println("Error scanning detail:", err)
 			return class.Response{Status: http.StatusInternalServerError, Message: "Gagal memproses detail"}, err
 		}
+		// log.Println("dosis", dosisRacik.String)
 
 		isKartustokEmpty := !rawKartustok.Valid || rawKartustok.String == ""
 		isRacikRow := rawRacikID.Valid && rawRacikID.String != ""
-
+		if dosisRacik.Valid {
+			ti.DosisRacik = &dosisRacik.String
+		}
 		if isKartustokEmpty && isRacikRow {
 			ti.IsRacikan = true
 			if dosisRacik.Valid {
 				ti.DosisRacik = &dosisRacik.String
 			}
+			// log.Println("dosis", ti.DosisRacik)
 			if jumlahRacik.Valid {
 				v := int(jumlahRacik.Int32)
 				ti.JumlahRacik = &v
@@ -690,6 +694,15 @@ ORDER BY d.id
 			if satuanRacik.Valid {
 				ti.SatuanRacik = &satuanRacik.String
 
+			}
+			if aturanP.Valid {
+				ti.AturanPakai = &aturanP.String
+			}
+			if caraP.Valid {
+				ti.CaraPakai = &caraP.String
+			}
+			if ketP.Valid {
+				ti.KeteranganPakai = &ketP.String
 			}
 			td.Items = append(td.Items, ti)
 			currentRacikIdx = len(td.Items) - 1
@@ -703,6 +716,7 @@ ORDER BY d.id
 			var ing = Ingredient{
 				ObatID:   ingID,
 				NamaObat: ti.NamaObat,
+				Dosis:    ti.DosisRacik,
 			}
 
 			// Load batch usage
