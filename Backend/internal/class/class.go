@@ -116,15 +116,16 @@ type DetailKaryawan struct {
 }
 
 type ObatJadi struct {
-	ID              int        `db:"id" json:"id"`
-	IDObat          string     `db:"id_obat" json:"id_obat"`
-	IDSatuan        string     `db:"id_satuan" json:"id_satuan"`
-	IDKategori      string     `db:"id_kategori" json:"id_kategori"`
-	NamaObat        string     `db:"nama_obat" json:"nama_obat"`
-	HargaJual       float64    `db:"harga_jual" json:"harga_jual"`
-	HargaBeli       float64    `db:"harga_beli" json:"harga_beli"`
-	StokMinimum     uint       `db:"stok_minimun" json:"stok_minimun"`
-	Uprate          *float64   `db:"uprate" json:"uprate,omitempty"`
+	ID          int      `db:"id" json:"id"`
+	IDObat      string   `db:"id_obat" json:"id_obat"`
+	IDSatuan    string   `db:"id_satuan" json:"id_satuan"`
+	IDKategori  string   `db:"id_kategori" json:"id_kategori"`
+	NamaObat    string   `db:"nama_obat" json:"nama_obat"`
+	HargaJual   float64  `db:"harga_jual" json:"harga_jual"`
+	HargaBeli   float64  `db:"harga_beli" json:"harga_beli"`
+	StokMinimum uint     `db:"stok_minimun" json:"stok_minimun"`
+	Uprate      *float64 `db:"uprate" json:"uprate,omitempty"`
+
 	CreatedAt       time.Time  `db:"created_at" json:"created_at"`
 	CreatedBy       string     `db:"created_by" json:"created_by"`
 	UpdatedAt       *time.Time `db:"updated_at" json:"updated_at,omitempty"`

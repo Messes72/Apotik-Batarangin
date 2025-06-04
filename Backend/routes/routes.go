@@ -33,6 +33,7 @@ func Init() *echo.Echo {
 	routeRole := e.Group("/role")
 	routeRole.Use(middleware.CheckAPIKey)
 	routeRole.Use(middleware.JWTMiddleware)
+	routeRole.Use(middleware.CheckPrivilege("Role"))
 	routeRole.POST("/create", controller.CreateRole)
 	routeRole.GET("/role", controller.GetAllRole)
 	routeRole.GET("/:id_role/info", controller.GetRoleByID)
@@ -40,6 +41,7 @@ func Init() *echo.Echo {
 	routeRole.PUT("/:id_role/delete", controller.DeleteRole)
 
 	routePrivilege := e.Group("/privilege")
+	routePrivilege.Use(middleware.CheckPrivilege("Privilege"))
 	routePrivilege.Use(middleware.CheckAPIKey)
 	routePrivilege.Use(middleware.JWTMiddleware)
 
