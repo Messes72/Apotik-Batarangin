@@ -72,7 +72,7 @@ func CheckPrivilege(requiredPrivilege string) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 
 			rawPrivileges := c.Get("privileges") //ngambil privilege dari jwt token return interface{}
-			fmt.Println("Raw privileges from context:", rawPrivileges)
+			// fmt.Println("Raw privileges from context:", rawPrivileges)
 
 			privileges, ok := rawPrivileges.([]class.Privilege) //ambil data priv dari interface
 			if !ok {
@@ -80,7 +80,7 @@ func CheckPrivilege(requiredPrivilege string) echo.MiddlewareFunc {
 				return c.JSON(http.StatusUnauthorized, map[string]string{"message": "User privileges tidak ada di JWT token"})
 			}
 
-			fmt.Println("Extracted privilege : ", privileges)
+			// fmt.Println("Extracted privilege : ", privileges)
 
 			// Check if the user has the required privilege
 			for _, p := range privileges {
