@@ -504,7 +504,6 @@ func GetDetailStokOpname(ctx context.Context, idstokopname string) (class.Respon
 		headerstokopname.Catatan = &catatan.String
 	}
 
-	// var listsort []class.StokOpnameObat
 	obatmap := map[string]*class.StokOpnameObat{}
 	totalselisih := 0
 
@@ -598,7 +597,7 @@ func GetSystemStokNow(iddepo string) (class.Response, error) {
 	con := db.GetDBCon()
 	log.Println("id depo", iddepo)
 
-	query := `SELECT ks.id_kartustok, oj.nama_obat, ks.stok_barang, dks.id_nomor_batch, dks.sisa
+	query := `SELECT ks.id_kartustok, oj.nama_obat, ks.stok_barang, dks.id_nomor_batch, dks.sisa, nb.no_batch
 FROM kartu_stok ks
 JOIN obat_jadi oj ON oj.id_obat = ks.id_obat
 LEFT JOIN (
@@ -613,6 +612,7 @@ LEFT JOIN (
 ) AS dks ON dks.id_kartustok = ks.id_kartustok
 AND ks.id_depo = dks.id_depo
 AND dks.rn = 1
+LEFT JOIN nomor_batch nb ON nb.id_nomor_batch = dks.id_nomor_batch
 WHERE ks.id_depo = ?
 ORDER BY oj.nama_obat ASC, ks.id_kartustok ASC, dks.id_nomor_batch ASC` // Adjusted ORDER BY
 
@@ -632,6 +632,7 @@ ORDER BY oj.nama_obat ASC, ks.id_kartustok ASC, dks.id_nomor_batch ASC` // Adjus
 		var obatKuantitasSistemTotal int
 		var idNomorBatch sql.NullString
 		var kuantitasSistem sql.NullInt64
+		var nobatch sql.NullString
 
 		err := rows.Scan(
 			&obatIDKartuStok,
@@ -639,6 +640,7 @@ ORDER BY oj.nama_obat ASC, ks.id_kartustok ASC, dks.id_nomor_batch ASC` // Adjus
 			&obatKuantitasSistemTotal,
 			&idNomorBatch,
 			&kuantitasSistem,
+			&nobatch,
 		)
 		if err != nil {
 			log.Println("Error saat scan rows data stok sistem:", err)
@@ -667,6 +669,9 @@ ORDER BY oj.nama_obat ASC, ks.id_kartustok ASC, dks.id_nomor_batch ASC` // Adjus
 			}
 			if kuantitasSistem.Valid {
 				batch.KuantitasSistem = int(kuantitasSistem.Int64)
+			}
+			if nobatch.Valid {
+				batch.NomorBatch = nobatch.String
 			}
 			currentObat.Batches = append(currentObat.Batches, batch)
 		}

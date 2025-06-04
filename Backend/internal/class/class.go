@@ -438,6 +438,7 @@ type StokOpnameGetResult struct {
 
 type StokOpnameGETBatch struct {
 	IdNomorBatch    string `json:"id_nomor_batch"`
+	NomorBatch      string `json:"nomor_batch"`
 	KuantitasSistem int    `json:"kuantitas_sistem"`
 }
 
