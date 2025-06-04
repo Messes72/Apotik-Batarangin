@@ -41,9 +41,9 @@ func Init() *echo.Echo {
 	routeRole.PUT("/:id_role/delete", controller.DeleteRole)
 
 	routePrivilege := e.Group("/privilege")
-	routePrivilege.Use(middleware.CheckPrivilege("Privilege"))
 	routePrivilege.Use(middleware.CheckAPIKey)
 	routePrivilege.Use(middleware.JWTMiddleware)
+	routePrivilege.Use(middleware.CheckPrivilege("Privilege"))
 
 	routePrivilege.POST("/create", controller.CreatePrivilege)
 	routePrivilege.GET("", controller.GetAllPrivilege)
