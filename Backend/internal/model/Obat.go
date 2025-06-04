@@ -140,7 +140,7 @@ func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Respo
 		offset := (page - 1) * pagesize
 		var sliceobat []class.ObatJadi
 
-		querymanyobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan
+		querymanyobat := `SELECT o.id_obat, o.id_satuan, o.id_kategori, o.nama_obat, o.harga_jual, o.harga_beli, o.stok_minimum, o.uprate, o.created_at, o.updated_at, o.link_gambar_obat, o.keterangan, s.nama_satuan, o.created_by
 				  FROM obat_jadi o JOIN satuan s ON o.id_satuan = s.id_satuan WHERE o.deleted_at IS NULL ORDER BY o.id_obat DESC  LIMIT ? OFFSET ?`
 
 		rows, err := con.QueryContext(ctx, querymanyobat, pagesize, offset)
@@ -154,7 +154,7 @@ func GetObat(ctx context.Context, idget string, page, pagesize int) (class.Respo
 			var obat class.ObatJadi
 			err := rows.Scan(
 				&obat.IDObat, &obat.IDSatuan, &obat.IDKategori, &obat.NamaObat, &obat.HargaJual, &obat.HargaBeli, &obat.StokMinimum,
-				&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan)
+				&obat.Uprate, &obat.CreatedAt, &obat.UpdatedAt, &obat.LinkGambarObat, &obat.Keterangan, &obat.NamaSatuan, &obat.CreatedBy)
 			if err != nil {
 				log.Println("gagal get data individual obat di model obat", err)
 				return class.Response{Status: http.StatusInternalServerError, Message: "gagal mengambil data obat"}, nil
