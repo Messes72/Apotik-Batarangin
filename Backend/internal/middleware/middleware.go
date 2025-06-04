@@ -84,7 +84,7 @@ func CheckPrivilege(requiredPrivilege string) echo.MiddlewareFunc {
 
 			// Check if the user has the required privilege
 			for _, p := range privileges {
-				fmt.Println("Checking privilege:", p.NamaPrivilege, "required:", requiredPrivilege)
+				// fmt.Println("Checking privilege:", p.NamaPrivilege, "required:", requiredPrivilege)
 				if strings.TrimSpace(p.NamaPrivilege) == strings.TrimSpace(requiredPrivilege) {
 					fmt.Println("User punya privilege:", requiredPrivilege)
 					return next(c) // lanjut kalo priv nya cukup
