@@ -6,3 +6,4 @@ String token = "";
 String nama ="";
 String xApiKey = "helopanda";
 String server_address = "http://leap.crossnet.co.id:2688";
+List<String> privileges = [];

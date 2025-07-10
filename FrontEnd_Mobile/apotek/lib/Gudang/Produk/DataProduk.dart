@@ -99,9 +99,9 @@ class Products {
   final double hargaBeli;
   final int stokMinimum;
   int? stokObatReal;
-  // final double uprate;
+  final double uprate;
   final DateTime createdAt;
-  final String createdBy;
+  final String ?createdBy;
   final String linkGambarObat;
   final String keterangan;
   final String namaSatuan;
@@ -116,7 +116,7 @@ class Products {
     required this.hargaBeli,
     required this.stokMinimum,
     required this.stokObatReal,
-    // required this.uprate,
+    required this.uprate,
     required this.createdAt,
     required this.createdBy,
     required this.linkGambarObat,
@@ -135,7 +135,7 @@ class Products {
       hargaBeli: (json['harga_beli'] ?? 0).toDouble(),
       stokMinimum: json['stok_minimun'] ?? 0,
       stokObatReal: json['stok_obatReal'] ?? 0,
-      // uprate: (json['uprate'] ?? 0).toDouble(),
+      uprate: (json['uprate'] ?? 0).toDouble(),
       createdAt: DateTime.parse(
           json['created_at'] ?? DateTime.now().toIso8601String()),
       createdBy: json['created_by'] ?? '',
@@ -155,6 +155,7 @@ class Products {
       'harga_jual': hargaJual,
       'harga_beli': hargaBeli,
       'stok_minimun': stokMinimum,
+      'uprate': uprate,
       'created_at': createdAt.toIso8601String(),
       'created_by': createdBy,
       'link_gambar_obat': linkGambarObat,
@@ -186,7 +187,7 @@ class Products {
 
   static Future<List<Products>> getData() async {
     String url =
-        "http://leap.crossnet.co.id:2688/product/info?page=1&page_size=20";
+        "http://leap.crossnet.co.id:2688/product/info?page=1&page_size=1000";
     var response = await http.get(Uri.parse(url),
         headers: {'Authorization': '$token', 'x-api-key': '$xApiKey'});
     var jsonObject = jsonDecode(response.body);
@@ -203,6 +204,35 @@ class Products {
       throw Exception("Gagal Load Data");
     }
   }
+  static Future<ObatResponse> getData2({required int page, required int pageSize}) async {
+    final String baseUrl = "http://leap.crossnet.co.id:2688"; // Base URL API Anda
+    final String url = "$baseUrl/product/info?page=$page&page_size=$pageSize";
+    
+    print("Fetching products from: $url");
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': token, // Menggunakan variabel global token
+          'x-api-key': xApiKey,     // Menggunakan variabel global xApiKey
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Langsung parse seluruh response menjadi ObatResponse
+        return ObatResponse.fromJson(jsonDecode(response.body));
+      } else {
+        print("Failed to load products. Status: ${response.statusCode}, Body: ${response.body}");
+        throw Exception("Gagal memuat data produk (Status: ${response.statusCode}).");
+      }
+    } catch (e) {
+      print("Error in Products.getData: $e");
+      throw Exception("Terjadi kesalahan koneksi: $e");
+    }
+  }
+
 }
 
 class KategoriObat {

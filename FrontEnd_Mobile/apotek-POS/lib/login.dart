@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:apotek/global.dart' as globals;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Login2 extends StatelessWidget {
@@ -35,64 +36,150 @@ class Login extends StatefulWidget {
 class LoginPage extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   bool _validasiTerisi = false;
+  bool isLoading = false;
 
   var _email = TextEditingController();
   var _password = TextEditingController();
   Future<void> login(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {
-      return; // Hentikan jika form tidak valid
+      return;
     }
+
+    setState(() {
+      isLoading = true;
+    });
 
     final username = _email.text.trim();
     final password = _password.text.trim();
 
-    final response = await http.post(
-      Uri.parse('http://leap.crossnet.co.id:2688/login'),
-      headers: {'x-api-key': '${globals.xApiKey}'},
-      body: {"username": username, "password": password},
-    );
-    print(response.body);
+    try {
+      final response = await http.post(
+        Uri.parse('http://leap.crossnet.co.id:2688/login'),
+        headers: {'x-api-key': '${globals.xApiKey}'},
+        body: {"username": username, "password": password},
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      print(data['data']['jwttoken']);
-      setState(() {
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        List<dynamic> privileges = data['data']['privileges'];
+        List<String> namaPrivileges = privileges
+            .map((priv) => priv['nama_privilege'].toString())
+            .toList();
+
+        bool hasPoSPrivilege = namaPrivileges.any((p) => p.contains('PoS'));
+        if (!hasPoSPrivilege) {
+          // ❌ Tampilkan AlertDialog jika tidak punya akses PoS
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: ColorStyle
+                  .putih_background, // Ganti dengan warna yang kamu inginkan
+
+              title: Center(
+                  child: Text(
+                'Akses Ditolak',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              )),
+              content: Text('Anda tidak memiliki akses ke sistem PoS.',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w400)),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('OK',
+                      style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: ColorStyle.hover)),
+                ),
+              ],
+            ),
+          );
+
+          setState(() {
+            isLoading = false;
+          });
+          return;
+        }
+
         globals.token = data['data']['jwttoken'];
         globals.nama = data['data']['nama'];
+        globals.privileges = namaPrivileges;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', globals.token);
+        await prefs.setString('nama', globals.nama);
+        await prefs.setStringList('privileges', namaPrivileges);
+
+        print("Token: ${globals.token}");
+        print("Nama: ${globals.nama}");
+        print("Privileges: $namaPrivileges");
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MyApp()),
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Center(
+                child: Text('Login Gagal',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+            content: Text('Periksa kembali username dan password Anda.',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w400)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('OK',
+                    style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600, color: ColorStyle.hover)),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error: $e");
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Center(
+              child: Text('Terjadi Kesalahan',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+          content: Text('Gagal terhubung ke server. Silakan coba lagi nanti.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w400)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK',
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, color: ColorStyle.hover)),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
       });
-      print(globals.token);
-      print(globals.nama);
-
-      // Simpan token di lokal
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', globals.token);
-      await prefs.setString('nama', globals.nama);
-
-      // Navigasi ke halaman utama
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MyApp()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Login gagal, periksa kembali kredensial!")),
-      );
     }
   }
+
   // NANTI DIHAPUS YA jangan LUPAAAAAAAA !!!!!!!!!!!!!!!!!!!!!!!!!!!
   @override
   void initState() {
     super.initState();
 
-    // 🔐 Hardcoded credentials
-    _email.text = "admin"; // ganti sesuai user default
-    _password.text = "admin"; // ganti sesuai password default
+    // // 🔐 Hardcoded credentials
+    // _email.text = "admin"; // ganti sesuai user default
+    // _password.text = "admin"; // ganti sesuai password default
 
-    // 🔁 Delay 1 detik lalu langsung login
-    Future.delayed(Duration(seconds: 1), () {
-      login(context); // langsung login otomatis
-    });
+    // // 🔁 Delay 1 detik lalu langsung login
+    // Future.delayed(Duration(seconds: 1), () {
+    //   login(context); // langsung login otomatis
+    // });
   }
 
   @override
@@ -408,6 +495,19 @@ class LoginPage extends State<Login> {
               ),
             ),
           ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.3),
+                child: Center(
+                  child: LoadingAnimationWidget.flickr(
+                    leftDotColor: Colors.red,
+                    rightDotColor: Colors.blue,
+                    size: 50,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

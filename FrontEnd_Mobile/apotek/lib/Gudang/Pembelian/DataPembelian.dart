@@ -620,3 +620,73 @@ class Depo {
     };
   }
 }
+class Supplier {
+  final int id;
+  final String idSupplier;
+  final String nama;
+  final String alamat;
+  final String noTelp;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String catatan;
+
+  Supplier({
+    required this.id,
+    required this.idSupplier,
+    required this.nama,
+    required this.alamat,
+    required this.noTelp,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.catatan,
+  });
+
+  factory Supplier.fromJson(Map<String, dynamic> json) {
+    return Supplier(
+      id: json['id'],
+      idSupplier: json['id_supplier'],
+      nama: json['nama'],
+      alamat: json['alamat'],
+      noTelp: json['no_telp'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      catatan: json['catatan'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "id_supplier": idSupplier,
+    "nama": nama,
+    "alamat": alamat,
+    "no_telp": noTelp,
+    "created_at": createdAt.toIso8601String(),
+    "updated_at": updatedAt.toIso8601String(),
+    "catatan": catatan,
+  };
+   static Future<List<Supplier>> getDataSupplier() async {
+    String url = "http://leap.crossnet.co.id:2688/supplier?page=1&page_size=10";
+
+    final response = await http.get(Uri.parse(url), headers: {
+      'Authorization': token,
+      'x-api-key': xApiKey,
+    });
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      // Ambil hanya list supplier dari bagian "data"
+      final List<dynamic> dataList = decoded['data'];
+
+      // Konversi menjadi List<Supplier>
+      List<Supplier> supplierList = dataList
+          .map((json) => Supplier.fromJson(json))
+          .toList();
+
+      return supplierList;
+    } else {
+      throw Exception("Gagal Load Data Supplier: ${response.statusCode}");
+    }
+  }
+}
+

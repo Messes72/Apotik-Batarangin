@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart' as im;
 import 'package:http/http.dart' as http;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class TransaksiPage extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -43,6 +44,7 @@ class _TransaksiPage extends State<TransaksiPage> {
   bool showMoreCategories = false;
   List<String> stockOptions = [">5", ">10", "<5", "<10"];
   String? selectedUnit;
+  bool loadingData = true;
 
   List<Widget> inputFormObat = [];
 
@@ -132,7 +134,7 @@ class _TransaksiPage extends State<TransaksiPage> {
   List<int> jumObatRacikTransaksi = [];
   List<String> dosisTransaksi = [];
 
-  bool _validasiTerisi = false;
+  // bool _validasiTerisi = false;
 
   ObatRacikModel? detailObatRacik;
 
@@ -165,8 +167,12 @@ class _TransaksiPage extends State<TransaksiPage> {
       // print();
       setState(() {
         filterData = List.from(listProduk);
+        loadingData = false;
       });
     } catch (e) {
+      setState(() {
+        loadingData = false;
+      });
       print("Error: $e");
     }
   }
@@ -318,10 +324,11 @@ class _TransaksiPage extends State<TransaksiPage> {
   void filterByStatus(String status) {
     setState(() {
       if (status == "Habis") {
-        filterData = listProduk.where((item) => item.stokMinimum == 0).toList();
+        filterData =
+            listProduk.where((item) => item.stokObatReal == 0).toList();
       } else if (status == "Sisa") {
         filterData = listProduk
-            .where((item) => item.stokMinimum > 0 && item.stokMinimum <= 10)
+            .where((item) => item.stokObatReal! > 0 && item.stokObatReal! <= 10)
             .toList();
       } else {
         filterData =
@@ -537,7 +544,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Edit Data Obat Racik",
+                              "Edit Komposisi Obat",
                               style: GoogleFonts.montserrat(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -639,7 +646,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                               hintStyle: TextStyle(
                                                                   fontSize: 13,
                                                                   color: Colors
-                                                                      .grey),
+                                                                      .black),
                                                               border:
                                                                   UnderlineInputBorder(
                                                                 borderSide: BorderSide(
@@ -717,8 +724,8 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                                     GoogleFonts
                                                                         .inter(
                                                                   fontSize: 13,
-                                                                  color: ColorStyle
-                                                                      .text_hint,
+                                                                  color: Colors
+                                                                      .black,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w400,
@@ -737,7 +744,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                                                                             fontSize:
                                                                                 13,
                                                                             color:
-                                                                                ColorStyle.text_hint,
+                                                                                Colors.black,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
                                                                           ),
@@ -1713,1755 +1720,1966 @@ class _TransaksiPage extends State<TransaksiPage> {
       //     isExpanded: widget.isExpanded,
       //     animationTrigger: onMenuPressed,
       //     animation: triggerAnimation),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.white,
-        padding: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 40,
-                      // width: 242,
-                      // decoration: BoxDecoration(
-                      //   border:
-                      //       Border.all(color: ColorStyle.fill_stroke, width: 1),
-                      //   color: ColorStyle.fill_form,
-                      //   borderRadius: BorderRadius.circular(4),
-                      // ),
-                      child: TextFormField(
-                        controller: text,
-                        onChanged: filtering,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          filled: true,
-                          fillColor: ColorStyle.fill_form,
+      body: Stack(children: [
+        loadingData
+            ? Positioned.fill(
+                child: Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: LoadingAnimationWidget.flickr(
+                      leftDotColor: Colors.red,
+                      rightDotColor: Colors.blue,
+                      size: 50,
+                    ),
+                  ),
+                ),
+              )
+            : Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 40,
+                              // width: 242,
+                              // decoration: BoxDecoration(
+                              //   border:
+                              //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+                              //   color: ColorStyle.fill_form,
+                              //   borderRadius: BorderRadius.circular(4),
+                              // ),
+                              child: TextFormField(
+                                controller: text,
+                                onChanged: filtering,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  filled: true,
+                                  fillColor: ColorStyle.fill_form,
 
-                          // Menambahkan ikon di dalam TextField
-                          prefixIcon: Padding(
-                            padding: EdgeInsets.only(left: 8, right: 8),
-                            child: Icon(
-                              Icons.search_outlined,
-                              color: Color(0XFF1B1442),
-                              size: 30, // Sesuaikan ukuran ikon
+                                  // Menambahkan ikon di dalam TextField
+                                  prefixIcon: Padding(
+                                    padding: EdgeInsets.only(left: 8, right: 8),
+                                    child: Icon(
+                                      Icons.search_outlined,
+                                      color: Color(0XFF1B1442),
+                                      size: 30, // Sesuaikan ukuran ikon
+                                    ),
+                                  ),
+
+                                  hintText: "Search",
+                                  contentPadding: EdgeInsets.only(bottom: 12.5),
+                                  hintStyle: GoogleFonts.notoSans(
+                                    color: ColorStyle.text_hint,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 16,
+                                  ),
+
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.fill_stroke,
+                                        width: 1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors.black, width: 1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-
-                          hintText: "Search",
-                          contentPadding: EdgeInsets.only(bottom: 12.5),
-                          hintStyle: GoogleFonts.notoSans(
-                            color: ColorStyle.text_hint,
-                            fontWeight: FontWeight.w400,
-                            fontSize: 16,
+                          Padding(padding: EdgeInsets.only(right: 8)),
+                          Container(
+                            height: 40,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                sortByName();
+                              },
+                              icon: Transform.translate(
+                                offset: Offset(
+                                    5, 0), // Geser ikon lebih dekat ke teks
+                                child: Icon(Icons.sort_by_alpha_outlined,
+                                    color: Colors.black, size: 22),
+                              ),
+                              label: Text("Sort Ascending",
+                                  style: GoogleFonts.inter(
+                                      color: Colors.black,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                    side: BorderSide(
+                                        color: ColorStyle.button_grey,
+                                        width: 1)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 5),
+                              ),
+                            ),
                           ),
-
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                                color: ColorStyle.fill_stroke, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-
-                          focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: Colors.black, width: 1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(padding: EdgeInsets.only(right: 8)),
-                  Container(
-                    height: 40,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        sortByName();
-                      },
-                      icon: Transform.translate(
-                        offset: Offset(5, 0), // Geser ikon lebih dekat ke teks
-                        child: Icon(Icons.sort_by_alpha_outlined,
-                            color: Colors.black, size: 22),
-                      ),
-                      label: Text("Sort Ascending",
-                          style: GoogleFonts.inter(
-                              color: Colors.black,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            side: BorderSide(
-                                color: ColorStyle.button_grey, width: 1)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 5),
-                      ),
-                    ),
-                  ),
-                  Padding(padding: EdgeInsets.only(right: 8)),
-                  Center(
-                    child: SizedBox(
-                      width: 160, // Sesuaikan lebar agar tidak terlalu besar
-                      height:
-                          40, // Tinggi dropdown agar sesuai dengan contoh gambar
-                      child: DropdownButtonFormField2<String>(
-                        isExpanded:
-                            false, // Jangan meluaskan dropdown ke full width
-                        value: _selectedStatus,
-                        hint: Text(
-                          "-- Pilih Status --",
-                          style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: ColorStyle.text_hint,
-                              fontWeight: FontWeight.w400),
-                        ),
-                        items: rowStatus
-                            .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(
-                                    e,
-                                    style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        color: ColorStyle.text_hint,
-                                        fontWeight: FontWeight.w400),
-                                    overflow: TextOverflow.ellipsis,
+                          Padding(padding: EdgeInsets.only(right: 8)),
+                          Center(
+                            child: SizedBox(
+                              width:
+                                  160, // Sesuaikan lebar agar tidak terlalu besar
+                              height:
+                                  40, // Tinggi dropdown agar sesuai dengan contoh gambar
+                              child: DropdownButtonFormField2<String>(
+                                isExpanded:
+                                    false, // Jangan meluaskan dropdown ke full width
+                                value: _selectedStatus,
+                                hint: Text(
+                                  "-- Pilih Status --",
+                                  style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: ColorStyle.text_hint,
+                                      fontWeight: FontWeight.w400),
+                                ),
+                                items: rowStatus
+                                    .map((e) => DropdownMenuItem(
+                                          value: e,
+                                          child: Text(
+                                            e,
+                                            style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                color: ColorStyle.text_hint,
+                                                fontWeight: FontWeight.w400),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedStatus = value!;
+                                    filterByStatus(value);
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: ColorStyle.fill_form,
+                                  contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 2),
+                                  constraints: BoxConstraints(maxHeight: 30),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        5), // Border radius halus
+                                    borderSide: BorderSide(
+                                        color: ColorStyle.button_grey),
                                   ),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedStatus = value!;
-                            filterByStatus(value);
-                          });
-                        },
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: ColorStyle.fill_form,
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          constraints: BoxConstraints(maxHeight: 30),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(5), // Border radius halus
-                            borderSide:
-                                BorderSide(color: ColorStyle.button_grey),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                        color: ColorStyle
+                                            .text_secondary), // Saat aktif, border lebih gelap
+                                  ),
+                                ),
+
+                                // **Atur Tampilan Dropdown**
+                                buttonStyleData: ButtonStyleData(
+                                  height: 25, // Tinggi tombol dropdown
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 6), // Jarak dalam dropdown
+                                ),
+
+                                // **Atur Tampilan Dropdown yang Muncul**
+                                dropdownStyleData: DropdownStyleData(
+                                  width:
+                                      160, // Lebar dropdown harus sama dengan input
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(5),
+                                    border: Border.all(color: Colors.grey),
+                                    color: ColorStyle.fill_form,
+                                  ),
+                                ),
+
+                                // **Atur Posisi Item Dropdown**
+                                menuItemStyleData: const MenuItemStyleData(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal:
+                                          8), // Padding antar item dropdown
+                                ),
+
+                                // **Ganti Icon Dropdown**
+                                iconStyleData: IconStyleData(
+                                  icon: Icon(Icons.keyboard_arrow_down_outlined,
+                                      size: 20, color: Colors.black),
+                                  openMenuIcon: Icon(
+                                      Icons.keyboard_arrow_up_outlined,
+                                      size: 20,
+                                      color: Colors.black),
+                                ),
+                              ),
+                            ),
                           ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: BorderSide(
-                                color: ColorStyle
-                                    .text_secondary), // Saat aktif, border lebih gelap
-                          ),
-                        ),
-
-                        // **Atur Tampilan Dropdown**
-                        buttonStyleData: ButtonStyleData(
-                          height: 25, // Tinggi tombol dropdown
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6), // Jarak dalam dropdown
-                        ),
-
-                        // **Atur Tampilan Dropdown yang Muncul**
-                        dropdownStyleData: DropdownStyleData(
-                          width: 160, // Lebar dropdown harus sama dengan input
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: Colors.grey),
-                            color: ColorStyle.fill_form,
-                          ),
-                        ),
-
-                        // **Atur Posisi Item Dropdown**
-                        menuItemStyleData: const MenuItemStyleData(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 8), // Padding antar item dropdown
-                        ),
-
-                        // **Ganti Icon Dropdown**
-                        iconStyleData: IconStyleData(
-                          icon: Icon(Icons.keyboard_arrow_down_outlined,
-                              size: 20, color: Colors.black),
-                          openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                              size: 20, color: Colors.black),
-                        ),
+                        ],
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                SizedBox(
-                                  width: 100,
-                                  // width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        pilihButton = true;
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      backgroundColor: pilihButton
-                                          ? ColorStyle.primary
-                                          : ColorStyle.putih_background,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: Text("Obat",
-                                        style: GoogleFonts.montserrat(
-                                            color: pilihButton
-                                                ? Colors.white
-                                                : Colors.black,
-                                            fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                SizedBox(
-                                  width: 100,
-                                  // width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        pilihButton = false;
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      backgroundColor: !pilihButton
-                                          ? ColorStyle.primary
-                                          : ColorStyle.putih_background,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: Text("Racikan",
-                                        style: GoogleFonts.montserrat(
-                                            color: !pilihButton
-                                                ? Colors.white
-                                                : Colors.black,
-                                            fontWeight: FontWeight.w600)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 15),
-                        pilihButton
-                            ? Column(
-                                children: [
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.6,
-                                    child: GridView.builder(
-                                      padding: EdgeInsets.all(8),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisExtent:
-                                            150, // ubah tinggi kotak
-                                        childAspectRatio: 2.7,
-                                        crossAxisSpacing: 10,
-                                        mainAxisSpacing: 10,
-                                      ),
-                                      itemCount: paginatedData.length,
-                                      itemBuilder: (context, index) {
-                                        var produk = paginatedData[index];
-                                        return Padding(
-                                          padding: const EdgeInsets.all(4),
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 12),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  offset: Offset(0, 0),
-                                                  blurRadius: 4,
-                                                  color: Colors.black
-                                                      .withOpacity(0.1),
-                                                ),
-                                              ],
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 100,
+                                          // width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                pilihButton = true;
+                                              });
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 12),
+                                              backgroundColor: pilihButton
+                                                  ? ColorStyle.primary
+                                                  : ColorStyle.putih_background,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
                                             ),
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Container(
-                                                  height: 59,
-                                                  width: 59,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.grey[300],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
+                                            child: Text("Obat",
+                                                style: GoogleFonts.montserrat(
+                                                    color: pilihButton
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w600)),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 10,
+                                        ),
+                                        SizedBox(
+                                          width: 100,
+                                          // width: double.infinity,
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              setState(() {
+                                                pilihButton = false;
+                                              });
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 12),
+                                              backgroundColor: !pilihButton
+                                                  ? ColorStyle.primary
+                                                  : ColorStyle.putih_background,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            child: Text("Racikan",
+                                                style: GoogleFonts.montserrat(
+                                                    color: !pilihButton
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w600)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 15),
+                                pilihButton
+                                    ? Column(
+                                        children: [
+                                          SizedBox(
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .height *
+                                                0.6,
+                                            child: GridView.builder(
+                                              padding: EdgeInsets.all(8),
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                mainAxisExtent:
+                                                    110, // ubah tinggi kotak
+                                                childAspectRatio: 2.7,
+                                                crossAxisSpacing: 10,
+                                                mainAxisSpacing: 10,
+                                              ),
+                                              itemCount: paginatedData.length,
+                                              itemBuilder: (context, index) {
+                                                var produk =
+                                                    paginatedData[index];
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(4),
+                                                  child: Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 12),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          offset: Offset(0, 0),
+                                                          blurRadius: 4,
+                                                          color: Colors.black
+                                                              .withOpacity(0.1),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        Container(
+                                                          height: 59,
+                                                          width: 59,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors
+                                                                .grey[300],
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                          ),
+                                                          child: ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        8),
+                                                            child:
+                                                                Image.network(
+                                                              Uri.parse(
+                                                                      "http://leap.crossnet.co.id:2688/${produk.linkGambarObat}")
+                                                                  .toString(),
+                                                              headers: {
+                                                                'Authorization':
+                                                                    '${global.token}',
+                                                                'x-api-key':
+                                                                    '${global.xApiKey}'
+                                                              },
+                                                              fit: BoxFit.cover,
+                                                              errorBuilder:
+                                                                  (context,
+                                                                      error,
+                                                                      stackTrace) {
+                                                                return Image.asset(
+                                                                    "images/gambarObat.png",
+                                                                    fit: BoxFit
+                                                                        .cover);
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 20),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top:
+                                                                            10),
+                                                                child: Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Expanded(
+                                                                      child:
+                                                                          Text(
+                                                                        produk
+                                                                            .namaObat,
+                                                                        style: GoogleFonts
+                                                                            .inter(
+                                                                          fontSize:
+                                                                              20,
+                                                                          fontWeight:
+                                                                              FontWeight.w600,
+                                                                          color:
+                                                                              Colors.black,
+                                                                        ),
+                                                                        overflow:
+                                                                            TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                    if (produk
+                                                                            .stokObatReal! <=
+                                                                        10)
+                                                                      Container(
+                                                                        width:
+                                                                            61,
+                                                                        height:
+                                                                            20,
+                                                                        alignment:
+                                                                            Alignment.center,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          color: produk.stokObatReal == 0
+                                                                              ? ColorStyle.button_red.withOpacity(0.8)
+                                                                              : ColorStyle.button_yellow.withOpacity(0.8),
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(2),
+                                                                          border:
+                                                                              Border.all(
+                                                                            color: produk.stokObatReal == 0
+                                                                                ? ColorStyle.button_red
+                                                                                : ColorStyle.button_yellow,
+                                                                            width:
+                                                                                1,
+                                                                          ),
+                                                                        ),
+                                                                        child:
+                                                                            Text(
+                                                                          produk.stokObatReal == 0
+                                                                              ? "HABIS"
+                                                                              : "SISA",
+                                                                          style:
+                                                                              GoogleFonts.inter(
+                                                                            color:
+                                                                                Colors.white,
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
+                                                                            fontSize:
+                                                                                13,
+                                                                          ),
+                                                                          textAlign:
+                                                                              TextAlign.center,
+                                                                        ),
+                                                                      ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              Text(
+                                                                produk.idObat,
+                                                                style:
+                                                                    GoogleFonts
+                                                                        .inter(
+                                                                  fontSize: 14,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w400,
+                                                                ),
+                                                              ),
+                                                              Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .spaceBetween,
+                                                                children: [
+                                                                  SizedBox(
+                                                                    // width: 100,
+                                                                    child: Text(
+                                                                      "Stock: ${produk.stokObatReal} ${produk.namaSatuan}",
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .visible,
+                                                                      style: GoogleFonts
+                                                                          .inter(
+                                                                        fontSize:
+                                                                            14,
+                                                                        fontWeight:
+                                                                            FontWeight.w400,
+                                                                        color: Colors
+                                                                            .black,
+                                                                      ),
+                                                                      maxLines:
+                                                                          2,
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .start,
+                                                                    ),
+                                                                  ),
+
+                                                                  // SizedBox(
+                                                                  //   width: 100,
+                                                                  //   child: ElevatedButton(
+                                                                  //     onPressed: () {},
+                                                                  //     style: ElevatedButton
+                                                                  //         .styleFrom(
+                                                                  //       padding: const EdgeInsets
+                                                                  //           .symmetric(
+                                                                  //           vertical: 12),
+                                                                  //       backgroundColor:
+                                                                  //           ColorStyle.primary,
+                                                                  //       shape:
+                                                                  //           RoundedRectangleBorder(
+                                                                  //         borderRadius:
+                                                                  //             BorderRadius
+                                                                  //                 .circular(4),
+                                                                  //       ),
+                                                                  //     ),
+                                                                  //     child: Text("Tambah",
+                                                                  //         style:
+                                                                  //             GoogleFonts.inter(
+                                                                  //                 color: Colors
+                                                                  //                     .white,
+                                                                  //                 fontWeight:
+                                                                  //                     FontWeight
+                                                                  //                         .w600)),
+                                                                  //   ),
+                                                                  // ),
+                                                                  produk.stokObatReal! >
+                                                                          0
+                                                                      ? SizedBox(
+                                                                          width:
+                                                                              80,
+                                                                          height:
+                                                                              30,
+                                                                          child:
+                                                                              ElevatedButton(
+                                                                            onPressed:
+                                                                                () {
+                                                                              final selected = Item(
+                                                                                idObat: produk.idObat,
+                                                                                kuantitas: 1,
+                                                                                aturanPakai: "",
+                                                                                caraPakai: "",
+                                                                                keteranganPakai: "",
+                                                                                namaObat: produk.namaObat,
+                                                                                hargaObat: produk.hargaJual,
+                                                                                jumlahObatReal: produk.stokObatReal ?? 0,
+                                                                              );
+                                                                              setState(() {
+                                                                                keranjang.add(selected);
+                                                                              });
+                                                                            },
+                                                                            style:
+                                                                                ElevatedButton.styleFrom(
+                                                                              padding: const EdgeInsets.symmetric(vertical: 5),
+                                                                              backgroundColor: ColorStyle.primary,
+                                                                              shape: RoundedRectangleBorder(
+                                                                                borderRadius: BorderRadius.circular(4),
+                                                                              ),
+                                                                            ),
+                                                                            child:
+                                                                                Text(
+                                                                              "Tambah",
+                                                                              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                      : SizedBox
+                                                                          .shrink(), // <- Tidak tampil sama sekali jika stok 0
+                                                                ],
+                                                              ),
+                                                              // SizedBox(
+                                                              //   height: 8,
+                                                              // ),
+                                                              // produk.stokObatReal! > 0
+                                                              //     ? SizedBox(
+                                                              //         width: 100,
+                                                              //         height: 35,
+                                                              //         child:
+                                                              //             ElevatedButton(
+                                                              //           onPressed:
+                                                              //               () {
+                                                              //             final selected =
+                                                              //                 Item(
+                                                              //               idObat: produk
+                                                              //                   .idObat,
+                                                              //               kuantitas:
+                                                              //                   1,
+                                                              //               aturanPakai:
+                                                              //                   "",
+                                                              //               caraPakai:
+                                                              //                   "",
+                                                              //               keteranganPakai:
+                                                              //                   "",
+                                                              //               namaObat:
+                                                              //                   produk
+                                                              //                       .namaObat,
+                                                              //               hargaObat:
+                                                              //                   produk
+                                                              //                       .hargaJual,
+                                                              //               jumlahObatReal:
+                                                              //                   produk.stokObatReal ??
+                                                              //                       0,
+                                                              //             );
+                                                              //             setState(
+                                                              //                 () {
+                                                              //               keranjang.add(
+                                                              //                   selected);
+                                                              //             });
+                                                              //           },
+                                                              //           style: ElevatedButton
+                                                              //               .styleFrom(
+                                                              //             padding: const EdgeInsets
+                                                              //                 .symmetric(
+                                                              //                 vertical:
+                                                              //                     5),
+                                                              //             backgroundColor:
+                                                              //                 ColorStyle
+                                                              //                     .primary,
+                                                              //             shape:
+                                                              //                 RoundedRectangleBorder(
+                                                              //               borderRadius:
+                                                              //                   BorderRadius.circular(
+                                                              //                       4),
+                                                              //             ),
+                                                              //           ),
+                                                              //           child: Text(
+                                                              //             "Tambah",
+                                                              //             style: GoogleFonts.inter(
+                                                              //                 color: Colors
+                                                              //                     .white,
+                                                              //                 fontWeight:
+                                                              //                     FontWeight.w600),
+                                                              //           ),
+                                                              //         ),
+                                                              //       )
+                                                              //     : SizedBox
+                                                              //         .shrink(), // <- Tidak tampil sama sekali jika stok 0
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
-                                                  child: ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    child: Image.network(
-                                                      Uri.parse(
-                                                              "http://leap.crossnet.co.id:2688/${produk.linkGambarObat}")
-                                                          .toString(),
-                                                      headers: {
-                                                        'Authorization':
-                                                            '${global.token}',
-                                                        'x-api-key':
-                                                            '${global.xApiKey}'
-                                                      },
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (context,
-                                                          error, stackTrace) {
-                                                        return Image.asset(
-                                                            "images/gambarObat.png",
-                                                            fit: BoxFit.cover);
-                                                      },
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              Text("Rows per page:",
+                                                  style: TextStyle(
+                                                      color:
+                                                          ColorStyle.text_hint,
+                                                      fontSize: 14)),
+                                              Padding(
+                                                  padding: EdgeInsets.only(
+                                                      right: 8)),
+                                              Center(
+                                                child: SizedBox(
+                                                  width:
+                                                      65, // Sesuaikan lebar agar tidak terlalu besar
+                                                  height:
+                                                      25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                                  child:
+                                                      DropdownButtonFormField2<
+                                                          int>(
+                                                    isExpanded:
+                                                        false, // Jangan meluaskan dropdown ke full width
+                                                    value: _rowsPerPage,
+                                                    items: rowItems
+                                                        .map((e) =>
+                                                            DropdownMenuItem(
+                                                              value: e,
+                                                              child: Text(
+                                                                e.toString(),
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    color: ColorStyle
+                                                                        .text_hint),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ))
+                                                        .toList(),
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        _rowsPerPage = value!;
+                                                      });
+                                                    },
+                                                    decoration: InputDecoration(
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 4,
+                                                              vertical: 2),
+                                                      constraints:
+                                                          BoxConstraints(
+                                                              maxHeight: 30),
+                                                      enabledBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                5), // Border radius halus
+                                                        borderSide: BorderSide(
+                                                            color: ColorStyle
+                                                                .button_grey),
+                                                      ),
+                                                      focusedBorder:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                        borderSide: BorderSide(
+                                                            color: ColorStyle
+                                                                .text_secondary), // Saat aktif, border lebih gelap
+                                                      ),
+                                                    ),
+
+                                                    // **Atur Tampilan Dropdown**
+                                                    buttonStyleData:
+                                                        ButtonStyleData(
+                                                      height:
+                                                          25, // Tinggi tombol dropdown
+                                                      padding: EdgeInsets.symmetric(
+                                                          horizontal:
+                                                              6), // Jarak dalam dropdown
+                                                    ),
+
+                                                    // **Atur Tampilan Dropdown yang Muncul**
+                                                    dropdownStyleData:
+                                                        DropdownStyleData(
+                                                      width: 65,
+                                                      offset: Offset(0,
+                                                          200), // Lebar dropdown harus sama dengan input
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                        border: Border.all(
+                                                            color: ColorStyle
+                                                                .button_grey),
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+
+                                                    // **Atur Posisi Item Dropdown**
+                                                    menuItemStyleData:
+                                                        const MenuItemStyleData(
+                                                      padding: EdgeInsets.symmetric(
+                                                          horizontal:
+                                                              8), // Padding antar item dropdown
+                                                    ),
+
+                                                    // **Ganti Icon Dropdown**
+                                                    iconStyleData:
+                                                        IconStyleData(
+                                                      icon: Icon(
+                                                          Icons
+                                                              .keyboard_arrow_down_outlined,
+                                                          size: 20,
+                                                          color: Colors.black),
+                                                      openMenuIcon: Icon(
+                                                          Icons
+                                                              .keyboard_arrow_up_outlined,
+                                                          size: 20,
+                                                          color: Colors.black),
                                                     ),
                                                   ),
                                                 ),
-                                                SizedBox(width: 20),
-                                                Expanded(
+                                              ),
+                                              Padding(
+                                                  padding: EdgeInsets.only(
+                                                      right: 8)),
+                                              Text(
+                                                  "Page $endIndex of ${filterData.length}",
+                                                  style: TextStyle(
+                                                      color:
+                                                          ColorStyle.text_hint,
+                                                      fontSize: 14)),
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: Icon(
+                                                        Icons.chevron_left),
+                                                    onPressed: _currentPage > 0
+                                                        ? () {
+                                                            setState(() {
+                                                              _currentPage--;
+                                                            });
+                                                          }
+                                                        : null,
+                                                  ),
+                                                  IconButton(
+                                                    icon: Icon(
+                                                        Icons.chevron_right),
+                                                    onPressed: _currentPage <
+                                                            totalPages - 1
+                                                        ? () {
+                                                            setState(() {
+                                                              _currentPage++;
+                                                            });
+                                                          }
+                                                        : null,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )
+                                    : SizedBox(
+                                        // ISIAN OBAT RACIK
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.65,
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 16.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: ColorStyle.warna_form,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: ColorStyle.shadow
+                                                          .withOpacity(0.25),
+                                                      spreadRadius: 0,
+                                                      blurRadius: 4,
+                                                      offset: Offset(
+                                                          0, 1), // x dan y
+                                                    ),
+                                                  ],
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
                                                   child: Column(
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
                                                             .start,
                                                     children: [
                                                       Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
                                                         children: [
                                                           Expanded(
-                                                            child: Text(
-                                                              produk.namaObat,
-                                                              style: GoogleFonts
-                                                                  .inter(
-                                                                fontSize: 20,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ),
-                                                          if (produk
-                                                                  .stokObatReal! <=
-                                                              10)
-                                                            Container(
-                                                              width: 61,
-                                                              height: 20,
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: produk
-                                                                            .stokObatReal ==
-                                                                        0
-                                                                    ? ColorStyle
-                                                                        .button_red
-                                                                        .withOpacity(
-                                                                            0.8)
-                                                                    : ColorStyle
-                                                                        .button_yellow
-                                                                        .withOpacity(
-                                                                            0.8),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            2),
-                                                                border:
-                                                                    Border.all(
-                                                                  color: produk
-                                                                              .stokObatReal ==
-                                                                          0
-                                                                      ? ColorStyle
-                                                                          .button_red
-                                                                      : ColorStyle
-                                                                          .button_yellow,
-                                                                  width: 1,
-                                                                ),
-                                                              ),
-                                                              child: Text(
-                                                                produk.stokObatReal ==
-                                                                        0
-                                                                    ? "HABIS"
-                                                                    : "SISA",
-                                                                style:
-                                                                    GoogleFonts
-                                                                        .inter(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                  fontSize: 13,
-                                                                ),
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .center,
-                                                              ),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                      Text(
-                                                        produk.idObat,
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                          fontSize: 14,
-                                                          color: Colors.black,
-                                                          fontWeight:
-                                                              FontWeight.w400,
-                                                        ),
-                                                      ),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                        children: [
-                                                          SizedBox(
-                                                            width: 100,
-                                                            child: Text(
-                                                              "Stock: ${produk.stokObatReal} ${produk.namaSatuan}",
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .visible,
-                                                              style: GoogleFonts
-                                                                  .inter(
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w400,
-                                                                color: Colors
-                                                                    .black,
-                                                              ),
-                                                              maxLines: 2,
-                                                              textAlign:
-                                                                  TextAlign
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
                                                                       .start,
-                                                            ),
-                                                          ),
-
-                                                          // SizedBox(
-                                                          //   width: 100,
-                                                          //   child: ElevatedButton(
-                                                          //     onPressed: () {},
-                                                          //     style: ElevatedButton
-                                                          //         .styleFrom(
-                                                          //       padding: const EdgeInsets
-                                                          //           .symmetric(
-                                                          //           vertical: 12),
-                                                          //       backgroundColor:
-                                                          //           ColorStyle.primary,
-                                                          //       shape:
-                                                          //           RoundedRectangleBorder(
-                                                          //         borderRadius:
-                                                          //             BorderRadius
-                                                          //                 .circular(4),
-                                                          //       ),
-                                                          //     ),
-                                                          //     child: Text("Tambah",
-                                                          //         style:
-                                                          //             GoogleFonts.inter(
-                                                          //                 color: Colors
-                                                          //                     .white,
-                                                          //                 fontWeight:
-                                                          //                     FontWeight
-                                                          //                         .w600)),
-                                                          //   ),
-                                                          // ),
-                                                        ],
-                                                      ),
-                                                      SizedBox(
-                                                        height: 8,
-                                                      ),
-                                                      produk.stokObatReal! > 0
-                                                          ? SizedBox(
-                                                              width: 100,
-                                                              height: 35,
-                                                              child:
-                                                                  ElevatedButton(
-                                                                onPressed: () {
-                                                                  final selected =
-                                                                      Item(
-                                                                    idObat: produk
-                                                                        .idObat,
-                                                                    kuantitas:
-                                                                        1,
-                                                                    aturanPakai:
-                                                                        "",
-                                                                    caraPakai:
-                                                                        "",
-                                                                    keteranganPakai:
-                                                                        "",
-                                                                    namaObat: produk
-                                                                        .namaObat,
-                                                                    hargaObat:
-                                                                        produk
-                                                                            .hargaJual,
-                                                                    jumlahObatReal:
-                                                                        produk.stokObatReal ??
-                                                                            0,
-                                                                  );
-                                                                  setState(() {
-                                                                    keranjang.add(
-                                                                        selected);
-                                                                  });
-                                                                },
-                                                                style: ElevatedButton
-                                                                    .styleFrom(
-                                                                  padding: const EdgeInsets
-                                                                      .symmetric(
-                                                                      vertical:
-                                                                          5),
-                                                                  backgroundColor:
-                                                                      ColorStyle
-                                                                          .primary,
-                                                                  shape:
-                                                                      RoundedRectangleBorder(
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(4),
-                                                                  ),
-                                                                ),
-                                                                child: Text(
-                                                                  "Tambah",
+                                                              children: [
+                                                                Text(
+                                                                  "Nama Racik",
                                                                   style: GoogleFonts.inter(
-                                                                      color: Colors
-                                                                          .white,
+                                                                      fontSize:
+                                                                          14,
                                                                       fontWeight:
                                                                           FontWeight
                                                                               .w600),
                                                                 ),
-                                                              ),
-                                                            )
-                                                          : SizedBox
-                                                              .shrink(), // <- Tidak tampil sama sekali jika stok 0
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text("Rows per page:",
-                                          style: TextStyle(
-                                              color: ColorStyle.text_hint,
-                                              fontSize: 14)),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 8)),
-                                      Center(
-                                        child: SizedBox(
-                                          width:
-                                              65, // Sesuaikan lebar agar tidak terlalu besar
-                                          height:
-                                              25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                                          child: DropdownButtonFormField2<int>(
-                                            isExpanded:
-                                                false, // Jangan meluaskan dropdown ke full width
-                                            value: _rowsPerPage,
-                                            items: rowItems
-                                                .map((e) => DropdownMenuItem(
-                                                      value: e,
-                                                      child: Text(
-                                                        e.toString(),
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: ColorStyle
-                                                                .text_hint),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ))
-                                                .toList(),
-                                            onChanged: (value) {
-                                              setState(() {
-                                                _rowsPerPage = value!;
-                                              });
-                                            },
-                                            decoration: InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 4,
-                                                      vertical: 2),
-                                              constraints:
-                                                  BoxConstraints(maxHeight: 30),
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        5), // Border radius halus
-                                                borderSide: BorderSide(
-                                                    color:
-                                                        ColorStyle.button_grey),
-                                              ),
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                borderSide: BorderSide(
-                                                    color: ColorStyle
-                                                        .text_secondary), // Saat aktif, border lebih gelap
-                                              ),
-                                            ),
-
-                                            // **Atur Tampilan Dropdown**
-                                            buttonStyleData: ButtonStyleData(
-                                              height:
-                                                  25, // Tinggi tombol dropdown
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      6), // Jarak dalam dropdown
-                                            ),
-
-                                            // **Atur Tampilan Dropdown yang Muncul**
-                                            dropdownStyleData:
-                                                DropdownStyleData(
-                                              width: 65,
-                                              offset: Offset(0,
-                                                  200), // Lebar dropdown harus sama dengan input
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                                border: Border.all(
-                                                    color:
-                                                        ColorStyle.button_grey),
-                                                color: Colors.white,
-                                              ),
-                                            ),
-
-                                            // **Atur Posisi Item Dropdown**
-                                            menuItemStyleData:
-                                                const MenuItemStyleData(
-                                              padding: EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      8), // Padding antar item dropdown
-                                            ),
-
-                                            // **Ganti Icon Dropdown**
-                                            iconStyleData: IconStyleData(
-                                              icon: Icon(
-                                                  Icons
-                                                      .keyboard_arrow_down_outlined,
-                                                  size: 20,
-                                                  color: Colors.black),
-                                              openMenuIcon: Icon(
-                                                  Icons
-                                                      .keyboard_arrow_up_outlined,
-                                                  size: 20,
-                                                  color: Colors.black),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 8)),
-                                      Text(
-                                          "Page $endIndex of ${filterData.length}",
-                                          style: TextStyle(
-                                              color: ColorStyle.text_hint,
-                                              fontSize: 14)),
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(Icons.chevron_left),
-                                            onPressed: _currentPage > 0
-                                                ? () {
-                                                    setState(() {
-                                                      _currentPage--;
-                                                    });
-                                                  }
-                                                : null,
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.chevron_right),
-                                            onPressed:
-                                                _currentPage < totalPages - 1
-                                                    ? () {
-                                                        setState(() {
-                                                          _currentPage++;
-                                                        });
-                                                      }
-                                                    : null,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              )
-                            : SizedBox(
-                                // ISIAN OBAT RACIK
-                                height:
-                                    MediaQuery.of(context).size.height * 0.65,
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 16.0),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: ColorStyle.warna_form,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: ColorStyle.shadow
-                                                  .withOpacity(0.25),
-                                              spreadRadius: 0,
-                                              blurRadius: 4,
-                                              offset: Offset(0, 1), // x dan y
-                                            ),
-                                          ],
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          "Nama Racik",
-                                                          style:
-                                                              GoogleFonts.inter(
-                                                                  fontSize: 14,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600),
-                                                        ),
-                                                        SizedBox(height: 6),
-                                                        LayoutBuilder(
-                                                          builder: (context,
-                                                              constraints) {
-                                                            return Container(
-                                                              // width: 300,
-                                                              child: DropdownButtonFormField2<
-                                                                  ObatRacikModel>(
-                                                                isExpanded:
-                                                                    true,
-                                                                value:
-                                                                    isiIdObat,
-                                                                validator:
-                                                                    (value) {
-                                                                  if (value ==
-                                                                      null) {
-                                                                    return "Silahkan Pilih Nama Racik";
-                                                                  }
-                                                                  return null;
-                                                                },
-                                                                hint: Text(
-                                                                  "Pilih Nama Racik",
-                                                                  style:
-                                                                      GoogleFonts
-                                                                          .inter(
-                                                                    fontSize:
-                                                                        13,
-                                                                    color: ColorStyle
-                                                                        .text_hint,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w400,
-                                                                  ),
-                                                                ),
-                                                                items:
-                                                                    listObatRacik!
-                                                                        .map((e) =>
-                                                                            DropdownMenuItem(
-                                                                              value: e,
-                                                                              child: Text(
-                                                                                "${e.namaRacik}",
-                                                                                style: GoogleFonts.inter(
-                                                                                  fontSize: 13,
-                                                                                  color: ColorStyle.text_hint,
-                                                                                  fontWeight: FontWeight.w400,
-                                                                                ),
-                                                                                overflow: TextOverflow.ellipsis,
-                                                                              ),
-                                                                            ))
-                                                                        .toList(),
-                                                                onChanged:
-                                                                    (value) {
-                                                                  _formKey
-                                                                      .currentState
-                                                                      ?.validate();
-                                                                  setState(() {
-                                                                    isiIdObat =
-                                                                        value!;
-                                                                    getDetailObatRacik(
-                                                                        value);
-                                                                  });
-                                                                },
-                                                                decoration:
-                                                                    InputDecoration(
-                                                                  isDense: true,
-                                                                  contentPadding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          bottom:
-                                                                              4), // tipis
-                                                                  hintStyle:
-                                                                      GoogleFonts.inter(
-                                                                          fontSize:
-                                                                              13),
-                                                                  filled: false,
-                                                                  border:
-                                                                      UnderlineInputBorder(
-                                                                    borderSide:
-                                                                        BorderSide(
-                                                                            color:
-                                                                                Colors.black),
-                                                                  ),
-                                                                  enabledBorder:
-                                                                      UnderlineInputBorder(
-                                                                    borderSide:
-                                                                        BorderSide(
-                                                                            color:
-                                                                                Colors.black),
-                                                                  ),
-                                                                  focusedBorder:
-                                                                      UnderlineInputBorder(
-                                                                    borderSide: BorderSide(
-                                                                        color: Colors
-                                                                            .black,
-                                                                        width:
-                                                                            1.5),
-                                                                  ),
-                                                                  errorBorder:
-                                                                      UnderlineInputBorder(
-                                                                    borderSide: BorderSide(
-                                                                        color: ColorStyle
-                                                                            .button_red,
-                                                                        width:
-                                                                            1),
-                                                                  ),
-                                                                ),
-                                                                dropdownStyleData:
-                                                                    DropdownStyleData(
-                                                                  // width: 300,
-                                                                  maxHeight:
-                                                                      200,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    border: Border.all(
-                                                                        color: ColorStyle
-                                                                            .button_grey),
-                                                                    color: ColorStyle
-                                                                        .fill_form,
-                                                                    borderRadius:
-                                                                        BorderRadius
-                                                                            .circular(4),
-                                                                  ),
-                                                                ),
-                                                                menuItemStyleData:
-                                                                    const MenuItemStyleData(
-                                                                  padding: EdgeInsets
-                                                                      .symmetric(
-                                                                          horizontal:
-                                                                              8,
-                                                                          vertical:
-                                                                              4),
-                                                                ),
-                                                                iconStyleData:
-                                                                    const IconStyleData(
-                                                                  icon: Icon(
-                                                                      Icons
-                                                                          .arrow_drop_down,
-                                                                      size: 16,
-                                                                      color: Colors
-                                                                          .black),
-                                                                  openMenuIcon: Icon(
-                                                                      Icons
-                                                                          .arrow_drop_up,
-                                                                      size: 16,
-                                                                      color: Colors
-                                                                          .black),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  SizedBox(
-                                                    width: 32,
-                                                  ),
-                                                  Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        "Satuan",
-                                                        style:
-                                                            GoogleFonts.inter(
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                      ),
-                                                      SizedBox(height: 6),
-                                                      LayoutBuilder(
-                                                        builder: (context,
-                                                            constraints) {
-                                                          return Container(
-                                                            width: 100,
-                                                            child:
-                                                                DropdownButtonFormField2<
-                                                                    SatuanObat>(
-                                                              isExpanded: true,
-                                                              value: isiSatuan,
-                                                              validator:
-                                                                  (value) {
-                                                                if (value ==
-                                                                    null) {
-                                                                  return "Silahkan Pilih Satuan";
-                                                                }
-                                                                return null;
-                                                              },
-                                                              hint: Text(
-                                                                "Pilih Satuan",
-                                                                style:
-                                                                    GoogleFonts
-                                                                        .inter(
-                                                                  fontSize: 13,
-                                                                  color: ColorStyle
-                                                                      .text_hint,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w400,
-                                                                ),
-                                                              ),
-                                                              items: listSatuan!
-                                                                  .map((e) =>
-                                                                      DropdownMenuItem(
+                                                                SizedBox(
+                                                                    height: 6),
+                                                                LayoutBuilder(
+                                                                  builder: (context,
+                                                                      constraints) {
+                                                                    return Container(
+                                                                      // width: 300,
+                                                                      child: DropdownButtonFormField2<
+                                                                          ObatRacikModel>(
+                                                                        isExpanded:
+                                                                            true,
                                                                         value:
-                                                                            e,
-                                                                        child:
+                                                                            isiIdObat,
+                                                                        validator:
+                                                                            (value) {
+                                                                          if (value ==
+                                                                              null) {
+                                                                            return "Silahkan Pilih Nama Racik";
+                                                                          }
+                                                                          return null;
+                                                                        },
+                                                                        hint:
                                                                             Text(
-                                                                          "${e.namaSatuan}",
+                                                                          "Pilih Nama Racik",
                                                                           style:
                                                                               GoogleFonts.inter(
                                                                             fontSize:
                                                                                 13,
                                                                             color:
-                                                                                ColorStyle.text_hint,
+                                                                                Colors.black,
                                                                             fontWeight:
                                                                                 FontWeight.w400,
                                                                           ),
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
                                                                         ),
-                                                                      ))
-                                                                  .toList(),
-                                                              onChanged:
-                                                                  (value) {
-                                                                _formKey
-                                                                    .currentState
-                                                                    ?.validate();
-                                                                setState(() {
-                                                                  isiSatuan =
-                                                                      value!;
-                                                                });
-                                                              },
-                                                              decoration:
-                                                                  InputDecoration(
-                                                                isDense: true,
-                                                                contentPadding:
-                                                                    const EdgeInsets
-                                                                        .only(
-                                                                        bottom:
-                                                                            4), // tipis
-                                                                hintStyle:
-                                                                    GoogleFonts.inter(
-                                                                        fontSize:
-                                                                            13),
-                                                                filled: false,
-                                                                border:
-                                                                    UnderlineInputBorder(
-                                                                  borderSide:
-                                                                      BorderSide(
-                                                                          color:
-                                                                              Colors.black),
+                                                                        items: listObatRacik!
+                                                                            .map((e) => DropdownMenuItem(
+                                                                                  value: e,
+                                                                                  child: Text(
+                                                                                    "${e.namaRacik}",
+                                                                                    style: GoogleFonts.inter(
+                                                                                      fontSize: 13,
+                                                                                      color: Colors.black,
+                                                                                      fontWeight: FontWeight.w400,
+                                                                                    ),
+                                                                                    overflow: TextOverflow.ellipsis,
+                                                                                  ),
+                                                                                ))
+                                                                            .toList(),
+                                                                        onChanged:
+                                                                            (value) {
+                                                                          _formKey
+                                                                              .currentState
+                                                                              ?.validate();
+                                                                          setState(
+                                                                              () {
+                                                                            isiIdObat =
+                                                                                value!;
+                                                                            getDetailObatRacik(value);
+                                                                          });
+                                                                        },
+                                                                        decoration:
+                                                                            InputDecoration(
+                                                                          isDense:
+                                                                              true,
+                                                                          contentPadding: const EdgeInsets
+                                                                              .only(
+                                                                              bottom: 4), // tipis
+                                                                          hintStyle: GoogleFonts.inter(
+                                                                              fontSize: 13,
+                                                                              color: Colors.black),
+                                                                          filled:
+                                                                              false,
+                                                                          border:
+                                                                              UnderlineInputBorder(
+                                                                            borderSide:
+                                                                                BorderSide(color: Colors.black),
+                                                                          ),
+                                                                          enabledBorder:
+                                                                              UnderlineInputBorder(
+                                                                            borderSide:
+                                                                                BorderSide(color: Colors.black),
+                                                                          ),
+                                                                          focusedBorder:
+                                                                              UnderlineInputBorder(
+                                                                            borderSide:
+                                                                                BorderSide(color: Colors.black, width: 1.5),
+                                                                          ),
+                                                                          errorBorder:
+                                                                              UnderlineInputBorder(
+                                                                            borderSide:
+                                                                                BorderSide(color: ColorStyle.button_red, width: 1),
+                                                                          ),
+                                                                        ),
+                                                                        dropdownStyleData:
+                                                                            DropdownStyleData(
+                                                                          // width: 300,
+                                                                          maxHeight:
+                                                                              150,
+                                                                          decoration:
+                                                                              BoxDecoration(
+                                                                            border:
+                                                                                Border.all(color: ColorStyle.button_grey),
+                                                                            color:
+                                                                                ColorStyle.fill_form,
+                                                                            borderRadius:
+                                                                                BorderRadius.circular(4),
+                                                                          ),
+                                                                        ),
+                                                                        menuItemStyleData:
+                                                                            const MenuItemStyleData(
+                                                                          padding: EdgeInsets.symmetric(
+                                                                              horizontal: 8,
+                                                                              vertical: 4),
+                                                                        ),
+                                                                        iconStyleData:
+                                                                            const IconStyleData(
+                                                                          icon: Icon(
+                                                                              Icons.arrow_drop_down,
+                                                                              size: 16,
+                                                                              color: Colors.black),
+                                                                          openMenuIcon: Icon(
+                                                                              Icons.arrow_drop_up,
+                                                                              size: 16,
+                                                                              color: Colors.black),
+                                                                        ),
+                                                                      ),
+                                                                    );
+                                                                  },
                                                                 ),
-                                                                enabledBorder:
-                                                                    UnderlineInputBorder(
-                                                                  borderSide:
-                                                                      BorderSide(
-                                                                          color:
-                                                                              Colors.black),
-                                                                ),
-                                                                focusedBorder:
-                                                                    UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: Colors
-                                                                          .black,
-                                                                      width:
-                                                                          1.5),
-                                                                ),
-                                                                errorBorder:
-                                                                    UnderlineInputBorder(
-                                                                  borderSide: BorderSide(
-                                                                      color: ColorStyle
-                                                                          .button_red,
-                                                                      width: 1),
-                                                                ),
-                                                              ),
-                                                              dropdownStyleData:
-                                                                  DropdownStyleData(
-                                                                width: 100,
-                                                                maxHeight: 200,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  border: Border.all(
-                                                                      color: ColorStyle
-                                                                          .button_grey),
-                                                                  color: ColorStyle
-                                                                      .fill_form,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              4),
-                                                                ),
-                                                              ),
-                                                              menuItemStyleData:
-                                                                  const MenuItemStyleData(
-                                                                padding: EdgeInsets
-                                                                    .symmetric(
-                                                                        horizontal:
-                                                                            8,
-                                                                        vertical:
-                                                                            4),
-                                                              ),
-                                                              iconStyleData:
-                                                                  const IconStyleData(
-                                                                icon: Icon(
-                                                                    Icons
-                                                                        .arrow_drop_down,
-                                                                    size: 16,
-                                                                    color: Colors
-                                                                        .black),
-                                                                openMenuIcon: Icon(
-                                                                    Icons
-                                                                        .arrow_drop_up,
-                                                                    size: 16,
-                                                                    color: Colors
-                                                                        .black),
-                                                              ),
+                                                              ],
                                                             ),
-                                                          );
+                                                          ),
+                                                          SizedBox(
+                                                            width: 32,
+                                                          ),
+                                                          Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                "Satuan",
+                                                                style: GoogleFonts.inter(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                              SizedBox(
+                                                                  height: 6),
+                                                              LayoutBuilder(
+                                                                builder: (context,
+                                                                    constraints) {
+                                                                  return Container(
+                                                                    width: 100,
+                                                                    child: DropdownButtonFormField2<
+                                                                        SatuanObat>(
+                                                                      isExpanded:
+                                                                          true,
+                                                                      value:
+                                                                          isiSatuan,
+                                                                      validator:
+                                                                          (value) {
+                                                                        if (value ==
+                                                                            null) {
+                                                                          return "Silahkan Pilih Satuan";
+                                                                        }
+                                                                        return null;
+                                                                      },
+                                                                      hint:
+                                                                          Text(
+                                                                        "Pilih Satuan",
+                                                                        style: GoogleFonts
+                                                                            .inter(
+                                                                          fontSize:
+                                                                              13,
+                                                                          color:
+                                                                              Colors.black,
+                                                                          fontWeight:
+                                                                              FontWeight.w400,
+                                                                        ),
+                                                                      ),
+                                                                      items: listSatuan!
+                                                                          .map((e) => DropdownMenuItem(
+                                                                                value: e,
+                                                                                child: Text(
+                                                                                  "${e.namaSatuan}",
+                                                                                  style: GoogleFonts.inter(
+                                                                                    fontSize: 13,
+                                                                                    color: Colors.black,
+                                                                                    fontWeight: FontWeight.w400,
+                                                                                  ),
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                ),
+                                                                              ))
+                                                                          .toList(),
+                                                                      onChanged:
+                                                                          (value) {
+                                                                        _formKey
+                                                                            .currentState
+                                                                            ?.validate();
+                                                                        setState(
+                                                                            () {
+                                                                          isiSatuan =
+                                                                              value!;
+                                                                        });
+                                                                      },
+                                                                      decoration:
+                                                                          InputDecoration(
+                                                                        isDense:
+                                                                            true,
+                                                                        contentPadding: const EdgeInsets
+                                                                            .only(
+                                                                            bottom:
+                                                                                4), // tipis
+                                                                        hintStyle:
+                                                                            GoogleFonts.inter(fontSize: 13),
+                                                                        filled:
+                                                                            false,
+                                                                        border:
+                                                                            UnderlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.black),
+                                                                        ),
+                                                                        enabledBorder:
+                                                                            UnderlineInputBorder(
+                                                                          borderSide:
+                                                                              BorderSide(color: Colors.black),
+                                                                        ),
+                                                                        focusedBorder:
+                                                                            UnderlineInputBorder(
+                                                                          borderSide: BorderSide(
+                                                                              color: Colors.black,
+                                                                              width: 1.5),
+                                                                        ),
+                                                                        errorBorder:
+                                                                            UnderlineInputBorder(
+                                                                          borderSide: BorderSide(
+                                                                              color: ColorStyle.button_red,
+                                                                              width: 1),
+                                                                        ),
+                                                                      ),
+                                                                      dropdownStyleData:
+                                                                          DropdownStyleData(
+                                                                        width:
+                                                                            100,
+                                                                        maxHeight:
+                                                                            200,
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          border:
+                                                                              Border.all(color: ColorStyle.button_grey),
+                                                                          color:
+                                                                              ColorStyle.fill_form,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(4),
+                                                                        ),
+                                                                      ),
+                                                                      menuItemStyleData:
+                                                                          const MenuItemStyleData(
+                                                                        padding: EdgeInsets.symmetric(
+                                                                            horizontal:
+                                                                                8,
+                                                                            vertical:
+                                                                                4),
+                                                                      ),
+                                                                      iconStyleData:
+                                                                          const IconStyleData(
+                                                                        icon: Icon(
+                                                                            Icons
+                                                                                .arrow_drop_down,
+                                                                            size:
+                                                                                16,
+                                                                            color:
+                                                                                Colors.black),
+                                                                        openMenuIcon: Icon(
+                                                                            Icons
+                                                                                .arrow_drop_up,
+                                                                            size:
+                                                                                16,
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                },
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          SizedBox(
+                                                            width: 32,
+                                                          ),
+                                                          Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                "Jumlah",
+                                                                style: GoogleFonts.inter(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                              SizedBox(
+                                                                  height: 6),
+                                                              SizedBox(
+                                                                width:
+                                                                    80, // Sesuaikan lebar
+                                                                // height:
+                                                                //     40, // Untuk jaga tinggi agar konsisten
+                                                                child:
+                                                                    TextFormField(
+                                                                  controller:
+                                                                      isiJumlah,
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .number,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          14), // Font kecil
+                                                                  decoration:
+                                                                      InputDecoration(
+                                                                    isDense:
+                                                                        true, // Mengurangi tinggi padding
+                                                                    contentPadding:
+                                                                        EdgeInsets.only(
+                                                                            bottom:
+                                                                                8), // Padding minimal
+                                                                    hintText:
+                                                                        '0',
+                                                                    hintStyle: TextStyle(
+                                                                        fontSize:
+                                                                            13,
+                                                                        color: Colors
+                                                                            .grey),
+                                                                    border:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    enabledBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide:
+                                                                          BorderSide(
+                                                                              color: Colors.black),
+                                                                    ),
+                                                                    focusedBorder:
+                                                                        UnderlineInputBorder(
+                                                                      borderSide: BorderSide(
+                                                                          color: Colors
+                                                                              .black,
+                                                                          width:
+                                                                              1.5),
+                                                                    ),
+                                                                  ),
+                                                                  validator:
+                                                                      (value) {
+                                                                    if (value ==
+                                                                            null ||
+                                                                        value
+                                                                            .isEmpty) {
+                                                                      return 'Wajib isi';
+                                                                    }
+                                                                    return null;
+                                                                  },
+                                                                ),
+                                                              )
+                                                            ],
+                                                          )
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      Text(
+                                                        "KOMPOSISI",
+                                                        style: GoogleFonts.inter(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .underline),
+                                                      ),
+                                                      // SizedBox(
+                                                      //   height: 8,
+                                                      // ),
+                                                      ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount:
+                                                            detailObatRacik
+                                                                    ?.bahan!
+                                                                    .length ??
+                                                                0,
+                                                        itemBuilder:
+                                                            (context, index) {
+                                                          final item =
+                                                              detailObatRacik!
+                                                                  .bahan[index];
+                                                          return listInputDataObatRacik(
+                                                              index,
+                                                              item.namaObat);
                                                         },
                                                       ),
                                                     ],
                                                   ),
+                                                ),
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: 15,
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 16.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.end,
+                                                children: [
                                                   SizedBox(
-                                                    width: 32,
-                                                  ),
-                                                  Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        "Jumlah",
+                                                    width: 100,
+                                                    height: 35,
+                                                    child: ElevatedButton(
+                                                      onPressed: () async {
+                                                        // Validasi
+                                                        if (komposisiList
+                                                                .isEmpty ||
+                                                            isiIdObat == null ||
+                                                            isiSatuan == null ||
+                                                            isiJumlah
+                                                                .text.isEmpty) {
+                                                          // Tampilkan notifikasi / alert
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            SnackBar(
+                                                                content: Text(
+                                                                    'Harap lengkapi semua data racikan')),
+                                                          );
+                                                          return;
+                                                        }
+                                                        ObatRacik racikBaru = ObatRacik(
+                                                            namaRacik:
+                                                                isiIdObat!
+                                                                    .namaRacik,
+                                                            satuan: isiSatuan!
+                                                                .namaSatuan,
+                                                            idnamaRacik:
+                                                                isiIdObat!
+                                                                    .idObatRacik,
+                                                            idsatuan: isiSatuan!
+                                                                .idSatuan,
+                                                            jumlah:
+                                                                isiJumlah.text,
+                                                            totalHarga: 0,
+                                                            aturanPakai: "",
+                                                            caraPakai: "",
+                                                            keteranganPakai: "",
+                                                            komposisi: []); // copy list
+                                                        for (var i = 0;
+                                                            i <
+                                                                komposisiList
+                                                                    .length;
+                                                            i++) {
+                                                          setState(() {
+                                                            racikBaru.komposisi.add(KomposisiObat(
+                                                                idObat:
+                                                                    komposisiList[
+                                                                            i]
+                                                                        .idObat,
+                                                                namaObat:
+                                                                    komposisiList[
+                                                                            i]
+                                                                        .namaObat,
+                                                                jumlah: num.parse(
+                                                                    komposisiList[
+                                                                            i]
+                                                                        .jumlahController
+                                                                        .text),
+                                                                dosis: komposisiList[
+                                                                        i]
+                                                                    .dosisController
+                                                                    .text));
+                                                          });
+                                                        }
+                                                        setState(() {
+                                                          daftarObatRacik
+                                                              .add(racikBaru);
+                                                          komposisiList
+                                                              .clear(); // reset komposisi
+                                                          detailObatRacik!.bahan
+                                                              .clear();
+                                                          isiIdObat = null;
+                                                          isiSatuan = null;
+                                                          isiJumlah.clear();
+                                                        });
+
+                                                        String temp =
+                                                            '''{"kuantitas": ${racikBaru.jumlah},
+        "ingredients": [''';
+                                                        for (var i = 0;
+                                                            i <
+                                                                racikBaru
+                                                                    .komposisi
+                                                                    .length;
+                                                            i++) {
+                                                          setState(() {
+                                                            if (i ==
+                                                                racikBaru
+                                                                        .komposisi
+                                                                        .length -
+                                                                    1) {
+                                                              temp = temp +
+                                                                  '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}}';
+                                                            } else
+                                                              temp = temp +
+                                                                  '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}},';
+                                                          });
+                                                        }
+                                                        setState(() {
+                                                          temp = temp + ']}';
+                                                        });
+                                                        print("TEST TEMP");
+                                                        print(temp);
+                                                        String url =
+                                                            "http://leap.crossnet.co.id:2688/PoS/calculateharga";
+                                                        var response =
+                                                            await http.post(
+                                                                Uri.parse(url),
+                                                                headers: {
+                                                                  'Authorization':
+                                                                      '${global.token}',
+                                                                  'x-api-key':
+                                                                      '${global.xApiKey}',
+                                                                  "Content-Type":
+                                                                      "application/json" // Tambahkan ini juga!
+                                                                },
+                                                                body: temp);
+                                                        print(response
+                                                            .statusCode);
+                                                        print(response.body);
+                                                        if (response
+                                                                .statusCode ==
+                                                            200) {
+                                                          var jsonObject =
+                                                              jsonDecode(
+                                                                  response
+                                                                      .body);
+                                                          print(jsonObject);
+                                                          // print('data: $data');
+                                                          setState(() {
+                                                            racikBaru
+                                                                    .totalHarga =
+                                                                jsonObject[
+                                                                        "data"][
+                                                                    "total_harga"];
+                                                          });
+                                                        } else {
+                                                          throw Exception(
+                                                              "Gagal Load Data Detail Obat Racik");
+                                                        }
+
+                                                        // Simpan ke daftar racikan
+                                                      },
+                                                      style: ElevatedButton
+                                                          .styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 5),
+                                                        backgroundColor:
+                                                            ColorStyle.primary,
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(4),
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        "Tambah",
                                                         style:
                                                             GoogleFonts.inter(
-                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .white,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600),
                                                       ),
-                                                      SizedBox(height: 6),
-                                                      SizedBox(
-                                                        width:
-                                                            80, // Sesuaikan lebar
-                                                        // height:
-                                                        //     40, // Untuk jaga tinggi agar konsisten
-                                                        child: TextFormField(
-                                                          controller: isiJumlah,
-                                                          keyboardType:
-                                                              TextInputType
-                                                                  .number,
-                                                          style: TextStyle(
-                                                              fontSize:
-                                                                  14), // Font kecil
-                                                          decoration:
-                                                              InputDecoration(
-                                                            isDense:
-                                                                true, // Mengurangi tinggi padding
-                                                            contentPadding:
-                                                                EdgeInsets.only(
-                                                                    bottom:
-                                                                        8), // Padding minimal
-                                                            hintText: '0',
-                                                            hintStyle: TextStyle(
-                                                                fontSize: 13,
-                                                                color: Colors
-                                                                    .grey),
-                                                            border:
-                                                                UnderlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  color: Colors
-                                                                      .black),
-                                                            ),
-                                                            enabledBorder:
-                                                                UnderlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  color: Colors
-                                                                      .black),
-                                                            ),
-                                                            focusedBorder:
-                                                                UnderlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  width: 1.5),
-                                                            ),
-                                                          ),
-                                                          validator: (value) {
-                                                            if (value == null ||
-                                                                value.isEmpty) {
-                                                              return 'Wajib isi';
-                                                            }
-                                                            return null;
-                                                          },
-                                                        ),
-                                                      )
-                                                    ],
-                                                  )
+                                                    ),
+                                                  ),
                                                 ],
                                               ),
-                                              SizedBox(
-                                                height: 20,
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                              flex: 2,
+                              child: Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: ColorStyle.shadow
+                                              .withOpacity(0.25),
+                                          spreadRadius: 0,
+                                          blurRadius: 4,
+                                          offset: Offset(0, 1))
+                                    ],
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Kwintansi Obat",
+                                      style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 20),
+                                    ),
+                                    SizedBox(
+                                      height: 19,
+                                    ),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                              color: ColorStyle.shadow
+                                                  .withOpacity(0.25),
+                                              spreadRadius: 0,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 1))
+                                        ],
+                                        borderRadius: BorderRadius.circular(0),
+                                      ),
+                                      child: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.25,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.40, // Lebih lebar
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            return SingleChildScrollView(
+                                              scrollDirection: Axis.vertical,
+                                              child: SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    minWidth:
+                                                        constraints.maxWidth,
+                                                  ),
+                                                  child: DataTable(
+                                                    columnSpacing: 24,
+                                                    columns: [
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text(
+                                                              "Nama Obat",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text("Jumlah",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text("Harga",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                    ],
+                                                    rows: keranjang
+                                                        .asMap()
+                                                        .entries
+                                                        .map((entry) {
+                                                      int index = entry.key;
+                                                      final item = entry.value;
+                                                      return DataRow(
+                                                        cells: [
+                                                          DataCell(Expanded(
+                                                              child: Center(
+                                                                  child: Text(
+                                                            item.namaObat,
+                                                            style: GoogleFonts.inter(
+                                                                color: ColorStyle
+                                                                    .text_dalam_kolom),
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                          )))),
+                                                          DataCell(Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              IconButton(
+                                                                icon: const Icon(
+                                                                    Icons
+                                                                        .remove_circle_outline),
+                                                                onPressed: () =>
+                                                                    kurangJumlah(
+                                                                        index),
+                                                              ),
+                                                              Text(item
+                                                                  .kuantitas
+                                                                  .toString()),
+                                                              IconButton(
+                                                                icon: const Icon(
+                                                                    Icons
+                                                                        .add_circle_outline),
+                                                                onPressed: item
+                                                                            .kuantitas <
+                                                                        item
+                                                                            .jumlahObatReal
+                                                                    ? () =>
+                                                                        tambahJumlah(
+                                                                            index)
+                                                                    : null,
+                                                              ),
+                                                            ],
+                                                          )),
+                                                          DataCell(Expanded(
+                                                            child: Center(
+                                                              child: Text(
+                                                                "${formatRupiah(hitungHargaperObat(item.kuantitas, item.hargaObat))},00",
+                                                                style: GoogleFonts.inter(
+                                                                    color: ColorStyle
+                                                                        .text_dalam_kolom),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
                                               ),
-                                              Text(
-                                                "KOMPOSISI",
-                                                style: GoogleFonts.inter(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    decoration: TextDecoration
-                                                        .underline),
-                                              ),
-                                              SizedBox(
-                                                height: 15.5,
-                                              ),
-                                              ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: detailObatRacik
-                                                        ?.bahan!.length ??
-                                                    0,
-                                                itemBuilder: (context, index) {
-                                                  final item = detailObatRacik!
-                                                      .bahan[index];
-                                                  return listInputDataObatRacik(
-                                                      index, item.namaObat);
-                                                },
-                                              ),
-                                            ],
-                                          ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ),
                                     SizedBox(
-                                      height: 15,
+                                      height: 16,
                                     ),
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(right: 16.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          SizedBox(
-                                            width: 100,
-                                            height: 35,
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                // Validasi
-                                                if (komposisiList.isEmpty ||
-                                                    isiIdObat == null ||
-                                                    isiSatuan == null ||
-                                                    isiJumlah.text.isEmpty) {
-                                                  // Tampilkan notifikasi / alert
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    SnackBar(
-                                                        content: Text(
-                                                            'Harap lengkapi semua data racikan')),
-                                                  );
-                                                  return;
-                                                }
-                                                ObatRacik racikBaru = ObatRacik(
-                                                    namaRacik:
-                                                        isiIdObat!.namaRacik,
-                                                    satuan:
-                                                        isiSatuan!.namaSatuan,
-                                                    idnamaRacik:
-                                                        isiIdObat!.idObatRacik,
-                                                    idsatuan:
-                                                        isiSatuan!.idSatuan,
-                                                    jumlah: isiJumlah.text,
-                                                    totalHarga: 0,
-                                                    aturanPakai: "",
-                                                    caraPakai: "",
-                                                    keteranganPakai: "",
-                                                    komposisi: []); // copy list
-                                                for (var i = 0;
-                                                    i < komposisiList.length;
-                                                    i++) {
-                                                  setState(() {
-                                                    racikBaru.komposisi.add(
-                                                        KomposisiObat(
-                                                            idObat:
-                                                                komposisiList[i]
-                                                                    .idObat,
-                                                            namaObat:
-                                                                komposisiList[i]
-                                                                    .namaObat,
-                                                            jumlah: num.parse(
-                                                                komposisiList[i]
-                                                                    .jumlahController
-                                                                    .text),
-                                                            dosis: komposisiList[
-                                                                    i]
-                                                                .dosisController
-                                                                .text));
-                                                  });
-                                                }
-                                                setState(() {
-                                                  daftarObatRacik
-                                                      .add(racikBaru);
-                                                  komposisiList
-                                                      .clear(); // reset komposisi
-                                                  detailObatRacik!.bahan
-                                                      .clear();
-                                                  isiIdObat = null;
-                                                  isiSatuan = null;
-                                                  isiJumlah.clear();
-                                                });
-
-                                                String temp =
-                                                    '''{"kuantitas": ${racikBaru.jumlah},
-"ingredients": [''';
-                                                for (var i = 0;
-                                                    i <
-                                                        racikBaru
-                                                            .komposisi.length;
-                                                    i++) {
-                                                  setState(() {
-                                                    if (i ==
-                                                        racikBaru.komposisi
-                                                                .length -
-                                                            1) {
-                                                      temp = temp +
-                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}}';
-                                                    } else
-                                                      temp = temp +
-                                                          '{"id_obat": "${racikBaru.komposisi[i].idObat}","jumlah_decimal": ${racikBaru.komposisi[i].jumlah}},';
-                                                  });
-                                                }
-                                                setState(() {
-                                                  temp = temp + ']}';
-                                                });
-                                                print("TEST TEMP");
-                                                print(temp);
-                                                String url =
-                                                    "http://leap.crossnet.co.id:2688/PoS/calculateharga";
-                                                var response = await http.post(
-                                                    Uri.parse(url),
-                                                    headers: {
-                                                      'Authorization':
-                                                          '${global.token}',
-                                                      'x-api-key':
-                                                          '${global.xApiKey}',
-                                                      "Content-Type":
-                                                          "application/json" // Tambahkan ini juga!
-                                                    },
-                                                    body: temp);
-                                                print(response.statusCode);
-                                                print(response.body);
-                                                if (response.statusCode ==
-                                                    200) {
-                                                  var jsonObject =
-                                                      jsonDecode(response.body);
-                                                  print(jsonObject);
-                                                  // print('data: $data');
-                                                  setState(() {
-                                                    racikBaru.totalHarga =
-                                                        jsonObject["data"]
-                                                            ["total_harga"];
-                                                  });
-                                                } else {
-                                                  throw Exception(
-                                                      "Gagal Load Data Detail Obat Racik");
-                                                }
-
-                                                // Simpan ke daftar racikan
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 5),
-                                                backgroundColor:
-                                                    ColorStyle.primary,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                              color: ColorStyle.shadow
+                                                  .withOpacity(0.25),
+                                              spreadRadius: 0,
+                                              blurRadius: 4,
+                                              offset: Offset(0, 1))
+                                        ],
+                                        borderRadius: BorderRadius.circular(0),
+                                      ),
+                                      child: SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.20,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.47, // Lebih lebar
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            return SingleChildScrollView(
+                                              scrollDirection: Axis.vertical,
+                                              child: SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    minWidth:
+                                                        constraints.maxWidth,
+                                                  ),
+                                                  child: DataTable(
+                                                    columnSpacing: 24,
+                                                    columns: [
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text(
+                                                              "Nama Obat Racik",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text("Jumlah",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text("Harga",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                      DataColumn(
+                                                          label: Expanded(
+                                                        child: Center(
+                                                          child: Text("Action",
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: GoogleFonts.inter(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600)),
+                                                        ),
+                                                      )),
+                                                    ],
+                                                    rows: daftarObatRacik
+                                                        .asMap()
+                                                        .entries
+                                                        .map((entry) {
+                                                      int index = entry.key;
+                                                      final item = entry.value;
+                                                      return DataRow(
+                                                        cells: [
+                                                          DataCell(
+                                                            SizedBox(
+                                                              width: 150,
+                                                              child: InkWell(
+                                                                onTap: () {
+                                                                  _editObatRacik(
+                                                                      item,
+                                                                      index);
+                                                                },
+                                                                child: Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .center,
+                                                                  children: [
+                                                                    Text(
+                                                                      item.namaRacik,
+                                                                      style: GoogleFonts
+                                                                          .inder(
+                                                                        color: Colors
+                                                                            .blue,
+                                                                        fontSize:
+                                                                            14,
+                                                                        fontWeight:
+                                                                            FontWeight.w400,
+                                                                        decoration:
+                                                                            TextDecoration.underline,
+                                                                        decorationColor:
+                                                                            Colors.blue,
+                                                                      ),
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      maxLines:
+                                                                          2,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ),
+                                                                    // Text(
+                                                                    //   "[detail]",
+                                                                    //   style: GoogleFonts
+                                                                    //       .inder(
+                                                                    //     color: Colors
+                                                                    //         .blue,
+                                                                    //     fontSize:
+                                                                    //         14,
+                                                                    //     fontWeight:
+                                                                    //         FontWeight.w400,
+                                                                    //   ),
+                                                                    //   textAlign:
+                                                                    //       TextAlign
+                                                                    //           .center,
+                                                                    // ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          DataCell(Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              // IconButton(
+                                                              //   icon: const Icon(Icons
+                                                              //       .remove_circle_outline),
+                                                              //   onPressed: () =>
+                                                              //       kurangJumlah(index),
+                                                              // ),
+                                                              Text(
+                                                                item.jumlah
+                                                                    .toString(),
+                                                                style: GoogleFonts.inter(
+                                                                    color: ColorStyle
+                                                                        .text_dalam_kolom),
+                                                              ),
+                                                              // IconButton(
+                                                              //   icon: const Icon(Icons
+                                                              //       .add_circle_outline),
+                                                              //   onPressed: item
+                                                              //               .kuantitas <
+                                                              //           item
+                                                              //               .jumlahObatReal
+                                                              //       ? () =>
+                                                              //           tambahJumlah(
+                                                              //               index)
+                                                              //       : null,
+                                                              // ),
+                                                            ],
+                                                          )),
+                                                          DataCell(Expanded(
+                                                            child: Center(
+                                                              child: Text(
+                                                                "${formatRupiah(item.totalHarga)},00",
+                                                                style: GoogleFonts.inter(
+                                                                    color: ColorStyle
+                                                                        .text_dalam_kolom),
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                              ),
+                                                            ),
+                                                          )),
+                                                          DataCell(Center(
+                                                              child: InkWell(
+                                                            child: Icon(
+                                                                Icons.delete),
+                                                            onTap: () {
+                                                              setState(() {
+                                                                daftarObatRacik
+                                                                    .removeAt(
+                                                                        index);
+                                                              });
+                                                            },
+                                                          ))),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
                                                 ),
                                               ),
-                                              child: Text(
-                                                "Tambah",
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text("Total Harga",
                                                 style: GoogleFonts.inter(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.w600),
+                                                    fontSize: 18)),
+                                            Text(
+                                              "${formatRupiah(hitungTotalHarga(keranjang) + hitungTotalHarga2(daftarObatRacik))},00",
+                                              style: GoogleFonts.inter(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
+                                    SizedBox(
+                                      height: 16,
+                                    ),
+                                    SizedBox(
+                                      height: 35,
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              ColorStyle.hover.withOpacity(0.7),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            global.selectedIndex =
+                                                3; // ini halaman yang ditampilkan
+                                            global.selectedScreen =
+                                                0; // ini di sidebarnya
+                                          });
+                                          Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      MyApp()));
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .center, // Centering content
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              "Selanjutnya",
+                                              style: GoogleFonts.inter(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(Icons.arrow_forward,
+                                                color: Colors.white),
+                                          ],
+                                        ),
+                                      ),
+                                    )
                                   ],
                                 ),
-                              )
-                      ],
-                    ),
+                              ))
+                        ],
+                      ),
+                    ],
                   ),
-                  Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                  color: ColorStyle.shadow.withOpacity(0.25),
-                                  spreadRadius: 0,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 1))
-                            ],
-                            borderRadius: BorderRadius.circular(12)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Kwintansi Obat",
-                              style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w500, fontSize: 20),
-                            ),
-                            SizedBox(
-                              height: 19,
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                      color:
-                                          ColorStyle.shadow.withOpacity(0.25),
-                                      spreadRadius: 0,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 1))
-                                ],
-                                borderRadius: BorderRadius.circular(0),
-                              ),
-                              child: SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.25,
-                                width: MediaQuery.of(context).size.width *
-                                    0.47, // Lebih lebar
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    return SingleChildScrollView(
-                                      scrollDirection: Axis.vertical,
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            minWidth: constraints.maxWidth,
-                                          ),
-                                          child: DataTable(
-                                            columnSpacing: 24,
-                                            columns: [
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Nama Obat",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Jumlah",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Harga",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                            ],
-                                            rows: keranjang
-                                                .asMap()
-                                                .entries
-                                                .map((entry) {
-                                              int index = entry.key;
-                                              final item = entry.value;
-                                              return DataRow(
-                                                cells: [
-                                                  DataCell(Expanded(
-                                                      child: Center(
-                                                          child: Text(
-                                                    item.namaObat,
-                                                    textAlign: TextAlign.center,
-                                                  )))),
-                                                  DataCell(Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      IconButton(
-                                                        icon: const Icon(Icons
-                                                            .remove_circle_outline),
-                                                        onPressed: () =>
-                                                            kurangJumlah(index),
-                                                      ),
-                                                      Text(item.kuantitas
-                                                          .toString()),
-                                                      IconButton(
-                                                        icon: const Icon(Icons
-                                                            .add_circle_outline),
-                                                        onPressed: item
-                                                                    .kuantitas <
-                                                                item
-                                                                    .jumlahObatReal
-                                                            ? () =>
-                                                                tambahJumlah(
-                                                                    index)
-                                                            : null,
-                                                      ),
-                                                    ],
-                                                  )),
-                                                  DataCell(Expanded(
-                                                    child: Center(
-                                                      child: Text(
-                                                        "${formatRupiah(hitungHargaperObat(item.kuantitas, item.hargaObat))},00",
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                      ),
-                                                    ),
-                                                  )),
-                                                ],
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                      color:
-                                          ColorStyle.shadow.withOpacity(0.25),
-                                      spreadRadius: 0,
-                                      blurRadius: 4,
-                                      offset: Offset(0, 1))
-                                ],
-                                borderRadius: BorderRadius.circular(0),
-                              ),
-                              child: SizedBox(
-                                height:
-                                    MediaQuery.of(context).size.height * 0.20,
-                                width: MediaQuery.of(context).size.width *
-                                    0.47, // Lebih lebar
-                                child: LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    return SingleChildScrollView(
-                                      scrollDirection: Axis.vertical,
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: ConstrainedBox(
-                                          constraints: BoxConstraints(
-                                            minWidth: constraints.maxWidth,
-                                          ),
-                                          child: DataTable(
-                                            columnSpacing: 24,
-                                            columns: [
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Nama Obat Racik",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Jumlah",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Harga",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                              DataColumn(
-                                                  label: Expanded(
-                                                child: Center(
-                                                  child: Text("Action",
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      style: GoogleFonts.inter(
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              )),
-                                            ],
-                                            rows: daftarObatRacik
-                                                .asMap()
-                                                .entries
-                                                .map((entry) {
-                                              int index = entry.key;
-                                              final item = entry.value;
-                                              return DataRow(
-                                                cells: [
-                                                  DataCell(Expanded(
-                                                      child: Center(
-                                                          child: InkWell(
-                                                    onTap: () {
-                                                      _editObatRacik(
-                                                          item, index);
-                                                    },
-                                                    child: Text(
-                                                      item.namaRacik,
-                                                      style: GoogleFonts.inder(
-                                                        color: Colors
-                                                            .blue, // Sesuaikan dengan ColorStyle.text_secondary jika perlu
-                                                        // fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.w400,
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline,
-                                                      ),
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                    ),
-                                                  )))),
-                                                  DataCell(Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      // IconButton(
-                                                      //   icon: const Icon(Icons
-                                                      //       .remove_circle_outline),
-                                                      //   onPressed: () =>
-                                                      //       kurangJumlah(index),
-                                                      // ),
-                                                      Text(item.jumlah
-                                                          .toString()),
-                                                      // IconButton(
-                                                      //   icon: const Icon(Icons
-                                                      //       .add_circle_outline),
-                                                      //   onPressed: item
-                                                      //               .kuantitas <
-                                                      //           item
-                                                      //               .jumlahObatReal
-                                                      //       ? () =>
-                                                      //           tambahJumlah(
-                                                      //               index)
-                                                      //       : null,
-                                                      // ),
-                                                    ],
-                                                  )),
-                                                  DataCell(Expanded(
-                                                    child: Center(
-                                                      child: Text(
-                                                        "${formatRupiah(item.totalHarga)},00",
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                      ),
-                                                    ),
-                                                  )),
-                                                  DataCell(Center(
-                                                      child: InkWell(
-                                                    child: Icon(Icons.delete),
-                                                    onTap: () {
-                                                      setState(() {
-                                                        daftarObatRacik
-                                                            .removeAt(index);
-                                                      });
-                                                    },
-                                                  ))),
-                                                ],
-                                              );
-                                            }).toList(),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 8,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Text("Total Harga",
-                                        style: GoogleFonts.inter(fontSize: 18)),
-                                    Text(
-                                      "${formatRupiah(hitungTotalHarga(keranjang) + hitungTotalHarga2(daftarObatRacik))},00",
-                                      style: GoogleFonts.inter(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            SizedBox(
-                              height: 16,
-                            ),
-                            SizedBox(
-                              height: 35,
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      ColorStyle.hover.withOpacity(0.7),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    global.selectedIndex =
-                                        3; // ini halaman yang ditampilkan
-                                    global.selectedScreen =
-                                        0; // ini di sidebarnya
-                                  });
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => MyApp()));
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .center, // Centering content
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      "Selanjutnya",
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.arrow_forward,
-                                        color: Colors.white),
-                                  ],
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ))
-                ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+      ]),
     );
   }
 
@@ -3496,7 +3714,7 @@ class _TransaksiPage extends State<TransaksiPage> {
                       contentPadding:
                           EdgeInsets.only(bottom: 8), // Padding minimal
                       hintText: namaObat,
-                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.black),
                       border: UnderlineInputBorder(
                         borderSide: BorderSide(color: Colors.black),
                       ),

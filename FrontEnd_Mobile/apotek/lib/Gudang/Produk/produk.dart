@@ -1,12 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:apotek/Gudang/Produk/DataProduk.dart';
-import 'package:apotek/NavbarTop.dart';
 import 'package:apotek/Theme/ColorStyle.dart';
 import 'package:apotek/main.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:apotek/global.dart' as global;
 import 'package:google_fonts/google_fonts.dart';
@@ -456,7 +454,7 @@ class _PageProduk extends State<PageProduk> {
       keteranganController.text = item.keterangan.toString();
       idObatPut = item.idObat;
       pickedImageByte2 = response.bodyBytes;
-      print(_selectedKategoriEdit!.idKategori);
+      // print(_selectedKategoriEdit!.idKategori);
     });
 
     // TextEditingController namaObatController =
@@ -1085,7 +1083,7 @@ class _PageProduk extends State<PageProduk> {
                 width:
                     constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
+                    0.5, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -1843,33 +1841,33 @@ class _PageProduk extends State<PageProduk> {
                               ),
                             ),
                           ),
-                          Padding(padding: EdgeInsets.only(right: 8)),
-                          Container(
-                            height: 40,
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  isExpanded2 = !isExpanded2;
-                                });
-                              },
-                              icon: Icon(Icons.filter_alt,
-                                  color: Colors.black, size: 22),
-                              label: Text("Filter",
-                                  style: GoogleFonts.inter(
-                                      color: Colors.black,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w400)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(5),
-                                    side: BorderSide(
-                                        color: ColorStyle.button_grey, width: 1)),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 5),
-                              ),
-                            ),
-                          ),
+                          // Padding(padding: EdgeInsets.only(right: 8)),
+                          // Container(
+                          //   height: 40,
+                          //   child: ElevatedButton.icon(
+                          //     onPressed: () {
+                          //       setState(() {
+                          //         isExpanded2 = !isExpanded2;
+                          //       });
+                          //     },
+                          //     icon: Icon(Icons.filter_alt,
+                          //         color: Colors.black, size: 22),
+                          //     label: Text("Filter",
+                          //         style: GoogleFonts.inter(
+                          //             color: Colors.black,
+                          //             fontSize: 16,
+                          //             fontWeight: FontWeight.w400)),
+                          //     style: ElevatedButton.styleFrom(
+                          //       backgroundColor: Colors.white,
+                          //       shape: RoundedRectangleBorder(
+                          //           borderRadius: BorderRadius.circular(5),
+                          //           side: BorderSide(
+                          //               color: ColorStyle.button_grey, width: 1)),
+                          //       padding: const EdgeInsets.symmetric(
+                          //           horizontal: 6, vertical: 5),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                       const SizedBox(height: 15),
@@ -2525,7 +2523,7 @@ class _PageProduk extends State<PageProduk> {
           SizedBox(height: 4),
           Container(
             width: double.infinity,
-            height: 35,
+            // height: 35,
             // decoration: BoxDecoration(
             //   border: Border.all(color: ColorStyle.fill_stroke),
             //   color: ColorStyle.fill_form,
@@ -2541,7 +2539,7 @@ class _PageProduk extends State<PageProduk> {
                 // hintText: value,
                 filled: true,
                 fillColor: ColorStyle.fill_form,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 hintStyle: TextStyle(
                   color: ColorStyle.tulisan_form,
                   fontSize: 13,

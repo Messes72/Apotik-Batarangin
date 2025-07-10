@@ -7,19 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:apotek/global.dart' as global;
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 
-class Detailstockopname extends StatefulWidget {
+class Editstockopname extends StatefulWidget {
   final VoidCallback toggleSidebar;
   final bool isExpanded;
-  const Detailstockopname(
+  const Editstockopname(
       {super.key, required this.isExpanded, required this.toggleSidebar});
 
   @override
-  State<Detailstockopname> createState() => detailStock();
+  State<Editstockopname> createState() => editStock();
 }
 
-class detailStock extends State<Detailstockopname> {
+class editStock extends State<Editstockopname> {
   bool triggerAnimation = false; // Tambahkan variabel isExpanded
 
   void onMenuPressed() {
@@ -43,6 +42,7 @@ class detailStock extends State<Detailstockopname> {
   var tanggalOpname = TextEditingController();
   var jumlahUpdate = TextEditingController();
 
+  List<StokOpnameData> filterData = [];
   final List<int> rowItems = [10, 25, 50, 100];
 
   String? selectedValue;
@@ -67,45 +67,30 @@ class detailStock extends State<Detailstockopname> {
     }
   }
 
-  StokOpnameDetailResponse? stokDataDetail;
-  bool loadingData = false;
+  // final List<StokOpnameData> _data = [
 
-  Future<void> getDetailStockOpname() async {
-    try {
-      setState(() => loadingData = true); // Mulai loading
+  // ];
+  final List<StokOpnameData> _data = List.generate(
+      30,
+      (index) => StokOpnameData(
+            nama: 'Barang $index',
+            kategori: 'Kategori ${index % 5}',
+            kode: 'KODE$index',
+            harga: (index + 1) * 1000.0,
+            kadaluarsa: DateTime.now().add(Duration(days: index * 30)),
+            stok: (index + 1) * 10,
+            masuk: (index + 1) * 5,
+            keluar: (index + 1) * 3,
+            hargaJual: (index + 1) * 1200.0,
+            hargaBeli: (index + 1) * 900.0,
+            satuan: 'Unit',
+            uprate: (index % 3) * 1.1,
+            noKartu: 'KARTU$index',
+            noBatch: 'BATCH$index',
+            catatan: 'Catatan untuk Barang $index',
+          ));
 
-      StokOpnameDetailResponse.getDetailStockOpname(global.idStockOpnameInfo)
-          .then((value) {
-        // if (!mounted) return; // ⛑️ Hindari error jika widget sudah disposed
-        setState(() {
-          stokDataDetail = value;
-          loadingData = false;
-        });
-      });
-    } catch (e) {
-      print("Error: $e");
-    }
-  }
-
-  List<StokOpnameObatItem> _data = [];
-  List<StokOpnameObatItem> filterData = [];
-  Future<void> fetchDetailBatchData() async {
-    try {
-      setState(() => loadingData = true);
-      final result = await StokOpnameResponseDetail.getDetailStockOpname(
-          global.idStockOpnameInfo);
-      setState(() {
-        _data = result.items;
-        filterData = List.from(_data);
-        loadingData = false;
-        // inisialisasi filter awal
-      });
-    } catch (e) {
-      print("Gagal fetch data: $e");
-    }
-  }
-
-  void _viewDetails(String nama, StokOpnameObatItem item) {
+  void _viewDetails(StokOpnameData item) {
     showDialog(
       context: context,
       builder: (context) {
@@ -117,9 +102,9 @@ class detailStock extends State<Detailstockopname> {
               ),
               child: Container(
                 width:
-                    constraints.maxWidth * 0.5, // Sesuaikan dengan ukuran layar
+                    constraints.maxWidth * 0.6, // Sesuaikan dengan ukuran layar
                 height: constraints.maxHeight *
-                    0.7, // Batasi tinggi agar tidak terlalu besar
+                    0.9, // Batasi tinggi agar tidak terlalu besar
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -143,7 +128,7 @@ class detailStock extends State<Detailstockopname> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Informasi Data Obat Stock Opname",
+                            "Informasi Stock Opname",
                             style: GoogleFonts.montserrat(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -171,234 +156,29 @@ class detailStock extends State<Detailstockopname> {
                           children: [
                             Column(
                               children: [
-                                detailField2("Nama Obat", nama),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      return SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: DataTable(
-                                          columnSpacing: 16,
-                                          headingRowHeight: 48,
-                                          dataRowMinHeight: 36,
-                                          dataRowMaxHeight: 40,
-                                          headingRowColor: MaterialStateProperty
-                                              .resolveWith<Color?>(
-                                            (Set<MaterialState> states) {
-                                              return Colors.grey
-                                                  .shade300; // Warna latar seluruh baris header
-                                            },
-                                          ),
-                                          columns: [
-                                            DataColumn(
-                                              label: Container(
-                                                color: Colors.grey.shade300,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 8),
-                                                child: Center(
-                                                  child: Text(
-                                                    "Nomor Batch",
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataColumn(
-                                              label: Container(
-                                                color: Colors.grey.shade300,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 8),
-                                                child: Center(
-                                                  child: Text(
-                                                    "Kuantitas Sistem",
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataColumn(
-                                              label: Container(
-                                                color: Colors.grey.shade300,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 8),
-                                                child: Center(
-                                                  child: Text(
-                                                    "Kuantitas Fisik",
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataColumn(
-                                              label: Container(
-                                                color: Colors.grey.shade300,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 8),
-                                                child: Center(
-                                                  child: Text(
-                                                    "Selisih",
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataColumn(
-                                              label: Container(
-                                                color: Colors.grey.shade300,
-                                                padding: EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 8),
-                                                child: Center(
-                                                  child: Text(
-                                                    "Catatan Batch",
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            // DataColumn(
-                                            //   label: Container(
-                                            //     color: Colors.grey.shade300,
-                                            //     padding: EdgeInsets.symmetric(
-                                            //         vertical: 12,
-                                            //         horizontal: 8),
-                                            //     child: Center(
-                                            //       child: Text(
-                                            //         "Status",
-                                            //         textAlign:
-                                            //             TextAlign.center,
-                                            //         style: GoogleFonts.inter(
-                                            //           fontWeight:
-                                            //               FontWeight.w600,
-                                            //           fontSize: 13,
-                                            //         ),
-                                            //       ),
-                                            //     ),
-                                            //   ),
-                                            // ),
-                                          ],
-                                          rows: item!.detailBatch
-                                              .asMap()
-                                              .entries
-                                              .map((entry) {
-                                            final obat = entry.value;
-                                            return DataRow(
-                                              cells: [
-                                                DataCell(Text(
-                                                  obat.noBatch,
-                                                  style: GoogleFonts.inter(
-                                                    fontWeight: FontWeight.w400,
-                                                    fontSize: 12,
-                                                  ),
-                                                )),
-                                                DataCell(Center(
-                                                  child: Text(
-                                                    obat.kuantitasSistem
-                                                        .toString(),
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                )),
-                                                DataCell(Center(
-                                                  child: Text(
-                                                    obat.kuantitasFisik
-                                                        .toString(),
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                )),
-                                                DataCell(Center(
-                                                  child: Text(
-                                                    obat.selisih.toString(),
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                )),
-                                                DataCell(Center(
-                                                  child: Text(
-                                                    obat.catatan.toString(),
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                      fontWeight:
-                                                          FontWeight.w400,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                )),
-                                              ],
-                                            );
-                                          }).toList(),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                item.detailBatch.isEmpty
-                                    ? Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 16.0),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Center(
-                                              child: Text(
-                                                "Tidak ada data batch",
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                    fontStyle:
-                                                        FontStyle.italic),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : SizedBox(
-                                        height: 1,
-                                      ),
+                                detailField("Nomor Kartu", item.noKartu),
+                                detailField("Nomor Batch", item.noBatch),
+                                detailField("Kode Obat", item.kode),
+                                detailField("Kategori Obat", item.kategori),
+                                detailField("Nama Obat", item.kategori),
+                                detailField(
+                                    "Kadarluarsa",
+                                    DateFormat('dd/MM/yyyy')
+                                        .format(item.kadaluarsa)),
+                                detailField("Satuan", item.satuan),
+                                detailField(
+                                    "Stock Barang", item.stok.toString()),
+                                detailField(
+                                    "Barang Masuk", item.masuk.toString()),
+                                detailField(
+                                    "Barang Keluar", item.keluar.toString()),
+                                detailField(
+                                    "Harga Jual", item.hargaJual.toString()),
+                                detailField(
+                                    "Harga Beli", item.hargaBeli.toString()),
+                                detailField("Uprate", item.uprate.toString()),
+                                buildFormCaraPemakaian(
+                                    "Cara Pemakaian", item.catatan)
                               ],
                             )
                           ],
@@ -1300,20 +1080,12 @@ class detailStock extends State<Detailstockopname> {
     );
   }
 
-  String convertTanggal(String input) {
-    final parsedDate = DateTime.parse(input); // parse ISO 8601 format
-    final formatter = DateFormat('dd-MM-yyyy');
-    return formatter.format(parsedDate);
-  }
-
   int _rowsPerPage = 10;
   int _currentPage = 0;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    getDetailStockOpname();
-    fetchDetailBatchData();
     filterData = List.from(_data);
   }
 
@@ -1323,7 +1095,8 @@ class detailStock extends State<Detailstockopname> {
         filterData = List.from(_data);
       } else {
         filterData = _data.where((item) {
-          return item.namaObat.toLowerCase().contains(query.toLowerCase());
+          return item.nama.toLowerCase().contains(query.toLowerCase()) ||
+              item.stok.toString().contains(query);
         }).toList();
       }
       _currentPage = 0; // Reset ke halaman pertama setelah filter
@@ -1335,27 +1108,11 @@ class detailStock extends State<Detailstockopname> {
     int totalPages = (filterData.length / _rowsPerPage).ceil();
     int startIndex = _currentPage * _rowsPerPage;
     int endIndex = (startIndex + _rowsPerPage).clamp(0, filterData.length);
-    List<StokOpnameObatItem> paginatedData =
+    List<StokOpnameData> paginatedData =
         filterData.sublist(startIndex, endIndex);
-
-    if (stokDataDetail == null && loadingData) {
-      return Positioned.fill(
-        child: Container(
-          color: Colors.white.withOpacity(0.7),
-          child: Center(
-            child: LoadingAnimationWidget.flickr(
-              leftDotColor: Colors.red,
-              rightDotColor: Colors.blue,
-              size: 50,
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       // appBar: NavbarTop(
-      //     title: "INFORMASI DATA STOCK OPNAME",
+      //     title: "EDIT DATA STOCK OPNAME",
       //     onMenuPressed: widget.toggleSidebar,
       //     isExpanded: widget.isExpanded,
       //     animationTrigger: onMenuPressed,
@@ -1390,104 +1147,60 @@ class detailStock extends State<Detailstockopname> {
                 ),
               ),
               Padding(padding: EdgeInsets.only(top: 25)),
-              Row(
-                children: [
-                  detailField(
-                      "Nomor Opname", stokDataDetail!.stokOpname!.idStokopname ?? "Kosong"),
-                  SizedBox(
-                    width: 16,
-                  ),
-                  detailField("Nama Depo", stokDataDetail!.stokOpname!.namaDepo)
-                ],
-              ),
-              SizedBox(
-                height: 8,
-              ),
-              Row(
-                children: [
-                  detailField(
-                      "Tanggal Stock Opname",
-                      convertTanggal(stokDataDetail!
-                          .stokOpname!.tanggalStokopname
-                          .toString())),
-                  SizedBox(
-                    width: 16,
-                  ),
-                  detailField("Total Selisih",
-                      stokDataDetail!.stokOpname!.totalSelisih.toString())
-                ],
-              ),
-              SizedBox(
-                height: 8,
-              ),
-
-              Row(
-                children: [
-                  detailField("Catatan",
-                      stokDataDetail!.stokOpname!.catatan.toString()),
-                ],
-              ),
-
-              // InputForm("Nomor Opname", "0977656", "Tanggal Stock Opname",
-              //     "21/01/2025", nomorOpname, tanggalOpname),
-              // InputForm("Jumlah Barang", "10", "Jumlah Update Stock", "10",
-              //     jumlahBarang, jumlahUpdate),
-              SizedBox(
-                height: 16,
-              ),
+              InputForm("Nomor Opname", "0977656", "Tanggal Stock Opname",
+                  "21/01/2025", nomorOpname, tanggalOpname),
+              InputForm("Jumlah Barang", "10", "Jumlah Update Stock", "10",
+                  jumlahBarang, jumlahUpdate),
               Divider(),
-              // SizedBox(
-              //   height: 16,
-              // ),
-              // Container(
-              //   height: 40,
-              //   // width: 242,
-              //   // decoration: BoxDecoration(
-              //   //   border:
-              //   //       Border.all(color: ColorStyle.fill_stroke, width: 1),
-              //   //   color: ColorStyle.fill_form,
-              //   //   borderRadius: BorderRadius.circular(4),
-              //   // ),
+              Container(
+                height: 40,
+                // width: 242,
+                // decoration: BoxDecoration(
+                //   border:
+                //       Border.all(color: ColorStyle.fill_stroke, width: 1),
+                //   color: ColorStyle.fill_form,
+                //   borderRadius: BorderRadius.circular(4),
+                // ),
 
-              //   child: TextFormField(
-              //     controller: text,
-              //     onChanged: filtering,
-              //     decoration: InputDecoration(
-              //       isDense: true,
-              //       filled: true,
-              //       fillColor: ColorStyle.fill_form,
+                child: TextFormField(
+                  controller: text,
+                  onChanged: filtering,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    filled: true,
+                    fillColor: ColorStyle.fill_form,
 
-              //       // Menambahkan ikon di dalam TextField
-              //       prefixIcon: Padding(
-              //         padding: EdgeInsets.only(left: 8, right: 8),
-              //         child: Icon(
-              //           Icons.search_outlined,
-              //           color: Color(0XFF1B1442),
-              //           size: 30, // Sesuaikan ukuran ikon
-              //         ),
-              //       ),
+                    // Menambahkan ikon di dalam TextField
+                    prefixIcon: Padding(
+                      padding: EdgeInsets.only(left: 8, right: 8),
+                      child: Icon(
+                        Icons.search_outlined,
+                        color: Color(0XFF1B1442),
+                        size: 30, // Sesuaikan ukuran ikon
+                      ),
+                    ),
 
-              //       hintText: "Search",
-              //       contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
+                    hintText: "Search",
+                    contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
 
-              //       hintStyle: TextStyle(
-              //         color: ColorStyle.text_hint,
-              //         fontSize: 16,
-              //       ),
+                    hintStyle: TextStyle(
+                      color: ColorStyle.text_hint,
+                      fontSize: 16,
+                    ),
 
-              //       enabledBorder: OutlineInputBorder(
-              //         borderSide:
-              //             BorderSide(color: ColorStyle.fill_stroke, width: 1),
-              //         borderRadius: BorderRadius.circular(4),
-              //       ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: ColorStyle.fill_stroke, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
 
-              //       focusedBorder: OutlineInputBorder(
-              //         borderSide: BorderSide(color: Colors.black, width: 1),
-              //         borderRadius: BorderRadius.circular(4),
-              //       ),
-              //     ),
-              //   ),
-              // ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ),
               Padding(padding: EdgeInsets.only(top: 25)),
               Expanded(
                 child: Container(
@@ -1542,7 +1255,7 @@ class detailStock extends State<Detailstockopname> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Nama Obat',
+                                            'Nomer Obat',
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
                                                 fontWeight: FontWeight.w600),
@@ -1553,7 +1266,7 @@ class detailStock extends State<Detailstockopname> {
                                           label: Expanded(
                                         child: Center(
                                           child: Text(
-                                            'Jumlah Stock Fisik',
+                                            'Jumlah Stock',
                                             textAlign: TextAlign.center,
                                             style: GoogleFonts.inter(
                                                 fontWeight: FontWeight.w600),
@@ -1563,7 +1276,7 @@ class detailStock extends State<Detailstockopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Jumlah Stock Sistem',
+                                          child: Text('Jumlah Barang Asli',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
@@ -1572,34 +1285,20 @@ class detailStock extends State<Detailstockopname> {
                                       DataColumn(
                                           label: Expanded(
                                         child: Center(
-                                          child: Text('Selisih',
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.inter(
-                                                  fontWeight: FontWeight.w600)),
-                                        ),
-                                      )),
-                                      DataColumn(
-                                          label: Expanded(
-                                        child: Center(
-                                          child: Text('Catatan',
+                                          child: Text('Keterangan',
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w600)),
                                         ),
                                       )),
                                     ],
-                                    rows: paginatedData
-                                        .asMap()
-                                        .entries
-                                        .map((entry) {
-                                      int index = entry.key;
-                                      StokOpnameObatItem item = entry.value;
+                                    rows: paginatedData.map((item) {
                                       return DataRow(
                                         color: MaterialStateProperty.all(
                                             Colors.white),
                                         cells: [
                                           DataCell(Center(
-                                            child: Text("${index + 1}",
+                                            child: Text(item.noKartu,
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.inter(
                                                   fontWeight: FontWeight.w700,
@@ -1608,37 +1307,9 @@ class detailStock extends State<Detailstockopname> {
                                                   fontSize: 14,
                                                 )),
                                           )),
-                                          DataCell(
-                                            Center(
-                                              child: InkWell(
-                                                onTap: () {
-                                                  // Aksi ketika teks diklik
-                                                  _viewDetails(
-                                                      item.namaObat, item);
-                                                  // atau bisa navigasi/detail
-                                                },
-                                                child: Text(
-                                                  item.namaObat,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.inter(
-                                                    color: Colors
-                                                        .blue, // Sesuaikan dengan ColorStyle.text_secondary jika perlu
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w400,
-                                                    decoration: TextDecoration
-                                                        .underline, // 🔽 GARIS BAWAH
-                                                    decorationColor:
-                                                        Colors.blue,
-                                                    decorationThickness:
-                                                        1.5, // Optional: tebal garis
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
                                           DataCell(Center(
                                             child: Text(
-                                              item.kuantitasFisik.toString(),
+                                              item.nama,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1649,7 +1320,7 @@ class detailStock extends State<Detailstockopname> {
                                           )),
                                           DataCell(Center(
                                             child: Text(
-                                              item.kuantitasSistem.toString(),
+                                              item.kategori,
                                               textAlign: TextAlign.center,
                                               style: GoogleFonts.inter(
                                                   color:
@@ -1659,31 +1330,59 @@ class detailStock extends State<Detailstockopname> {
                                             ),
                                           )),
                                           DataCell(Center(
-                                            child: Text(
-                                              item.selisih.toString(),
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.inter(
-                                                  color:
-                                                      ColorStyle.text_secondary,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w400),
-                                            ),
-                                          )),
-                                          DataCell(SizedBox(
+                                              child: SizedBox(
                                             width: 100,
-                                            child: Center(
-                                              child: Text(
-                                                item.catatan,
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.inter(
-                                                    color: ColorStyle
-                                                        .text_secondary,
-                                                    fontSize: 14,
-                                                    fontWeight:
-                                                        FontWeight.w400),
+                                            height: 35,
+                                            child: TextFormField(
+                                              initialValue:
+                                                  item.stok.toString(),
+                                              textAlign: TextAlign.center,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 8),
+                                                border: OutlineInputBorder(),
                                               ),
                                             ),
-                                          )),
+                                          )
+                                              // child: Text(
+                                              //   item.stok.toString(),
+                                              //   textAlign: TextAlign.center,
+                                              //   style: GoogleFonts.inter(
+                                              //     color:
+                                              //         ColorStyle.text_secondary,
+                                              //     fontSize: 14,fontWeight: FontWeight.w400
+                                              //   ),
+                                              // ),
+                                              )),
+                                          DataCell(Center(
+                                              child: SizedBox(
+                                            width: 250,
+                                            height: 35,
+                                            child: TextFormField(
+                                              initialValue:
+                                                  item.catatan.toString(),
+                                              textAlign: TextAlign.center,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 8),
+                                                border: OutlineInputBorder(),
+                                              ),
+                                            ),
+                                          )
+                                              // child: Text(
+                                              //   item.stok.toString(),
+                                              //   textAlign: TextAlign.center,
+                                              //   style: GoogleFonts.inter(
+                                              //     color:
+                                              //         ColorStyle.text_secondary,
+                                              //     fontSize: 14,fontWeight: FontWeight.w400
+                                              //   ),
+                                              // ),
+                                              )),
                                         ],
                                       );
                                     }).toList(),
@@ -1700,117 +1399,156 @@ class detailStock extends State<Detailstockopname> {
               ),
               Padding(padding: EdgeInsets.only(bottom: 4)),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Rows per page:",
-                      style:
-                          TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
-                  Padding(padding: EdgeInsets.only(right: 8)),
-                  Center(
-                    child: SizedBox(
-                      width: 65, // Sesuaikan lebar agar tidak terlalu besar
-                      height:
-                          25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                      child: DropdownButtonFormField2<int>(
-                        isExpanded:
-                            false, // Jangan meluaskan dropdown ke full width
-                        value: _rowsPerPage,
-                        items: rowItems
-                            .map((e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(
-                                    e.toString(),
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        color: ColorStyle.text_hint),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _rowsPerPage = value!;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                          constraints: BoxConstraints(maxHeight: 30),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(5), // Border radius halus
-                            borderSide:
-                                BorderSide(color: ColorStyle.button_grey),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: BorderSide(
-                                color: ColorStyle
-                                    .text_secondary), // Saat aktif, border lebih gelap
-                          ),
-                        ),
-
-                        // **Atur Tampilan Dropdown**
-                        buttonStyleData: ButtonStyleData(
-                          height: 25, // Tinggi tombol dropdown
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 6), // Jarak dalam dropdown
-                        ),
-
-                        // **Atur Tampilan Dropdown yang Muncul**
-                        dropdownStyleData: DropdownStyleData(
-                          width: 65, // Lebar dropdown harus sama dengan input
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            border: Border.all(color: ColorStyle.button_grey),
-                            color: Colors.white,
-                          ),
-                        ),
-
-                        // **Atur Posisi Item Dropdown**
-                        menuItemStyleData: const MenuItemStyleData(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 8), // Padding antar item dropdown
-                        ),
-
-                        // **Ganti Icon Dropdown**
-                        iconStyleData: IconStyleData(
-                          icon: Icon(Icons.keyboard_arrow_down_outlined,
-                              size: 20, color: Colors.black),
-                          openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
-                              size: 20, color: Colors.black),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(padding: EdgeInsets.only(right: 8)),
-                  Text("Page $endIndex of ${filterData.length}",
-                      style:
-                          TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: Icon(Icons.chevron_left),
-                        onPressed: _currentPage > 0
-                            ? () {
-                                setState(() {
-                                  _currentPage--;
-                                });
-                              }
-                            : null,
+                      Text("Rows per page:",
+                          style:
+                              TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
+                      Padding(padding: EdgeInsets.only(right: 8)),
+                      Center(
+                        child: SizedBox(
+                          width: 65, // Sesuaikan lebar agar tidak terlalu besar
+                          height:
+                              25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                          child: DropdownButtonFormField2<int>(
+                            isExpanded:
+                                false, // Jangan meluaskan dropdown ke full width
+                            value: _rowsPerPage,
+                            items: rowItems
+                                .map((e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(
+                                        e.toString(),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: ColorStyle.text_hint),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _rowsPerPage = value!;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              contentPadding:
+                                  EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              constraints: BoxConstraints(maxHeight: 30),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.circular(5), // Border radius halus
+                                borderSide:
+                                    BorderSide(color: ColorStyle.button_grey),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                borderSide: BorderSide(
+                                    color: ColorStyle
+                                        .text_secondary), // Saat aktif, border lebih gelap
+                              ),
+                            ),
+                  
+                            // **Atur Tampilan Dropdown**
+                            buttonStyleData: ButtonStyleData(
+                              height: 25, // Tinggi tombol dropdown
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 6), // Jarak dalam dropdown
+                            ),
+                  
+                            // **Atur Tampilan Dropdown yang Muncul**
+                            dropdownStyleData: DropdownStyleData(
+                              width: 65, // Lebar dropdown harus sama dengan input
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(color: ColorStyle.button_grey),
+                                color: Colors.white,
+                              ),
+                            ),
+                  
+                            // **Atur Posisi Item Dropdown**
+                            menuItemStyleData: const MenuItemStyleData(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8), // Padding antar item dropdown
+                            ),
+                  
+                            // **Ganti Icon Dropdown**
+                            iconStyleData: IconStyleData(
+                              icon: Icon(Icons.keyboard_arrow_down_outlined,
+                                  size: 20, color: Colors.black),
+                              openMenuIcon: Icon(Icons.keyboard_arrow_up_outlined,
+                                  size: 20, color: Colors.black),
+                            ),
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.chevron_right),
-                        onPressed: _currentPage < totalPages - 1
-                            ? () {
-                                setState(() {
-                                  _currentPage++;
-                                });
-                              }
-                            : null,
+                      Padding(padding: EdgeInsets.only(right: 8)),
+                      Text("Page $endIndex of ${filterData.length}",
+                          style:
+                              TextStyle(color: ColorStyle.text_hint, fontSize: 14)),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.chevron_left),
+                            onPressed: _currentPage > 0
+                                ? () {
+                                    setState(() {
+                                      _currentPage--;
+                                    });
+                                  }
+                                : null,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.chevron_right),
+                            onPressed: _currentPage < totalPages - 1
+                                ? () {
+                                    setState(() {
+                                      _currentPage++;
+                                    });
+                                  }
+                                : null,
+                          ),
+                  
+                          
+                        ],
                       ),
                     ],
                   ),
+                  ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorStyle.hover,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 32, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            "SIMPAN",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ))
+                      //         ElevatedButton(
+                      //   onPressed: () {
+
+                      //   },
+                      //   const Text("Kembali",
+                      //       style: TextStyle(color: Colors.white)),
+                      //   style: ElevatedButton.styleFrom(
+                      //     backgroundColor: Colors.red,
+                      //     shape: RoundedRectangleBorder(
+                      //       borderRadius: BorderRadius.circular(5),
+                      //     ),
+                      //     padding:
+                      //         const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                      //   ),
+                      // ),
                 ],
               ),
             ],
@@ -1819,41 +1557,10 @@ class detailStock extends State<Detailstockopname> {
       ),
     );
   }
-   Widget detailField2(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-          SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            height: 35,
-            decoration: BoxDecoration(
-              border: Border.all(color: ColorStyle.fill_stroke),
-              color: ColorStyle.fill_form,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
-              child: Text(
-                value,
-                style: GoogleFonts.inter(fontSize: 12),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
 
   Widget detailField(String title, String value) {
-    return Expanded(
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

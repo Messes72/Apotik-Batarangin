@@ -7,3 +7,4 @@ String nama = "";
 String xApiKey = "helopanda";
 
 String idStockOpnameInfo="";
+List<String> privileges = [];

@@ -43,16 +43,27 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
   @override
   void initState() {
     super.initState();
-    // timerChange = Timer.periodic(
-    //   Duration(seconds: 1),
-    //   (timer) {
-    //     setState(() {
-    //       pageIndex = global.selectedIndex;
-    //     });
-    //   },
-    // );
+
+    // isExpanded = widget.isExpanded;
+
+    // Tentukan default pageIndex berdasarkan privilege
+    // if (hasPrivilege("Product")) {
+    //   global.selectedIndex = 0;
+    // } else if (hasPrivilege("Stok Opname")) {
+    //   global.selectedIndex = 1;
+    //   if
+    // } else if (hasPrivilege("Penerimaan")) {
+    //   global.selectedIndex = 2;
+    // } else if (hasPrivilege("Pembelian")) {
+    //   global.selectedIndex = 4;
+    // } 
+    // else {
+    //   global.selectedIndex = 0; // fallback default
+    // }
+
     pageIndex = global.selectedIndex;
     isExpanded = widget.isExpanded;
+
     screenApp = [
       PageProduk(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 0
       stokopname(isExpanded: isExpanded, toggleSidebar: toggleSidebar), // 1
@@ -71,6 +82,11 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
     setState(() {
       isExpanded = !isExpanded;
     });
+  }
+
+  bool hasPrivilege(String keyword) {
+    return global.privileges
+        .any((p) => p.toLowerCase().contains(keyword.toLowerCase()));
   }
 
   @override
@@ -133,13 +149,22 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
               SizedBox(
                 height: 40,
               ),
-              buildMenuItem("images/produk.png", "Product", 0),
-              Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/stockOpname.png", "Stock Opname", 1),
-              Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/pembelian.png", "Pembeliaan Barang", 4),
-              Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/penerimaan.png", "Penerimaan Barang", 2),
+              if (hasPrivilege("Product")) ...[
+                buildMenuItem("images/produk.png", "Product", 0),
+                SizedBox(height: 8),
+              ],
+              if (hasPrivilege("Stok Opname")) ...[
+                buildMenuItem("images/stockOpname.png", "Stock Opname", 1),
+                SizedBox(height: 8),
+              ],
+              if (hasPrivilege("Pembelian")) ...[
+                buildMenuItem("images/pembelian.png", "Pembeliaan Barang", 4),
+                SizedBox(height: 8),
+              ],
+              if (hasPrivilege("Penerimaan")) ...[
+                buildMenuItem("images/penerimaan.png", "Penerimaan Barang", 2),
+                SizedBox(height: 8),
+              ],
               Spacer(),
               Divider(color: Colors.white, thickness: 2),
               buildMenuItem2(Icons.logout, "Keluar", 3),
@@ -152,7 +177,19 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
             child: Column(
               children: [
                 NavbarTop(
-                    title: pageIndex == 0 ? "PRODUK" : pageIndex == 1 ?"STOCK OPNAME": pageIndex == 2 ? "PENERIMAAN BARANG": pageIndex == 4 ?"PEMBELIAN BARANG" : pageIndex == 3 ? "INPUT STOCK OPNAME" : pageIndex ==5 ? "INFORMASI DATA STOCK OPNAME"  : "TIDAK ADA",
+                    title: pageIndex == 0
+                        ? "PRODUK"
+                        : pageIndex == 1
+                            ? "STOCK OPNAME"
+                            : pageIndex == 2
+                                ? "PENERIMAAN BARANG"
+                                : pageIndex == 4
+                                    ? "PEMBELIAN BARANG"
+                                    : pageIndex == 3
+                                        ? "INPUT STOCK OPNAME"
+                                        : pageIndex == 5
+                                            ? "INFORMASI DATA STOCK OPNAME"
+                                            : "TIDAK ADA",
                     onMenuPressed: () {
                       setState(() {
                         if (isExpanded) {
@@ -164,7 +201,7 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
                     },
                     isExpanded: isExpanded,
                     animationTrigger: () {},
-                    animation: isExpanded?true:false),
+                    animation: isExpanded ? true : false),
                 Expanded(child: screenApp[pageIndex]),
               ],
             ),

@@ -45,6 +45,12 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
   List<Widget> screenApp = [];
   Timer? timerChange;
   int pageIndex = 0;
+
+  bool hasPrivilege(String keyword) {
+    return global.privileges
+        .any((p) => p.toLowerCase().contains(keyword.toLowerCase()));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -134,9 +140,13 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
               ),
               //  buildMenuItem("images/dashboard.png", "Dashboard", 5),
               //   Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/transaksi.png", "Transaksi", 0),
-              Padding(padding: EdgeInsets.only(bottom: 8)),
-              buildMenuItem("images/drug.png", "Obat Racik", 1),
+              if (hasPrivilege("PoS")) ...[
+                buildMenuItem("images/transaksi.png", "Transaksi", 0),
+              ],
+              if (hasPrivilege("Product")) ...[
+                Padding(padding: EdgeInsets.only(bottom: 8)),
+                buildMenuItem("images/drug.png", "Obat Racik", 1),
+              ],
               Spacer(),
               Divider(color: Colors.white, thickness: 2),
               buildMenuItem2(Icons.logout, "Keluar", 3),
@@ -155,7 +165,9 @@ class _Sidebarcoba2 extends State<Sidebarcoba2> {
                             ? "Obat Racik"
                             : pageIndex == 2
                                 ? "PENERIMAAN BARANG"
-                                : pageIndex == 3 ? "KWITANSI OBAT" : "TIDAK ADA",
+                                : pageIndex == 3
+                                    ? "KWITANSI OBAT"
+                                    : "TIDAK ADA",
                     onMenuPressed: () {
                       setState(() {
                         if (isExpanded) {

@@ -13,6 +13,7 @@ import 'package:http/retry.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:apotek/global.dart' as global;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class obatRacik extends StatefulWidget {
   final VoidCallback toggleSidebar;
@@ -31,6 +32,7 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
 
   final List<String> rowKategori = ["Obat Panas", "Obat Batuk", "Obat Flu"];
   final List<String> rowSatuan = ["Strip", "Botol", "Pcs"];
+  bool loadingData = true;
 
   String? selectedValue;
   String? _selectedStatus;
@@ -47,23 +49,25 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
 
   // BUAT INPUT
   void tambahInputForm(void Function(void Function()) setDialogState2) {
-    Products? isiNama;
-    TextEditingController jumlahBarang = TextEditingController();
+    isi.add(null);
+    isi2.add(TextEditingController());
+    renderInputForms(setDialogState2);
+  }
 
-    isi.add(isiNama);
-    isi2.add(jumlahBarang);
-    int index = isi.length - 1;
-
-    inputObatRacikData.add(
-      InputForm(
-        "Nama Obat",
-        "Nama Obat",
-        "Catatan",
-        "Catatan",
-        index,
-        index == 0 ? null : () => hapusInputForm(index, setDialogState2),
-      ),
-    );
+  void renderInputForms(void Function(void Function()) setDialogState2) {
+    inputObatRacikData.clear();
+    for (int i = 0; i < isi.length; i++) {
+      inputObatRacikData.add(
+        InputForm(
+          "Nama Obat",
+          "Nama Obat",
+          "Catatan",
+          "Catatan",
+          i,
+          i == 0 ? null : () => hapusInputForm(i, setDialogState2),
+        ),
+      );
+    }
   }
 
   void muatUlang(void Function(void Function()) setDialogState2) {
@@ -76,10 +80,10 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
   void hapusInputForm(
       int index, void Function(void Function()) setDialogState2) {
     setDialogState2(() {
-      if (index < inputObatRacikData.length) {
-        inputObatRacikData.removeAt(index);
+      if (index < isi.length) {
         isi.removeAt(index);
         isi2.removeAt(index);
+        renderInputForms(setDialogState2); // Render ulang form
       }
     });
   }
@@ -145,11 +149,15 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
       // ObatRacikData.getDataObatRacik().then((value) {
       setState(() {
         filterData = List.from(listObatRacik);
+        loadingData = false;
       });
       // });
 
       print(listObatRacik.length);
     } catch (e) {
+      setState(() {
+        loadingData = false;
+      });
       print("Error: $e");
     }
   }
@@ -257,7 +265,7 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                           ],
                         ),
                       ),
-                      SizedBox(height: 12),
+                      SizedBox(height: 8),
 
                       Expanded(
                         child: SingleChildScrollView(
@@ -266,107 +274,88 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                             spacing: 16,
                             runSpacing: 16,
                             children: [
-                              Column(
-                                children: [
-                                  inputField("Nama Obat Racik",
-                                      "Nama Obat Racik", namaOnatRacik),
-                                  inputField("Catatan", "Catatan",
-                                      keteranganObatRacik),
-                                  Divider(),
-                                  Padding(padding: EdgeInsets.only(bottom: 16)),
-                                  Row(
-                                    children: [
-                                      Padding(
-                                          padding: EdgeInsets.only(left: 16)),
-                                      Text("Komposisi",
-                                          style: GoogleFonts.montserrat(
-                                              fontSize: 18,
-                                              color: ColorStyle.tulisan_form,
-                                              fontWeight: FontWeight.w600)),
-                                      Spacer(),
-                                      // SizedBox(
-                                      //   width: 120,
-                                      //   height: 30,
-                                      //   child: ElevatedButton.icon(
-                                      //     onPressed: () {
-                                      //       setDialogState2(() {
-                                      //         // muatUlang(setDialogState2);
-                                      //       });
-                                      //     },
-                                      //     icon: Icon(Icons.refresh,
-                                      //         color: ColorStyle.button_yellow,
-                                      //         size: 22),
-                                      //     label: const Text("Muat Ulang",
-                                      //         style: TextStyle(
-                                      //             color:
-                                      //                 ColorStyle.button_yellow,
-                                      //             fontSize: 12,
-                                      //             fontWeight: FontWeight.bold)),
-                                      //     style: ElevatedButton.styleFrom(
-                                      //       padding: const EdgeInsets.symmetric(
-                                      //           vertical: 6),
-                                      //       backgroundColor: Colors.white,
-                                      //       shape: RoundedRectangleBorder(
-                                      //           borderRadius:
-                                      //               BorderRadius.circular(8),
-                                      //           side: BorderSide(
-                                      //               color: ColorStyle
-                                      //                   .button_yellow)),
-                                      //     ),
-                                      //   ),
-                                      // ),
-                                      // Padding(
-                                      //     padding: EdgeInsets.only(left: 16)),
-                                      SizedBox(
-                                        width: 150,
-                                        height: 30,
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            setDialogState2(() {
-                                              tambahInputForm(setDialogState2);
-                                            });
-                                            // print(inputObatRacikData.length);
-                                          },
-                                          icon: Icon(Icons.add,
-                                              color:
-                                                  ColorStyle.text_dalam_kolom,
-                                              size: 22),
-                                          label: const Text("Tambah Komposisi",
-                                              style: TextStyle(
-                                                  color: ColorStyle
-                                                      .text_dalam_kolom,
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold)),
-                                          style: ElevatedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 6, horizontal: 2),
-                                            backgroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                side: BorderSide(
+                              Form(
+                                key: _formKey,
+                                child: Column(
+                                  children: [
+                                    inputField("Nama Obat Racik",
+                                        "Nama Obat Racik", namaOnatRacik),
+                                    inputField("Catatan", "Catatan",
+                                        keteranganObatRacik),
+                                    SizedBox(height: 20.35,),
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 6, left: 6),
+                                      child: Divider(),
+                                    ),
+                                    Padding(
+                                        padding: EdgeInsets.only(bottom: 16)),
+                                    Row(
+                                      children: [
+                                        Padding(
+                                            padding: EdgeInsets.only(left: 16)),
+                                        Text("Komposisi",
+                                            style: GoogleFonts.montserrat(
+                                                fontSize: 18,
+                                                color: ColorStyle.tulisan_form,
+                                                fontWeight: FontWeight.w600)),
+                                        Spacer(),
+                                        SizedBox(
+                                          width: 150,
+                                          height: 30,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () {
+                                              setDialogState2(() {
+                                                tambahInputForm(
+                                                    setDialogState2);
+                                              });
+                                              // print(inputObatRacikData.length);
+                                            },
+                                            icon: Icon(Icons.add,
+                                                color:
+                                                    ColorStyle.text_dalam_kolom,
+                                                size: 22),
+                                            label: const Text(
+                                                "Tambah Komposisi",
+                                                style: TextStyle(
                                                     color: ColorStyle
-                                                        .text_dalam_kolom)),
+                                                        .text_dalam_kolom,
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            style: ElevatedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 6,
+                                                      horizontal: 2),
+                                              backgroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  side: BorderSide(
+                                                      color: ColorStyle
+                                                          .text_dalam_kolom)),
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Padding(
-                                          padding: EdgeInsets.only(right: 16)),
-                                    ],
-                                  ),
-                                  Padding(padding: EdgeInsets.only(top: 16)),
-                                  Column(
-                                    children: [
-                                      ListView.builder(
-                                        shrinkWrap: true,
-                                        itemCount: inputObatRacikData.length,
-                                        itemBuilder: (context, index) {
-                                          return inputObatRacikData[index];
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                        Padding(
+                                            padding:
+                                                EdgeInsets.only(right: 16)),
+                                      ],
+                                    ),
+                                    Padding(padding: EdgeInsets.only(top: 16)),
+                                    Column(
+                                      children: [
+                                        ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: inputObatRacikData.length,
+                                          itemBuilder: (context, index) {
+                                            return inputObatRacikData[index];
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                               Padding(
                                 padding:
@@ -379,20 +368,14 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                                       height: 30,
                                       child: ElevatedButton(
                                         onPressed: () {
-                                          Navigator.pop(context);
-                                          _alertInput();
-                                          // _alertDone("diinput");
-                                          // _updateProduk(
-                                          //     item,
-                                          //     nomorKartuController,
-                                          //     nomorBatchController,
-                                          //     kodeController,
-                                          //     kategoriController,
-                                          //     namaObatController,
-                                          //     kadaluarsaController,
-                                          //     satuanController,
-                                          //     jumlahController,
-                                          //     caraPemakaianController);
+                                          if (_formKey.currentState
+                                                  ?.validate() ??
+                                              false) {
+                                            Navigator.pop(context);
+                                            _alertInput(); // Data valid dan bisa diproses
+                                          } else {
+                                            // Form tidak valid, tampilkan pesan atau highlight otomatis akan muncul
+                                          }
                                         },
                                         style: ElevatedButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
@@ -406,7 +389,7 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                                                 width: 1),
                                           ),
                                         ),
-                                        child: const Text("KONFIRMASI",
+                                        child: const Text("SIMPAN",
                                             style: TextStyle(
                                                 color: ColorStyle.button_green,
                                                 fontSize: 11,
@@ -651,7 +634,18 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: dataObatDetail == null
-                    ? Center(child: CircularProgressIndicator())
+                    ? Positioned.fill(
+                        child: Container(
+                          color: Colors.white,
+                          child: Center(
+                            child: LoadingAnimationWidget.flickr(
+                              leftDotColor: Colors.red,
+                              rightDotColor: Colors.blue,
+                              size: 50,
+                            ),
+                          ),
+                        ),
+                      )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -826,400 +820,481 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
       //     animationTrigger: onMenuPressed,
       //     animation: triggerAnimation),
 
-      body: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(padding: EdgeInsets.only(bottom: 16)),
-            Expanded(
-              child: Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+      body: Stack(children: [
+        loadingData
+            ? Positioned.fill(
+                child: Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: LoadingAnimationWidget.flickr(
+                      leftDotColor: Colors.red,
+                      rightDotColor: Colors.blue,
+                      size: 50,
+                    ),
+                  ),
+                ),
+              )
+            : Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          height: 40,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              // setState(() {
-                              //   global.selectedIndex = 3;
-                              //   global.selectedScreen = 0;
-                              // });
-                              _inputObatRacik();
-                            },
-                            icon:
-                                Icon(Icons.add, color: Colors.white, size: 22),
-                            label: Transform.translate(
-                              offset: Offset(-3, 0),
-                              child: Text("Input Obat Racik",
-                                  style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600)),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  ColorStyle.hover.withOpacity(0.7),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                            ),
-                          ),
-                        ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
+                        Padding(padding: EdgeInsets.only(bottom: 16)),
                         Expanded(
                           child: Container(
-                            height: 40,
-                            // width: 242,
-                            // decoration: BoxDecoration(
-                            //   border: Border.all(
-                            //       color: ColorStyle.fill_stroke, width: 1),
-                            //   color: ColorStyle.fill_form,
-                            //   borderRadius: BorderRadius.circular(4),
-                            // ),
-                            child: TextField(
-                              controller: text,
-                              onChanged: filtering,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                filled: true,
-                                fillColor: ColorStyle.fill_form,
-
-                                // Menambahkan ikon di dalam TextField
-                                prefixIcon: Padding(
-                                  padding: EdgeInsets.only(left: 8, right: 8),
-                                  child: Icon(
-                                    Icons.search_outlined,
-                                    color: Color(0XFF1B1442),
-                                    size: 30, // Sesuaikan ukuran ikon
-                                  ),
-                                ),
-
-                                hintText: "Search",
-                                contentPadding:
-                                    EdgeInsets.only(left: 8, bottom: 12.5),
-                                hintStyle: TextStyle(
-                                  color: ColorStyle.text_hint,
-                                  fontSize: 16,
-                                ),
-
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: ColorStyle.fill_stroke, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.black, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                      ],
-                    ),
-                    const SizedBox(height: 30),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: ColorStyle.putih_background,
-                            boxShadow: [
-                              BoxShadow(
-                                color: ColorStyle.shadow.withOpacity(0.25),
-                                spreadRadius: 0,
-                                blurRadius: 4,
-                                offset: Offset(0, 1), // x dan y
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                  return SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                          minWidth: constraints.maxWidth),
-                                      child: SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
-                                        child: DataTable(
-                                          headingRowColor:
-                                              MaterialStateProperty.all(
-                                                  Colors.white),
-                                          columnSpacing:
-                                              60, // Menambah jarak antar kolom
-                                          dataRowMinHeight:
-                                              60, // Menambah tinggi minimum baris
-                                          dataRowMaxHeight:
-                                              60, // Menambah tinggi maksimum baris
-                                          columns: [
-                                            DataColumn(
-                                                label: Expanded(
-                                                    child: Center(
-                                                        child: Text(
-                                                            'ID Obat Racik',
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: GoogleFonts.inter(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600))))),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Nama Obat Racik',
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                        fontWeight:
-                                                            FontWeight.w600)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Catatan',
-                                                    textAlign: TextAlign.center,
-                                                    style: GoogleFonts.inter(
-                                                        fontWeight:
-                                                            FontWeight.w600)),
-                                              ),
-                                            )),
-                                            DataColumn(
-                                                label: Expanded(
-                                              child: Center(
-                                                child: Text('Actions',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)),
-                                              ),
-                                            )),
-                                          ],
-                                          rows: paginatedData
-                                              .asMap()
-                                              .entries
-                                              .map((entry) {
-                                            int index = entry.key;
-                                            ObatRacikData item = entry.value;
-                                            return DataRow(
-                                              color: MaterialStateProperty.all(
-                                                  Colors.white),
-                                              cells: [
-                                                DataCell(Center(
-                                                    child: Text(
-                                                        item.idObatRacik,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 14,
-                                                        )))),
-                                                DataCell(Center(
-                                                    child: Text(item.namaRacik,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontSize: 14,
-                                                        )))),
-                                                DataCell(
-                                                  Center(
-                                                    child: SizedBox(
-                                                      width: 100,
-                                                      child: Text(
-                                                        item.catatan,
-                                                        overflow: TextOverflow
-                                                            .visible,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 2,
-                                                        textAlign: TextAlign
-                                                            .center, // Batas maksimal baris teks
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(Center(
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      IconButton(
-                                                          icon: Icon(
-                                                            Icons
-                                                                .open_in_new_outlined,
-                                                            color: ColorStyle
-                                                                .text_secondary,
-                                                            size: 24,
-                                                          ),
-                                                          onPressed: () {
-                                                            _viewDetails(item);
-                                                          }),
-                                                    ],
-                                                  ),
-                                                ))
-                                              ],
-                                            );
-                                          }).toList(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      height: 40,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          // setState(() {
+                                          //   global.selectedIndex = 3;
+                                          //   global.selectedScreen = 0;
+                                          // });
+                                          _inputObatRacik();
+                                        },
+                                        icon: Icon(Icons.add,
+                                            color: Colors.white, size: 22),
+                                        label: Transform.translate(
+                                          offset: Offset(-3, 0),
+                                          child: Text("Input Obat Racik",
+                                              style: GoogleFonts.inter(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600)),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              ColorStyle.hover.withOpacity(0.7),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 5),
                                         ),
                                       ),
                                     ),
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text("Rows per page:",
-                            style: TextStyle(
-                                color: ColorStyle.text_hint, fontSize: 14)),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Center(
-                          child: SizedBox(
-                            width:
-                                65, // Sesuaikan lebar agar tidak terlalu besar
-                            height:
-                                25, // Tinggi dropdown agar sesuai dengan contoh gambar
-                            child: DropdownButtonFormField2<int>(
-                              isExpanded:
-                                  false, // Jangan meluaskan dropdown ke full width
-                              value: _rowsPerPage,
-                              items: rowItems
-                                  .map((e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e.toString(),
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: ColorStyle.text_hint),
-                                          overflow: TextOverflow.ellipsis,
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                    Expanded(
+                                      child: Container(
+                                        height: 40,
+                                        // width: 242,
+                                        // decoration: BoxDecoration(
+                                        //   border: Border.all(
+                                        //       color: ColorStyle.fill_stroke, width: 1),
+                                        //   color: ColorStyle.fill_form,
+                                        //   borderRadius: BorderRadius.circular(4),
+                                        // ),
+                                        child: TextField(
+                                          controller: text,
+                                          onChanged: filtering,
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            filled: true,
+                                            fillColor: ColorStyle.fill_form,
+
+                                            // Menambahkan ikon di dalam TextField
+                                            prefixIcon: Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 8, right: 8),
+                                              child: Icon(
+                                                Icons.search_outlined,
+                                                color: Color(0XFF1B1442),
+                                                size:
+                                                    30, // Sesuaikan ukuran ikon
+                                              ),
+                                            ),
+
+                                            hintText: "Search",
+                                            contentPadding: EdgeInsets.only(
+                                                left: 8, bottom: 12.5),
+                                            hintStyle: TextStyle(
+                                              color: ColorStyle.text_hint,
+                                              fontSize: 16,
+                                            ),
+
+                                            enabledBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: ColorStyle.fill_stroke,
+                                                  width: 1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+
+                                            focusedBorder: OutlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors.black,
+                                                  width: 1),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                          ),
                                         ),
-                                      ))
-                                  .toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _rowsPerPage = value!;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 2),
-                                constraints: BoxConstraints(maxHeight: 30),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      5), // Border radius halus
-                                  borderSide:
-                                      BorderSide(color: ColorStyle.button_grey),
+                                      ),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                  ],
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide(
-                                      color: ColorStyle
-                                          .text_secondary), // Saat aktif, border lebih gelap
+                                const SizedBox(height: 30),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(4),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: ColorStyle.putih_background,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: ColorStyle.shadow
+                                                .withOpacity(0.25),
+                                            spreadRadius: 0,
+                                            blurRadius: 4,
+                                            offset: Offset(0, 1), // x dan y
+                                          ),
+                                        ],
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Expanded(
+                                            child: LayoutBuilder(builder:
+                                                (context, constraints) {
+                                              return SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                      minWidth:
+                                                          constraints.maxWidth),
+                                                  child: SingleChildScrollView(
+                                                    scrollDirection:
+                                                        Axis.vertical,
+                                                    child: DataTable(
+                                                      headingRowColor:
+                                                          MaterialStateProperty
+                                                              .all(
+                                                                  Colors.white),
+                                                      columnSpacing:
+                                                          60, // Menambah jarak antar kolom
+                                                      dataRowMinHeight:
+                                                          60, // Menambah tinggi minimum baris
+                                                      dataRowMaxHeight:
+                                                          60, // Menambah tinggi maksimum baris
+                                                      columns: [
+                                                        DataColumn(
+                                                            label: Expanded(
+                                                                child: Center(
+                                                                    child: Text(
+                                                                        'ID Obat Racik',
+                                                                        textAlign:
+                                                                            TextAlign
+                                                                                .center,
+                                                                        style: GoogleFonts.inter(
+                                                                            fontWeight:
+                                                                                FontWeight.w600))))),
+                                                        DataColumn(
+                                                            label: Expanded(
+                                                          child: Center(
+                                                            child: Text(
+                                                                'Nama Obat Racik',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: GoogleFonts.inter(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600)),
+                                                          ),
+                                                        )),
+                                                        DataColumn(
+                                                            label: Expanded(
+                                                          child: Center(
+                                                            child: Text(
+                                                                'Catatan',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: GoogleFonts.inter(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600)),
+                                                          ),
+                                                        )),
+                                                        DataColumn(
+                                                            label: Expanded(
+                                                          child: Center(
+                                                            child: Text(
+                                                                'Actions',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .center,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)),
+                                                          ),
+                                                        )),
+                                                      ],
+                                                      rows: paginatedData
+                                                          .asMap()
+                                                          .entries
+                                                          .map((entry) {
+                                                        int index = entry.key;
+                                                        ObatRacikData item =
+                                                            entry.value;
+                                                        return DataRow(
+                                                          color:
+                                                              MaterialStateProperty
+                                                                  .all(Colors
+                                                                      .white),
+                                                          cells: [
+                                                            DataCell(Center(
+                                                                child: Text(
+                                                                    item
+                                                                        .idObatRacik,
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: ColorStyle
+                                                                          .text_secondary,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                      fontSize:
+                                                                          14,
+                                                                    )))),
+                                                            DataCell(Center(
+                                                                child: Text(
+                                                                    item
+                                                                        .namaRacik,
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: ColorStyle
+                                                                          .text_secondary,
+                                                                      fontSize:
+                                                                          14,
+                                                                    )))),
+                                                            DataCell(
+                                                              Center(
+                                                                child: SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    item.catatan,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .visible,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                    ),
+                                                                    maxLines: 2,
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center, // Batas maksimal baris teks
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            DataCell(Center(
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .center,
+                                                                children: [
+                                                                  IconButton(
+                                                                      icon:
+                                                                          Icon(
+                                                                        Icons
+                                                                            .open_in_new_outlined,
+                                                                        color: ColorStyle
+                                                                            .text_secondary,
+                                                                        size:
+                                                                            24,
+                                                                      ),
+                                                                      onPressed:
+                                                                          () {
+                                                                        _viewDetails(
+                                                                            item);
+                                                                      }),
+                                                                ],
+                                                              ),
+                                                            ))
+                                                          ],
+                                                        );
+                                                      }).toList(),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Text("Rows per page:",
+                                        style: TextStyle(
+                                            color: ColorStyle.text_hint,
+                                            fontSize: 14)),
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                    Center(
+                                      child: SizedBox(
+                                        width:
+                                            65, // Sesuaikan lebar agar tidak terlalu besar
+                                        height:
+                                            25, // Tinggi dropdown agar sesuai dengan contoh gambar
+                                        child: DropdownButtonFormField2<int>(
+                                          isExpanded:
+                                              false, // Jangan meluaskan dropdown ke full width
+                                          value: _rowsPerPage,
+                                          items: rowItems
+                                              .map((e) => DropdownMenuItem(
+                                                    value: e,
+                                                    child: Text(
+                                                      e.toString(),
+                                                      style: TextStyle(
+                                                          fontSize: 14,
+                                                          color: ColorStyle
+                                                              .text_hint),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ))
+                                              .toList(),
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _rowsPerPage = value!;
+                                            });
+                                          },
+                                          decoration: InputDecoration(
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                    horizontal: 4, vertical: 2),
+                                            constraints:
+                                                BoxConstraints(maxHeight: 30),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                      5), // Border radius halus
+                                              borderSide: BorderSide(
+                                                  color:
+                                                      ColorStyle.button_grey),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              borderSide: BorderSide(
+                                                  color: ColorStyle
+                                                      .text_secondary), // Saat aktif, border lebih gelap
+                                            ),
+                                          ),
 
-                              // **Atur Tampilan Dropdown**
-                              buttonStyleData: ButtonStyleData(
-                                height: 25, // Tinggi tombol dropdown
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 6), // Jarak dalam dropdown
-                              ),
+                                          // **Atur Tampilan Dropdown**
+                                          buttonStyleData: ButtonStyleData(
+                                            height:
+                                                25, // Tinggi tombol dropdown
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal:
+                                                    6), // Jarak dalam dropdown
+                                          ),
 
-                              // **Atur Tampilan Dropdown yang Muncul**
-                              dropdownStyleData: DropdownStyleData(
-                                width:
-                                    65, // Lebar dropdown harus sama dengan input
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
-                                  border:
-                                      Border.all(color: ColorStyle.button_grey),
-                                  color: Colors.white,
+                                          // **Atur Tampilan Dropdown yang Muncul**
+                                          dropdownStyleData: DropdownStyleData(
+                                            width:
+                                                65, // Lebar dropdown harus sama dengan input
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                              border: Border.all(
+                                                  color:
+                                                      ColorStyle.button_grey),
+                                              color: Colors.white,
+                                            ),
+                                          ),
+
+                                          // **Atur Posisi Item Dropdown**
+                                          menuItemStyleData:
+                                              const MenuItemStyleData(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal:
+                                                    8), // Padding antar item dropdown
+                                          ),
+
+                                          // **Ganti Icon Dropdown**
+                                          iconStyleData: IconStyleData(
+                                            icon: Icon(
+                                                Icons
+                                                    .keyboard_arrow_down_outlined,
+                                                size: 20,
+                                                color: Colors.black),
+                                            openMenuIcon: Icon(
+                                                Icons
+                                                    .keyboard_arrow_up_outlined,
+                                                size: 20,
+                                                color: Colors.black),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(padding: EdgeInsets.only(right: 8)),
+                                    Text(
+                                        "Page $endIndex of ${filterData.length}",
+                                        style: TextStyle(
+                                            color: ColorStyle.text_hint,
+                                            fontSize: 14)),
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(Icons.chevron_left),
+                                          onPressed: _currentPage > 0
+                                              ? () {
+                                                  setState(() {
+                                                    _currentPage--;
+                                                  });
+                                                }
+                                              : null,
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.chevron_right),
+                                          onPressed:
+                                              _currentPage < totalPages - 1
+                                                  ? () {
+                                                      setState(() {
+                                                        _currentPage++;
+                                                      });
+                                                    }
+                                                  : null,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ),
-
-                              // **Atur Posisi Item Dropdown**
-                              menuItemStyleData: const MenuItemStyleData(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        8), // Padding antar item dropdown
-                              ),
-
-                              // **Ganti Icon Dropdown**
-                              iconStyleData: IconStyleData(
-                                icon: Icon(Icons.keyboard_arrow_down_outlined,
-                                    size: 20, color: Colors.black),
-                                openMenuIcon: Icon(
-                                    Icons.keyboard_arrow_up_outlined,
-                                    size: 20,
-                                    color: Colors.black),
-                              ),
+                              ],
                             ),
                           ),
-                        ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
-                        Text("Page $endIndex of ${filterData.length}",
-                            style: TextStyle(
-                                color: ColorStyle.text_hint, fontSize: 14)),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.chevron_left),
-                              onPressed: _currentPage > 0
-                                  ? () {
-                                      setState(() {
-                                        _currentPage--;
-                                      });
-                                    }
-                                  : null,
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.chevron_right),
-                              onPressed: _currentPage < totalPages - 1
-                                  ? () {
-                                      setState(() {
-                                        _currentPage++;
-                                      });
-                                    }
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                        )
+                      ]),
                 ),
               ),
-            )
-          ]),
-        ),
-      ),
+      ]),
     );
   }
 
@@ -1294,62 +1369,66 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
             children: [
               Text(
                 title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w600),
               ),
               Text(
                 " *",
-                style: TextStyle(
+                style: GoogleFonts.inter(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: ColorStyle.button_red),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            height: 35,
-            // decoration: BoxDecoration(
-            //   border: Border.all(color: ColorStyle.fill_stroke),
-            //   color: ColorStyle.fill_form,
-            //   borderRadius: BorderRadius.circular(8),
-            // ),
-            child: TextField(
-              controller: edit,
-              style: TextStyle(
+          SizedBox(height: 4),
+          TextFormField(
+            controller: edit,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return "Tidak boleh kosong";
+              }
+              return null;
+            },
+            style: GoogleFonts.inter(
                 color: ColorStyle.tulisan_form,
-                fontSize: 12,
-              ),
-              decoration: InputDecoration(
-                hintText: isi,
-                filled: true,
-                fillColor: ColorStyle.fill_form,
-                contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-                hintStyle: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: isi,
+              filled: true,
+              fillColor: ColorStyle.fill_form,
+              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              hintStyle: GoogleFonts.inter(
                   color: ColorStyle.tulisan_form,
-                  fontSize: 12,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
-                  borderRadius: BorderRadius.circular(5),
-                ),
-
-                // Border saat ditekan (fokus)
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: Colors.black, width: 1), // Warna biru saat fokus
-                  borderRadius: BorderRadius.circular(5),
-                ),
-
-                // Border saat error
-                errorBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                      color: ColorStyle.button_red,
-                      width: 1), // Warna merah jika error
-                  borderRadius: BorderRadius.circular(5),
-                ),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.fill_stroke, width: 1), // Warna abu-abu
+                borderRadius: BorderRadius.circular(5),
               ),
+
+              // Border saat ditekan (fokus)
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.black, width: 1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.button_red,
+                    width: 1), // Warna biru saat fokus
+                borderRadius: BorderRadius.circular(5),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                    color: ColorStyle.button_red,
+                    width: 1), // Warna biru saat fokus
+                borderRadius: BorderRadius.circular(5),
+              ),
+
+              // Border saat error
             ),
           ),
         ],
@@ -2222,76 +2301,7 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Row(
-                  //   children: [
-                  //     Text(
-                  //       "Nama Obat",
-                  //       style: TextStyle(
-                  //           fontSize: 14, fontWeight: FontWeight.bold),
-                  //     ),
-                  //     Text(
-                  //       " *",
-                  //       style: TextStyle(
-                  //           fontSize: 14,
-                  //           fontWeight: FontWeight.bold,
-                  //           color: ColorStyle.button_red),
-                  //     ),
-                  //   ],
-                  // ),
-                  // SizedBox(height: 8),
-                  // Container(
-                  //   height: 35,
-                  //   // decoration: BoxDecoration(
-                  //   //   border: Border.all(color: ColorStyle.fill_stroke),
-                  //   //   color: ColorStyle.fill_form,
-                  //   //   borderRadius: BorderRadius.circular(8),
-                  //   // ),
-                  //   child: TextField(
-                  //     onChanged: (value) {
-                  //       print(isi[0].text);
-                  //     },
-                  //     controller: edit,
-                  //     style: TextStyle(
-                  //       color: ColorStyle.tulisan_form,
-                  //       fontSize: 12,
-                  //     ),
-                  //     decoration: InputDecoration(
-                  //       filled: true,
-                  //       fillColor: ColorStyle.fill_form,
-                  //       hintText: "Nama Obat",
-                  //       contentPadding: EdgeInsets.only(left: 8, bottom: 12.5),
-                  //       hintStyle: TextStyle(
-                  //         color: ColorStyle.tulisan_form,
-                  //         fontSize: 12,
-                  //       ),
-                  //       enabledBorder: OutlineInputBorder(
-                  //         borderSide: BorderSide(
-                  //             color: ColorStyle.fill_stroke,
-                  //             width: 1), // Warna abu-abu
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-
-                  //       // Border saat ditekan (fokus)
-                  //       focusedBorder: OutlineInputBorder(
-                  //         borderSide: BorderSide(
-                  //             color: Colors.black,
-                  //             width: 1), // Warna biru saat fokus
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-
-                  //       // Border saat error
-                  //       errorBorder: OutlineInputBorder(
-                  //         borderSide: BorderSide(
-                  //             color: ColorStyle.button_red,
-                  //             width: 1), // Warna merah jika error
-                  //         borderRadius: BorderRadius.circular(8),
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  dropdownProduct(index)
-                ],
+                children: [dropdownProduct(index)],
               ),
             ),
             SizedBox(width: 10),
@@ -2320,52 +2330,56 @@ class _obatRacik extends State<obatRacik> with SingleTickerProviderStateMixin {
                     children: [
                       Expanded(
                         // Gunakan Expanded agar TextField tidak menyebabkan infinite width error
-                        child: Container(
-                          height: 35,
-                          // decoration: BoxDecoration(
-                          //   border: Border.all(color: ColorStyle.fill_stroke),
-                          //   color: ColorStyle.fill_form,
-                          //   borderRadius: BorderRadius.circular(8),
-                          // ),
-                          child: TextFormField(
-                            controller: isi2[index],
-                            style: TextStyle(
+                        child: TextFormField(
+                          controller: isi2[index],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "Tidak boleh kosong";
+                            }
+                            return null;
+                          },
+                          style: GoogleFonts.inter(
                               color: ColorStyle.tulisan_form,
-                              fontSize: 12,
-                            ),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: ColorStyle.fill_form,
-                              hintText: "Catatan",
-                              contentPadding:
-                                  EdgeInsets.only(left: 8, bottom: 12.5),
-                              hintStyle: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: "Catatan",
+                            filled: true,
+                            fillColor: ColorStyle.fill_form,
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 8),
+                            hintStyle: GoogleFonts.inter(
                                 color: ColorStyle.tulisan_form,
-                                fontSize: 12,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: ColorStyle.fill_stroke,
-                                    width: 1), // Warna abu-abu
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-
-                              // Border saat ditekan (fokus)
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Colors.black,
-                                    width: 1), // Warna biru saat fokus
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-
-                              // Border saat error
-                              errorBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: ColorStyle.button_red,
-                                    width: 1), // Warna merah jika error
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: ColorStyle.fill_stroke,
+                                  width: 1), // Warna abu-abu
+                              borderRadius: BorderRadius.circular(5),
                             ),
+
+                            // Border saat ditekan (fokus)
+                            focusedBorder: OutlineInputBorder(
+                              borderSide:
+                                  BorderSide(color: Colors.black, width: 1),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: ColorStyle.button_red,
+                                  width: 1), // Warna biru saat fokus
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: ColorStyle.button_red,
+                                  width: 1), // Warna biru saat fokus
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+
+                            // Border saat error
                           ),
                         ),
                       ),

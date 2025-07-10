@@ -82,7 +82,7 @@ class NavbarTop extends StatelessWidget implements PreferredSizeWidget {
           //       "https://cdn.shopify.com/s/files/1/0416/8083/0620/files/01132022_soc_pinterestboardcoverupdate_CN_1200x1200_88c02180-90a1-4745-921e-341c191ec84a_480x480.png?v=1646098139") as ImageProvider,
           // ),
           // Padding(padding: EdgeInsets.only(right: 16)),
-          Text(globals.nama,
+          Text("Halo, ${globals.nama}",
               style: GoogleFonts.montserrat(
                   fontSize: 18, fontWeight: FontWeight.w600)),
           Padding(padding: EdgeInsets.only(right: 16))

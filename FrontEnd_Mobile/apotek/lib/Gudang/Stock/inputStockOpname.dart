@@ -73,66 +73,65 @@ class inputStock extends State<Inputstockopname> {
   List<SpesifikBatch> spesifikBatch = [];
   late String tanggalHariIni;
   Future<void> postStockOpname() async {
-  String url = "http://leap.crossnet.co.id:2688/stokopname/create";
+    String url = "http://leap.crossnet.co.id:2688/stokopname/create";
 
-  String temp = '''{
+    String temp = '''{
   "id_depo": "20",
   "tanggal_stok_opname": "${tanggalHariIni}",
   "catatan": "${catatan.text}",
   "items": [''';
 
-  for (var i = 0; i < _data.length; i++) {
-    temp += '''
+    for (var i = 0; i < _data.length; i++) {
+      temp += '''
     {
       "id_kartustok": "${_data[i].idKartustok}",
       "batches": [''';
 
-    for (var j = 0; j < _data[i].batches.length; j++) {
-      final batch = _data[i].batches[j];
-      final jumlah = batch.jumlah.text.trim();
-      final keterangan = batch.keterangan.text.trim();
+      for (var j = 0; j < _data[i].batches.length; j++) {
+        final batch = _data[i].batches[j];
+        final jumlah = batch.jumlah.text.trim();
+        final keterangan = batch.keterangan.text.trim();
 
-      temp += '''
+        temp += '''
         {
           "id_nomor_batch": "${batch.idNomorBatch}",
           "kuantitas_fisik": ${jumlah.isEmpty ? 0 : jumlah},
           "catatan": "${keterangan.replaceAll('"', '\\"')}"
         }''';
 
-      // Tambahkan koma jika bukan item terakhir
-      if (j != _data[i].batches.length - 1) {
-        temp += ',';
+        // Tambahkan koma jika bukan item terakhir
+        if (j != _data[i].batches.length - 1) {
+          temp += ',';
+        }
       }
+
+      temp += ']';
+
+      // Tambahkan koma antar item jika bukan yang terakhir
+      temp += (i == _data.length - 1) ? '}' : '},';
     }
 
-    temp += ']';
+    temp += ']}';
 
-    // Tambahkan koma antar item jika bukan yang terakhir
-    temp += (i == _data.length - 1) ? '}' : '},';
+    print("Final JSON:\n$temp");
+
+    var response = await http.post(
+      Uri.parse(url),
+      headers: {
+        "Authorization": token,
+        "x-api-key": xApiKey,
+        "Content-Type": "application/json"
+      },
+      body: temp,
+    );
+
+    if (response.statusCode == 200) {
+      print("✅ Sukses mengirim input penerimaan");
+    } else {
+      print("❌ Gagal: ${response.statusCode}");
+      print(response.body);
+    }
   }
-
-  temp += ']}';
-
-  print("Final JSON:\n$temp");
-
-  var response = await http.post(
-    Uri.parse(url),
-    headers: {
-      "Authorization": token,
-      "x-api-key": xApiKey,
-      "Content-Type": "application/json"
-    },
-    body: temp,
-  );
-
-  if (response.statusCode == 200) {
-    print("✅ Sukses mengirim input penerimaan");
-  } else {
-    print("❌ Gagal: ${response.statusCode}");
-    print(response.body);
-  }
-}
-
 
   Future<void> getListStockOpname() async {
     try {
@@ -353,7 +352,7 @@ class inputStock extends State<Inputstockopname> {
                                     if (condition == "post") {
                                       await postStockOpname();
                                       Navigator.pop(context);
-                                      _alertDone(context,"diinput");
+                                      _alertDone(context, "diinput");
                                       setState(() {
                                         global.selectedIndex = 1;
                                         global.selectedScreen = 1;
@@ -429,8 +428,8 @@ class inputStock extends State<Inputstockopname> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.6,
-                height: MediaQuery.of(context).size.height * 0.9,
+                width: MediaQuery.of(context).size.width * 0.52,
+                height: MediaQuery.of(context).size.height * 0.6,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -1403,7 +1402,7 @@ class inputStock extends State<Inputstockopname> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _alertDone(context,"diinput");
+                                  _alertDone(context, "diinput");
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
@@ -1438,63 +1437,64 @@ class inputStock extends State<Inputstockopname> {
     );
   }
 
- // ⬇️ TARUH DI LUAR build(), setState(), atau try-catch manapun
-void _alertDone(BuildContext context, String isi) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.of(context).pop();
-      });
+  // ⬇️ TARUH DI LUAR build(), setState(), atau try-catch manapun
+  void _alertDone(BuildContext context, String isi) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        Future.delayed(const Duration(seconds: 2), () {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        });
 
-      return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return FractionallySizedBox(
-              widthFactor: 0.5,
-              heightFactor: 0.4,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        "images/done.png",
-                        width: constraints.maxWidth * 0.08,
-                        height: constraints.maxWidth * 0.08,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Data berhasil $isi!",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: constraints.maxWidth * 0.025,
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return FractionallySizedBox(
+                widthFactor: 0.5,
+                heightFactor: 0.4,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "images/done.png",
+                          width: constraints.maxWidth * 0.08,
+                          height: constraints.maxWidth * 0.08,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                        const SizedBox(height: 16),
+                        Text(
+                          "Data berhasil $isi!",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: constraints.maxWidth * 0.025,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
-
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   String tanggalNow = '';
   int _rowsPerPage = 10;

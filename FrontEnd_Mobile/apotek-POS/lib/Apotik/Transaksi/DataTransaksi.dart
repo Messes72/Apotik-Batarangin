@@ -84,7 +84,7 @@ class Kustomer {
   }
 
   static Future<List<Kustomer>> getData() async {
-    String url = "http://leap.crossnet.co.id:2688/kustomer?page=1&page_size=20";
+    String url = "http://leap.crossnet.co.id:2688/kustomer?page=1&page_size=100";
     var response = await http.get(Uri.parse(url),
         headers: {'Authorization': '$token', 'x-api-key': '$xApiKey'});
     var jsonObject = jsonDecode(response.body);
@@ -437,7 +437,7 @@ class ObatRacikModel {
 
   static Future<List<ObatRacikModel>> getDataObatRacik() async {
     String url =
-        "http://leap.crossnet.co.id:2688/product/racik?page=1&page_size=2";
+        "http://leap.crossnet.co.id:2688/product/racik?page=1&page_size=20";
     var response = await http.get(Uri.parse(url),
         headers: {'Authorization': '$token', 'x-api-key': '$xApiKey'});
     var jsonObject = jsonDecode(response.body);

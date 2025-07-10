@@ -90,74 +90,61 @@ class _KwitansiObat extends State<KwitansiObat>
     String url = "http://leap.crossnet.co.id:2688/PoS/checkout";
     String temp = '''{"id_kustomer": "${_selectedNamaKustomer!.idKustomer}",
 "pembayaran": { "metode_bayar": "${_selectedMetodePembayaran}"} ,"items": [''';
-    setState(() {
+
+    List<String> items = [];
+
+    if (daftarObatRacik.isNotEmpty) {
       for (var i = 0; i < daftarObatRacik.length; i++) {
-        // if (i == daftarObatRacik.length - 1) {
-          temp = temp +
-              '''{
-      "id_obat": "${daftarObatRacik[i].idnamaRacik}",
-      "kuantitas":${daftarObatRacik[i].jumlah},
-      "id_depo": "20",
-      "satuan_racik": "${daftarObatRacik[i].idsatuan}",
-      "dosis": "",                  
-      "aturan_pakai": "${daftarObatRacik[i].aturanPakai}",
-      "cara_pakai": "${daftarObatRacik[i].caraPakai}",
-      "keterangan_pakai": "${daftarObatRacik[i].keteranganPakai}",
-      "ingredients": [
-        ''';
-        // }
-        for (var j = 0; j < daftarObatRacik[i].komposisi.length; j++) {
-          if (j == daftarObatRacik[i].komposisi.length-1) {
-            temp = temp +
-                '''{
-          "id_obat": "${daftarObatRacik[i].komposisi[j].idObat}",
-          "jumlah_decimal": ${daftarObatRacik[i].komposisi[j].jumlah},
-          "dosis": "${daftarObatRacik[i].komposisi[j].dosis}"
-        }]},''';
-          } else
-            temp = temp +
-                '''{
-           "id_obat": "${daftarObatRacik[i].komposisi[j].idObat}",
-          "jumlah_decimal": ${daftarObatRacik[i].komposisi[j].jumlah},
-          "dosis": "${daftarObatRacik[i].komposisi[j].dosis}"
-        },''';
-        }
-        
+        String ingredients = daftarObatRacik[i].komposisi.map((komposisi) {
+          return '''{
+          "id_obat": "${komposisi.idObat}",
+          "jumlah_decimal": ${komposisi.jumlah},
+          "dosis": "${komposisi.dosis}"
+        }''';
+        }).join(",");
+
+        String item = '''{
+        "id_obat": "${daftarObatRacik[i].idnamaRacik}",
+        "kuantitas": ${daftarObatRacik[i].jumlah},
+        "id_depo": "20",
+        "satuan_racik": "${daftarObatRacik[i].idsatuan}",
+        "dosis": "",
+        "aturan_pakai": "${daftarObatRacik[i].aturanPakai}",
+        "cara_pakai": "${daftarObatRacik[i].caraPakai}",
+        "keterangan_pakai": "${daftarObatRacik[i].keteranganPakai}",
+        "ingredients": [$ingredients]
+      }''';
+
+        items.add(item);
       }
+    }
+
+    if (keranjang.isNotEmpty) {
       for (var i = 0; i < keranjang.length; i++) {
-        if (i == keranjang.length - 1) {
-          temp = temp +
-              '''{
-      "id_obat":   "${keranjang[i].idObat}",
-      "kuantitas":       ${keranjang[i].jumlahObatReal},
-      "aturan_pakai":     "${keranjang[i].aturanPakai}",
-      "cara_pakai":       "${keranjang[i].caraPakai}",
-      "keterangan_pakai": "${keranjang[i].keteranganPakai}"
-    }]}''';
-        } else {
-          temp = temp +
-              ''',
-    {
-       "id_obat":   "${keranjang[i].idObat}",
-      "kuantitas":       ${keranjang[i].jumlahObatReal},
-      "aturan_pakai":     "${keranjang[i].aturanPakai}",
-      "cara_pakai":       "${keranjang[i].caraPakai}",
-      "keterangan_pakai": "${keranjang[i].keteranganPakai}"
-    },''';
-        }
+        String item = '''{
+        "id_obat": "${keranjang[i].idObat}",
+        "kuantitas": ${keranjang[i].jumlahObatReal},
+        "aturan_pakai": "${keranjang[i].aturanPakai}",
+        "cara_pakai": "${keranjang[i].caraPakai}",
+        "keterangan_pakai": "${keranjang[i].keteranganPakai}"
+      }''';
+
+        items.add(item);
       }
-    });
+    }
+
+    temp += items.join(",");
+    temp += "]}";
+
     print(temp);
 
     var response = await http.post(Uri.parse(url),
         headers: {
           "Authorization": '${global.token}',
           "x-api-key": '${global.xApiKey}',
-          "Content-Type": "application/json" // Tambahkan ini juga!
+          "Content-Type": "application/json"
         },
         body: temp);
-    // print(response.statusCode);
-    // print(response.body);
 
     if (response.statusCode == 200) {
       print("✅ Sukses mengirim input data pembelian di POS");
@@ -166,12 +153,6 @@ class _KwitansiObat extends State<KwitansiObat>
       print("❌ Gagal: ${response.statusCode}");
       print(response.body);
     }
-  }
-
-  void onMenuPressed() {
-    setState(() {
-      triggerAnimation = !triggerAnimation; // Toggle sidebar
-    });
   }
 
   int _rowsPerPage = 10; // Default jumlah baris per halaman
@@ -323,6 +304,17 @@ class _KwitansiObat extends State<KwitansiObat>
   void generateAndPrintPDF(BuildContext context) async {
     final pdf = pw.Document();
 
+    double totalHargaObat =
+        keranjang.fold(0, (sum, item) => sum + item.hargaObat * item.kuantitas);
+    double totalHargaRacik =
+        daftarObatRacik.fold(0, (sum, item) => sum + item.totalHarga);
+    double totalKeseluruhan = totalHargaObat + totalHargaRacik;
+
+    String metodePembayaran =
+        _selectedMetodePembayaran.toString(); 
+    String namaPemesan =
+        _selectedNamaKustomer!.nama.toString(); 
+
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -330,30 +322,81 @@ class _KwitansiObat extends State<KwitansiObat>
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text("Kwitansi Pembelian Obat",
+              pw.Text("Kwitansi Pembelian Obat Apotek Bantarangin Hospital",
                   style: pw.TextStyle(
                       fontSize: 20, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 16),
+              pw.Text("Pemesan: $namaPemesan"),
+              pw.Text("Metode Pembayaran: $metodePembayaran"),
+              pw.SizedBox(height: 16),
+              pw.Text("Obat Jadi",
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               pw.Table.fromTextArray(
-                headers: ["No", "Nama Obat", "Jumlah", "Harga"],
+                headers: ["No", "Nama Obat", "Jumlah","Aturan Pakai", "Cara Pakai", "Keterangan Pakai" ,"Harga"],
                 data: List.generate(keranjang.length, (index) {
                   final item = keranjang[index];
                   return [
                     "${index + 1}",
                     item.namaObat,
                     item.kuantitas.toString(),
-                    "Rp ${item.hargaObat}",
+                    item.aturanPakai,
+                    item.caraPakai,
+                    item.keteranganPakai,
+                    "Rp ${item.hargaObat * item.kuantitas}",
                   ];
                 }),
                 border: pw.TableBorder.all(),
                 cellAlignment: pw.Alignment.centerLeft,
               ),
+              pw.SizedBox(height: 16),
+              pw.Text("Obat Racikan",
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ...List.generate(daftarObatRacik.length, (index) {
+                final racik = daftarObatRacik[index];
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text("Obat Racik #${index + 1}: ${racik.namaRacik}",
+                        style: pw.TextStyle(
+                            fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    pw.Text("Jumlah: ${racik.jumlah}"),
+                    pw.Text("Cara Pemakaian: ${racik.caraPakai}"),
+                    pw.Text("Aturan Pakai: ${racik.aturanPakai}"),
+                    pw.Text("Keterangan: ${racik.keteranganPakai}"),
+                    pw.Text("Harga: Rp ${racik.totalHarga}"),
+                    pw.SizedBox(height: 8),
+                    pw.Text("Komposisi:",
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Table.fromTextArray(
+                      headers: ["No", "Nama Obat", "Jumlah","Dosis","Qty"],
+                      data: List.generate(racik.komposisi.length, (i) {
+                        final komp = racik.komposisi[i];
+                        return [
+                          "${i + 1}",
+                          komp.namaObat,
+                          komp.jumlah.toString(),
+                          komp.dosis.toString(),
+                          komp.jumlah.toString()
+                        ];
+                      }),
+                      border: pw.TableBorder.all(),
+                      cellAlignment: pw.Alignment.centerLeft,
+                    ),
+                    pw.SizedBox(height: 16),
+                  ],
+                );
+              }),
+              pw.Divider(),
+              pw.Text("Total Harga Obat Jadi: Rp $totalHargaObat"),
+              pw.Text("Total Harga Obat Racik: Rp $totalHargaRacik"),
+              pw.Text("Total Pembayaran: Rp $totalKeseluruhan",
+                  style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold, fontSize: 16)),
             ],
           );
         },
       ),
     );
-
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
@@ -390,61 +433,61 @@ class _KwitansiObat extends State<KwitansiObat>
                   children: [
                     Row(
                       children: [
-                        Expanded(
-                          child: Container(
-                            height: 40,
-                            // width: 242,
-                            // decoration: BoxDecoration(
-                            //   border: Border.all(
-                            //       color: ColorStyle.fill_stroke, width: 1),
-                            //   color: ColorStyle.fill_form,
-                            //   borderRadius: BorderRadius.circular(4),
-                            // ),
-                            child: TextFormField(
-                              controller: text,
-                              onChanged: filtering,
-                              decoration: InputDecoration(
-                                isDense: true,
-                                filled: true,
-                                fillColor: ColorStyle.fill_form,
+                        // Expanded(
+                        //   child: Container(
+                        //     height: 40,
+                        //     // width: 242,
+                        //     // decoration: BoxDecoration(
+                        //     //   border: Border.all(
+                        //     //       color: ColorStyle.fill_stroke, width: 1),
+                        //     //   color: ColorStyle.fill_form,
+                        //     //   borderRadius: BorderRadius.circular(4),
+                        //     // ),
+                        //     child: TextFormField(
+                        //       controller: text,
+                        //       onChanged: filtering,
+                        //       decoration: InputDecoration(
+                        //         isDense: true,
+                        //         filled: true,
+                        //         fillColor: ColorStyle.fill_form,
 
-                                // Menambahkan ikon di dalam TextField
-                                prefixIcon: Padding(
-                                  padding: EdgeInsets.only(left: 8, right: 8),
-                                  child: Icon(
-                                    Icons.search_outlined,
-                                    color: Color(0XFF1B1442),
-                                    size: 30, // Sesuaikan ukuran ikon
-                                  ),
-                                ),
+                        //         // Menambahkan ikon di dalam TextField
+                        //         prefixIcon: Padding(
+                        //           padding: EdgeInsets.only(left: 8, right: 8),
+                        //           child: Icon(
+                        //             Icons.search_outlined,
+                        //             color: Color(0XFF1B1442),
+                        //             size: 30, // Sesuaikan ukuran ikon
+                        //           ),
+                        //         ),
 
-                                hintText: "Search",
-                                contentPadding:
-                                    EdgeInsets.only(left: 8, bottom: 12.5),
-                                hintStyle: TextStyle(
-                                  color: ColorStyle.text_hint,
-                                  fontSize: 16,
-                                ),
+                        //         hintText: "Search",
+                        //         contentPadding:
+                        //             EdgeInsets.only(left: 8, bottom: 12.5),
+                        //         hintStyle: TextStyle(
+                        //           color: ColorStyle.text_hint,
+                        //           fontSize: 16,
+                        //         ),
 
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                      color: ColorStyle.fill_stroke, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                        //         enabledBorder: OutlineInputBorder(
+                        //           borderSide: BorderSide(
+                        //               color: ColorStyle.fill_stroke, width: 1),
+                        //           borderRadius: BorderRadius.circular(4),
+                        //         ),
 
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide:
-                                      BorderSide(color: Colors.black, width: 1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(padding: EdgeInsets.only(right: 8)),
+                        //         focusedBorder: OutlineInputBorder(
+                        //           borderSide:
+                        //               BorderSide(color: Colors.black, width: 1),
+                        //           borderRadius: BorderRadius.circular(4),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
+                        // Padding(padding: EdgeInsets.only(right: 8)),
                       ],
                     ),
-                    const SizedBox(height: 30),
+                    // const SizedBox(height: 30),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(4),
@@ -556,17 +599,35 @@ class _KwitansiObat extends State<KwitansiObat>
                                               // color: MaterialStateProperty.all(
                                               //     Colors.white),
                                               cells: [
-                                                DataCell(Center(
-                                                    child: Text(item.namaObat,
-                                                        textAlign:
-                                                            TextAlign.center,
+                                                DataCell(
+                                                  Center(
+                                                    child: SizedBox(
+                                                      width: 100,
+                                                      child: Text(
+                                                        item.namaObat,
+                                                        overflow: TextOverflow
+                                                            .visible,
                                                         style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontWeight:
-                                                              FontWeight.bold,
                                                           fontSize: 14,
-                                                        )))),
+                                                        ),
+                                                        maxLines: 2,
+                                                        textAlign: TextAlign
+                                                            .center, // Batas maksimal baris teks
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // DataCell(Center(
+                                                //     child: Text(item.namaObat,
+                                                //         textAlign:
+                                                //             TextAlign.center,
+                                                //         style: TextStyle(
+                                                //           color: ColorStyle
+                                                //               .text_secondary,
+                                                //           fontWeight:
+                                                //               FontWeight.bold,
+                                                //           fontSize: 14,
+                                                //         )))),
                                                 DataCell(Center(
                                                     child: Text(
                                                         item.kuantitas
@@ -813,17 +874,39 @@ class _KwitansiObat extends State<KwitansiObat>
                                               // color: MaterialStateProperty.all(
                                               //     Colors.white),
                                               cells: [
-                                                DataCell(Center(
-                                                    child: Text(item.namaRacik,
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: TextStyle(
-                                                          color: ColorStyle
-                                                              .text_secondary,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 14,
-                                                        )))),
+                                                DataCell(
+                                                              Center(
+                                                                child: SizedBox(
+                                                                  width: 100,
+                                                                  child: Text(
+                                                                    item.namaRacik,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .visible,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                    ),
+                                                                    maxLines: 2,
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .center, // Batas maksimal baris teks
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                // DataCell(Center(
+                                                //     child: Text(item.namaRacik,
+                                                //         textAlign:
+                                                //             TextAlign.center,
+                                                //         style: TextStyle(
+                                                //           color: ColorStyle
+                                                //               .text_secondary,
+                                                //           fontWeight:
+                                                //               FontWeight.bold,
+                                                //           fontSize: 14,
+                                                //         )))),
                                                 DataCell(Center(
                                                     child: Text(
                                                         item.jumlah.toString(),
@@ -1240,9 +1323,16 @@ class _KwitansiObat extends State<KwitansiObat>
                             Navigator.pop(context);
                             _alertDone("diinput");
                             generateAndPrintPDF(context);
-                            daftarObatRacik.clear();
-                            keranjang.clear();
-
+                            // daftarObatRacik.clear();
+                            // keranjang.clear();
+                            // setState(() {
+                            //   global.selectedIndex = 0;
+                            //   global.selectedScreen = 0;
+                            // });
+                            // Navigator.pushReplacement(
+                            //     context,
+                            //     MaterialPageRoute(
+                            //         builder: (context) => MyHomePage()));
                           },
                           icon:
                               Icon(Icons.print, color: Colors.white, size: 22),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:apotek/global.dart' as globals;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,6 +45,7 @@ class LoginPage extends State<Login> {
     if (!_formKey.currentState!.validate()) {
       return; // Hentikan jika form tidak valid
     }
+
     setState(() {
       isLoading = true;
     });
@@ -57,37 +59,85 @@ class LoginPage extends State<Login> {
         headers: {'x-api-key': '${globals.xApiKey}'},
         body: {"username": username, "password": password},
       );
+
       print(response.body);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print(data['data']['jwttoken']);
+
+        // Simpan token dan nama ke globals
         setState(() {
           globals.token = data['data']['jwttoken'];
           globals.nama = data['data']['nama'];
         });
-        print(globals.token);
-        print(globals.nama);
 
-        // Simpan token di lokal
+        // Ambil list privilege
+        List<dynamic> privileges = data['data']['privileges'];
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(globals.token);
+
+
+        // Ambil hanya nama_privilege sebagai List<String>
+        List<String> namaPrivileges = privileges
+            .map((priv) => priv['nama_privilege'].toString())
+            .toList();
+
+        // Simpan token, nama, dan privileges di lokal
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', globals.token);
         await prefs.setString('nama', globals.nama);
+        await prefs.setStringList('privileges', namaPrivileges);
+
+        // (Opsional) Simpan juga ke globals jika perlu
+        globals.privileges = namaPrivileges;
+
+        print("Token: ${globals.token}");
+        print("Nama: ${globals.nama}");
+        print("Privileges: $namaPrivileges");
 
         // Navigasi ke halaman utama
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => MyApp()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Login gagal, periksa kembali kredensial!")),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Center(
+                child: Text('Login Gagal',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+            content: Text('Periksa kembali username dan password Anda.',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w400)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('OK',
+                    style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600, color: ColorStyle.hover)),
+              ),
+            ],
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Terjadi kesalahan saat login.")),
+      print("Error: $e");
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Center(
+              child: Text('Terjadi Kesalahan',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600))),
+          content: Text('Gagal terhubung ke server. Silakan coba lagi nanti.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w400)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('OK',
+                  style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600, color: ColorStyle.hover)),
+            ),
+          ],
+        ),
       );
     } finally {
       setState(() {
@@ -98,18 +148,31 @@ class LoginPage extends State<Login> {
 
   // NANTI DIHAPUS YA jangan LUPAAAAAAAA !!!!!!!!!!!!!!!!!!!!!!!!!!!
   @override
-  void initState() {
-    super.initState();
+void initState() {
+  super.initState();
+  cekToken();
+}
 
-    // 🔐 Hardcoded credentials
-    _email.text = "admin"; // ganti sesuai user default
-    _password.text = "admin"; // ganti sesuai password default
+void cekToken() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
 
-    // 🔁 Delay 1 detik lalu langsung login
-    Future.delayed(Duration(seconds: 1), () {
-      login(context); // langsung login otomatis
-    });
+  if (token != null && !JwtDecoder.isExpired(token)) {
+    // Token masih aktif, langsung ke dashboard
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MyApp()),
+    );
+  } else {
+    // Token tidak ada atau sudah expired, kembali ke login
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const Login()),
+    );
   }
+}
+
+
 
   @override
   Widget build(BuildContext context) {
